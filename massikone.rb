@@ -12,8 +12,7 @@ require "sequel"
 require "sqlite3"
 require "zip"
 
-APP_DIR = File.dirname(File.absolute_path(__FILE__))
-USERIMAGE_DIR = File.join(APP_DIR, ENV.fetch("USERIMAGE_DIR"))
+USERIMAGE_DIR = ENV.fetch("USERIMAGE_DIR")
 
 DB = Sequel.connect(ENV.fetch("DATABASE_URL"))
 
