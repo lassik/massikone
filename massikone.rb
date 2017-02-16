@@ -120,6 +120,7 @@ def valid_nonneg_integer(x)
 end
 
 def valid_image_id(x)
+  return nil unless x
   raise unless valid_imgbasename?(x)
   x
 end
