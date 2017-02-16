@@ -200,7 +200,7 @@ def fetch_bill(bill_id)
   bill[:closed_user] = DB.fetch("select * from users where user_id = :user_id", :user_id => bill[:closed_user_id]).first
   bill[:paid_date_fi] = fi_from_iso_date(bill[:paid_date])
   bill[:closed_date_fi] = fi_from_iso_date(bill[:closed_date])
-  bill[:tags] = bill[:tags].split.sort.uniq
+  bill[:tags] = if bill[:tags] then bill[:tags].split.sort.uniq else [] end
   bill
 end
 
