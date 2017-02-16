@@ -164,7 +164,7 @@ def store_image(tmpfilename)
              "mogrify",
              "-strip",
              "-define", "png:include-chunk=none",
-             "-resize", "500>",
+             "-resize", "900x900>",
              "-colorspace", "Gray",
              "-separate",
              "-average",
