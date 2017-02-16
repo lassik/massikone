@@ -442,9 +442,9 @@ class Massikone < Roda
 
         r.get do
           bill = fetch_bill(bill_id)
-          u = admin_data[:users].find do |u| u[:user_id] == bill[:paid_user_id] end
+          u = users.find do |u| u[:user_id] == bill[:paid_user_id] end
           u[:is_paid_user] = true if u
-          u = admin_data[:users].find do |u| u[:user_id] == bill[:closed_user_id] end
+          u = users.find do |u| u[:user_id] == bill[:closed_user_id] end
           u[:is_closed_user] = true if u
           r.halt(404, "No such bill") unless bill
           puts bill[:tags].inspect
