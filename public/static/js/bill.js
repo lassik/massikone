@@ -11,6 +11,7 @@ $(function() {
         var hasImage = (imageId !== "");
         $("#image-id").val(imageId);
         $("#image-upload-progress").hide();
+        $("#image-select-button").show();
         $("#image-remove-button").toggle(hasImage);
         $("#image-rotate-button").toggle(hasImage);
         $("#bill-image-placeholder").toggle(!hasImage);
@@ -36,6 +37,9 @@ $(function() {
             $('#image-upload-progress-bar').css('width', percent+"%")
                 .attr('aria-valuenow', percent);
             $("#image-upload-progress").show();
+            $("#image-select-button").hide();
+            $("#image-remove-button").hide();
+            $("#image-rotate-button").hide();
         }).done(function(imageId) {
             setImageId(imageId);
         }).fail(function(jqXHR) {
