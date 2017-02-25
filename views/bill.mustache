@@ -94,13 +94,11 @@
           <tr>
             <th>Tägit:</th>
             <td>
-              <div class="btn-group" data-toggle="buttons">
-                {{#tags}}
-                <label class="btn btn-primary {{#active}}active{{/active}}">
-                  <input type="checkbox" class="tag-checkbox" value="{{tag}}" {{#active}}checked{{/active}}> #{{tag}}
-                </label>
-                {{/tags}}
-              </div>
+              {{#tags}}
+              <label class="checkbox-inline">
+                <input type="checkbox" class="tag-checkbox" value="{{tag}}" {{#active}}checked{{/active}}> {{tag}}
+              </label>
+              {{/tags}}
             </td>
           </tr>
           <tr>

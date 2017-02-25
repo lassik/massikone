@@ -125,6 +125,7 @@ $(function() {
     }
 
     $("#kilometer-input").on("input", updateCost);
+    $("#total-cost-input").on("input", updateCost);
     $("input.tag-checkbox").change(updateTags);
     $("#bill-form input[name=paid_type]").change(updateCost);
     $("#bill-form input[name=paid_user_id]").val($("#paid-user-id-init").val());
