@@ -29,6 +29,7 @@
             <td>
               {{#admin}}
               <select class="form-control" name="paid_user_id" value="{{#bill}}{{paid_user_id}}{{/bill}}">
+                <option value=""></option>
                 {{#users}}
                 <option value="{{user_id}}" {{#is_paid_user}}selected{{/is_paid_user}}>{{full_name}}</option>
                 {{/users}}
