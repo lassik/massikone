@@ -68,7 +68,7 @@ end
 
 def slug(str)
   return "" if str.nil?
-  str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '').gsub(/^-/, '').gsub('/-$', '')
+  str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '').gsub(/^-/, '').gsub(/-$/, '').gsub(/--+/, '')
 end
 
 def load_account_tree
