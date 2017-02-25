@@ -51,48 +51,6 @@
             </td>
           </tr>
           <tr>
-            <th>Tyyppi:</th>
-            <td>
-              <div class="radio">
-                <label>
-                  <input type="radio" name="paid_type" value="self" {{#bill}}{{paid_type_self_checked}}{{/bill}}>Hankinnat omalla rahalla
-                </label>
-              </div>
-              <div class="radio">
-                <label>
-                  <input type="radio" name="paid_type" value="card" {{#bill}}{{paid_type_card_checked}}{{/bill}}>Yhdistyksen pankkikortin käyttö
-                </label>
-              </div>
-              <div class="radio">
-                <label>
-                  <input type="radio" name="paid_type" value="ebank" {{#bill}}{{paid_type_ebank_checked}}{{/bill}}>Yhdistyksen verkkopankkimaksu
-                </label>
-              </div>
-              <div class="radio">
-                <label>
-                  <input type="radio" name="paid_type" value="car" {{#bill}}{{paid_type_car_checked}}{{/bill}}>
-                  Kilometrikorvaus (<span id="euros-per-kilometer-display"></span> &euro;/km)
-                  <span class="car" style="display: none">
-                    Matka: <input id="kilometer-input" type="number" min="0" max="9999" value="1"> km
-                  </span>
-                </label>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <th>Summa:</th>
-            <td>
-              <span class="car">
-                <span id="total-cost-display"></span> &euro;
-              </span>
-              <div class="input-group notcar">
-                <span class="input-group-addon">&euro;</span>
-                <input id="total-cost-input" type="number" value="" min="0" max="99999" step="0.01"
-                       data-number-to-fixed="2" data-number-stepfactor="100" class="form-control currency" id="c2" />
-              </div>
-            </td>
-          </tr>
-          <tr>
             <th>Tägit:</th>
             <td>
               {{#tags}}
