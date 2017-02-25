@@ -127,8 +127,11 @@ end
 
 def valid_tags(x)
   return nil unless x
-  raise "Invalid tags: #{x.inspect}" unless x =~ /^[ a-zA-Z0-9]*$/
-  x.split(" ").sort.uniq.join(" ")
+  x = x.split(" ") unless x.kind_of?(Array)
+  x.each do |tag|
+    raise "Invalid tags: #{x.inspect}" unless tag =~ /^[a-zA-Z0-9]+$/
+  end
+  x.sort.uniq.join(" ")
 end
 
 def valid_imgbasename?(imgbasename)
@@ -447,7 +450,6 @@ class Massikone < Roda
           u = users.find do |u| u[:user_id] == bill[:closed_user_id] end
           u[:is_closed_user] = true if u
           r.halt(404, "No such bill") unless bill
-          puts bill[:tags].inspect
           mustache :bill,
                    :admin => admin_data,
                    :current_user => current_user,

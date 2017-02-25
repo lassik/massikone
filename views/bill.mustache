@@ -97,7 +97,7 @@
             <td>
               {{#tags}}
               <label class="checkbox-inline">
-                <input type="checkbox" class="tag-checkbox" value="{{tag}}" {{#active}}checked{{/active}}> {{tag}}
+                <input name="tags[]" type="checkbox" class="tag-checkbox" value="{{tag}}" {{#active}}checked{{/active}}> {{tag}}
               </label>
               {{/tags}}
             </td>
@@ -159,8 +159,6 @@
                value="{{#bill}}{{unit_count}}{{/bill}}">
         <input type="hidden" id="unit-cost-cents" name="unit_cost_cents"
                value="{{#bill}}{{unit_cost_cents}}{{/bill}}">
-        <input type="hidden" id="tags" name="tags"
-               value="{{#bill}}{{#tags}}{{/tags}}{{/bill}}">
         <input type="hidden" id="image-id" name="image_id"
                value="{{#bill}}{{image_id}}{{/bill}}">
       </form>
