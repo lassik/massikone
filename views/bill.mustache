@@ -125,7 +125,13 @@
         <input type="file" name="file" id="image-upload-file"
                accept=".jpeg,.jpg,.png,image/jpeg,image/png">
       </form>
-      <div id="bill-image-container"></div>
+      <div id="bill-image-container">
+        {{#bill}}
+        {{#image_id}}
+        <img src="/api/userimage/{{image_id}}">
+        {{/image_id}}
+        {{/bill}}
+      </div>
       <div id="bill-image-placeholder" class="well">
         <ul>
           <li>Valitse kameralla, skannerilla tai <a target="_blank"
@@ -133,6 +139,15 @@
             otettu kuva laskusta tai kuitista. Tuetut tiedostomuodot ovat JPEG ja
             PNG.</li>
           <li>Kuvasta täytyy näkyä <b>päivämäärä</b> ja <b>summa</b>. Kuittia saa täydentää käsin kirjoittamalla.</li>
+          <li>
+            Tapahtuma dokumentoidaan sellaisella tarkkuudella, että lukija,
+            joka ei tapahtumasta etukäteen tiedä mitään, saa tositetta
+            lukemalla selville olennaiset asiat: milloin tapahtuma sattui,
+            ketkä olivat osallisia, mitä myytiin tai ostettiin tms, ja miten
+            tapahtuma liittyi yhdistyksen toimintaan. Tositteeseen pitää
+            dokumentoida myös tapahtuman
+            raha-arvo. <a href="http://antti-juhani.kaijanaho.fi/newblog/archives/791">[Lähde]</a>.
+          </li>
           <li>Valokuvaamiseen suositellaan salamaa.</li>
           <li>Useampi kuva täytyy yhdistää yhdeksi. Androidille
             suositellaan <a target="_blank"
