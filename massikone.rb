@@ -207,12 +207,17 @@ def fetch_bill(bill_id)
   bill
 end
 
-def fetch_bills_and_all_tags
+def fetch_bills_and_all_tags(current_user)
+  puts("current user is #{current_user.inspect}")
   all_tags = []
-  bills = DB.fetch("select bill_id, unit_count * unit_cost_cents as cents, paid_date, tags, description, pu.full_name as paid_user_full_name"+
-                   " from bills"+
-                   " left join users pu on pu.user_id = bills.paid_user_id"+
-                   " order by bill_id").all
+  sql = ("select bill_id, unit_count * unit_cost_cents as cents, paid_date, tags, description, pu.full_name as paid_user_full_name"+
+         " from bills"+
+         " left join users pu on pu.user_id = bills.paid_user_id")
+  bills = if current_user[:is_admin]
+            DB.fetch(sql+" order by bill_id").all
+          else
+            DB.fetch(sql+" where paid_user_id = ? order by bill_id", current_user[:user_id]).all
+          end
   bills.each do |bill|
     bill[:amount] = amount_from_cents(bill[:cents])
     bill[:tags] = []
@@ -229,15 +234,22 @@ def fetch_bills_and_all_tags
   [bills, all_tags]
 end
 
-def update_bill!(bill_id, r)
-  # TODO only admin can set certain fields
+def update_bill!(bill_id, r, current_user)
+  # TODO: don't allow updating a closed bill
   bill = {}
+  if current_user[:is_admin]
+    # TODO: more admin-only fields
+    bill[:paid_user_id] = valid_user_id(r[:paid_user_id])
+    bill[:closed_type] = valid_closed_type(r[:closed_type])
+    bill[:closed_user_id] = valid_user_id(r[:closed_user_id])
+    bill[:closed_date] = iso_from_fi_date(r[:closed_date_fi])
+  else
+    # TODO proper errors
+    bill[:paid_user_id] ||= current_user[:user_id]
+    raise unless bill[:paid_user_id] == current_user[:user_id]
+  end
   bill[:paid_date] = iso_from_fi_date(r[:paid_date_fi])
-  bill[:closed_date] = iso_from_fi_date(r[:closed_date_fi])
   bill[:paid_type] = valid_paid_type(r[:paid_type])
-  bill[:closed_type] = valid_closed_type(r[:closed_type])
-  bill[:paid_user_id] = valid_user_id(r[:paid_user_id])
-  bill[:closed_user_id] = valid_user_id(r[:closed_user_id])
   bill[:unit_count] = valid_nonneg_integer(r[:unit_count])
   bill[:unit_cost_cents] = valid_nonneg_integer(r[:unit_cost_cents])
   bill[:image_id] = valid_image_id(r[:image_id])
@@ -426,7 +438,7 @@ class Massikone < Roda
     end
 
     r.root do
-      bills, all_tags = fetch_bills_and_all_tags
+      bills, all_tags = fetch_bills_and_all_tags current_user
       mustache "bills",
                :current_user => current_user,
                :admin => admin_data,
@@ -462,7 +474,7 @@ class Massikone < Roda
           bill = DB.fetch("select * from bills where bill_id = :bill_id",
                           :bill_id=>bill_id).first
           r.halt(404, "No such bill") unless bill
-          update_bill! bill_id, r
+          update_bill! bill_id, r, current_user
           r.redirect "/bill/#{bill_id}"
         end
 
@@ -480,7 +492,7 @@ class Massikone < Roda
         r.post do
           bill_id = DB[:bills].insert(
             :created_date => DateTime.now.strftime("%Y-%m-%d"))
-          update_bill! bill_id, r
+          update_bill! bill_id, r, current_user
           r.redirect "/bill/#{bill_id}"
         end
 
@@ -498,7 +510,7 @@ class Massikone < Roda
       end
 
       r.get "massikone.ofx" do
-        bills, all_tags = fetch_bills_and_all_tags
+        bills, all_tags = fetch_bills_and_all_tags current_user
         response["Content-Type"] = "text/xml"
         mustache "report/massikone.ofx",
                  :bills => bills
