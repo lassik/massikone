@@ -8,7 +8,15 @@ gem "omniauth"
 gem "omniauth-google-oauth2"
 
 gem "sequel"
-gem "sqlite3"
+group :sqlite3 do
+  gem "sqlite3"
+end
+group :mysql do
+  gem "mysql"
+end
+group :pg do
+  gem "pg"
+end
 
 gem "rubyzip"
 
