@@ -12,7 +12,6 @@ require "sequel"
 require "sqlite3"
 require "zip"
 
-USERIMAGE_DIR = ENV.fetch("USERIMAGE_DIR")
 
 DB = Sequel.connect(ENV.fetch("DATABASE_URL"))
 
@@ -121,7 +120,7 @@ end
 
 def valid_image_id(x)
   return nil unless x and not x.empty?
-  raise unless valid_imgbasename?(x)
+  raise unless valid_image_id?(x)
   x
 end
 
@@ -134,61 +133,76 @@ def valid_tags(x)
   x.sort.uniq.join(" ")
 end
 
-def valid_imgbasename?(imgbasename)
-  not not /^[0-9a-f]{40}\.(jpeg|png)$/.match imgbasename
+def valid_image_id?(image_id)
+  not not /^[0-9a-f]{40}\.(jpeg|png)$/.match image_id
 end
 
-def store_image_from_tmpfile(tmpfilename, extension)
-  filehash = Digest::SHA1.file(tmpfilename).hexdigest
-  imgbasename = "#{filehash}#{extension}"
-  imgfullpath = File.join(USERIMAGE_DIR, imgbasename)
-  FileUtils.cp(tmpfilename, imgfullpath)  # TODO how reliable?
-  imgbasename
+def fetch_image_data(image_id)
+  raise unless valid_image_id?(image_id)
+  image = DB.fetch("select image_data from images"+
+                   " where image_id = ?", image_id).first
+  # TODO what if not found
+  image[:image_data]
 end
 
-def store_image(tmpfilename)
+def store_image_data(image_data, image_format)
+  hash = Digest::SHA1.hexdigest(image_data)
+  image_id = "#{hash}.#{image_format}"
+  DB[:images].insert(image_id: image_id, image_data: Sequel.blob(image_data))
+  image_id
+end
+
+def store_image_file(tmpfilename)
   # We don't need the complexity of minimagick et.al.
   #
   # Don't trust filename extension given by user. It is sometimes wrong even
   # when not malicious. Better trust ImageMagick to identify the file format.
   tmpfilename = File.absolute_path(tmpfilename)
-  file_format, status = Open3.capture2(
-                 "identify",
-                 "-format", "%[m]",
-                 tmpfilename)
-  extension = nil
+  old_image_format, err_msg, status = Open3.capture3(
+                               "identify",
+                               "-format", "%[m]",
+                               tmpfilename)
+  new_image_format = nil
   if status.exitstatus == 0
-    extension = case file_format
-                when "JPEG" then ".jpeg"
-                when "PNG"  then ".png"
-                end
+    new_image_format = case old_image_format
+                       when "JPEG" then "jpeg"
+                       when "PNG"  then "png"
+                       end
   end
-  abort "Bad image format" unless extension  # TODO better error message for user. does roda have a good pre-made exception class we can use?
-  message, status = Open3.capture2(
-             "mogrify",
-             "-strip",
-             "-define", "png:include-chunk=none",
-             "-resize", "900x900>",
-             "-colorspace", "Gray",
-             "-separate",
-             "-average",
-             tmpfilename)
-  puts "Message from mogrify is #{message}"
-  store_image_from_tmpfile(tmpfilename, extension)
+  unless new_image_format
+    # TODO better error message for user. does roda have a good pre-made exception class we can use?
+    raise "Bad image format: #{err_msg}"
+  end
+  new_image_data, err_msg, status = Open3.capture3(
+                             "convert",
+                             "-strip",
+                             "-define", "png:include-chunk=none",
+                             "-resize", "900x900>",
+                             "-colorspace", "Gray",
+                             "-separate",
+                             "-average",
+                             tmpfilename,
+                             "#{new_image_format}:-")
+  unless status.exitstatus == 0
+    raise "Image conversion error: #{err_msg}"
+  end
+  store_image_data(new_image_data, new_image_format)
 end
 
-def rotate_image(oldbasename)
-  raise unless valid_imgbasename?(oldbasename)
-  oldfullpath = File.join(USERIMAGE_DIR, oldbasename)
-  extension = File.extname(oldbasename)
-  tmpfullpath = "/tmp/massikone.resize#{extension}"  # TODO use mktemp
-  message, status = Open3.capture2(
-             "convert",
-             oldfullpath,
-             "-rotate", "90",
-             tmpfullpath)
-  puts "Message from convert is #{message}"
-  store_image_from_tmpfile(tmpfullpath, extension)
+def rotate_image(old_image_id)
+  raise unless valid_image_id?(old_image_id)
+  old_image_data = fetch_image_data(old_image_id)
+  image_format = File.extname(old_image_id)[1..-1]
+  new_image_data, err_msg, status = Open3.capture3(
+                             "convert",
+                             "#{image_format}:-",
+                             "-rotate", "90",
+                             "#{image_format}:-",
+                             :stdin_data => old_image_data)
+  unless status.exitstatus == 0
+    raise "Image conversion error: #{err_msg}"
+  end
+  store_image_data(new_image_data, image_format)
 end
 
 def fetch_bill(bill_id)
@@ -388,24 +402,25 @@ class Massikone < Roda
         # SECURITY NOTE: Users can view each other's images if they somehow
         # know the filehash.
 
-        r.on "rotated/:imgbasename" do |imgbasename|
+        r.on "rotated/:image_id" do |image_id|
           r.is do
             r.get do
               response["Content-Type"] = "text/plain"
-              rotate_image(imgbasename)
+              rotate_image(image_id)
             end
           end
         end
 
-        r.get :imgbasename do |imgbasename|
-          r.pass unless valid_imgbasename?(imgbasename)
-          r.send_file(File.join(USERIMAGE_DIR, imgbasename))
+        r.get :image_id do |image_id|
+          # TODO http header, esp. caching
+          r.pass unless valid_image_id?(image_id)
+          fetch_image_data(image_id)
         end
 
         r.is do
           r.post do
             response["Content-Type"] = "text/plain"
-            store_image(r[:file][:tempfile])
+            store_image_file(r[:file][:tempfile])
           end
         end
 
@@ -529,8 +544,11 @@ class Massikone < Roda
                                  bill[:bill_id],
                                  slug(bill[:description] || bill[:tags]),
                                  File.extname(bill[:image_id]))
-              zipfile.add(imginzip,
-                          File.join(USERIMAGE_DIR, bill[:image_id]))
+              image = DB.fetch("select image_data from images"+
+                               " where image_id = ?", bill[:image_id]).first
+              zipfile.get_output_stream(imginzip) do |output|
+                output.write image[:image_data]
+              end
             else
               missing.push("##{bill[:bill_id]}")
             end
