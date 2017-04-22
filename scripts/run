@@ -1,0 +1,8 @@
+#!/bin/sh -
+# Run script for daemontools, runit, and some web hosts.
+set -eu
+exec 2>&1
+echo starting
+[ -s .env ]
+export $(xargs < .env)
+exec "$(dirname "$(readlink -f "$0")")"/server

@@ -1,0 +1,4 @@
+#!/bin/sh -
+set -eu
+cd "$(dirname "$(readlink -f "$0")")"/..
+exec $GEM_HOME/bin/thin start -R config.ru -p "$PORT"

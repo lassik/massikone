@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+    <title>{{app_title}}</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>{{app_title}}</h1>
+      <h2>{{current_user.full_name}}</h2>
+      <div class="btn-group" role="group" aria-label="Basic example">
+        <a class="btn btn-info btn-lg" href="/bill">Uusi lasku</a>
+        {{#admin}}
+        <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#tags-modal">Tägit</button>
+        <div class="btn-group">
+          <button class="btn btn-info btn-lg dropdown-toggle" type="button" data-toggle="dropdown">Raportit <span class="caret"></span></button>
+          <ul class="dropdown-menu">
+            <li><a href="#">Päiväkirja</a></li>
+            <li><a href="#">Pääkirja</a></li>
+            <li><a href="#">Tase</a></li>
+            <li><a href="#">Tase erittelyin</a></li>
+            <li><a href="/report/chart-of-accounts">Tilikartta</a></li>
+            <li><a href="#">Tuloslaskelma tilierittelyin</a></li>
+            <li><a href="/report/massikone.ofx">Tiliote OFX-tiedostona</a></li>
+            <li><a href="/report/massikone.zip">Kuittien kuvat zip-tiedostona</a></li>
+          </ul>
+        </div>
+        {{/admin}}
+        <button type="button" class="btn btn-info btn-lg" id="logout-button">Kirjaudu ulos</button>
+      </div>
+      <form id="logout-form" method="POST" action="/logout" style="display: none"></form>
+      {{^bills}}
+      <p>Ei laskuja</p>
+      {{/bills}}
+      {{#bills}}
+      <h2>Kulut</h2>
+      <div class="well">
+        <div class="btn-group" data-toggle="buttons">
+          {{#tags}}
+          <label class="btn btn-warning active">
+            <input type="checkbox" class="tag-toggle" value="{{tag_index}}" checked> {{tag}}
+          </label>
+          {{/tags}}
+          {{#admin}}
+          {{#users}}
+          <label class="btn btn-success active">
+            <input type="checkbox" value="{{user_id}}" checked> {{short_name}}
+          </label>
+          {{/users}}
+          {{/admin}}
+        </div>
+      </div>
+      <table class="table table-striped table-hover">
+	      <tr>
+	        <th>Kulu</th>
+	        <th>Pvm</th>
+	        <th class="text-right">&euro;</th>
+	        {{#admin}}
+	        <th>Maksaja</th>
+	        {{/admin}}
+	        <th>Kuvaus</th>
+	        <th>Tägit</th>
+	      </tr>
+	      {{#bills}}
+	      <tr class="clickable-row {{#tags}}tag{{tag_index}} {{/tags}}" data-href="/bill/{{bill_id}}" style="cursor: pointer">
+	        <td><a class="btn btn-default" href="/bill/{{bill_id}}">#{{bill_id}}</a></td>
+	        <td>{{paid_date}}</td>
+	        <td class="text-right">{{amount}}</td>
+	        {{#admin}}
+	        <td>{{paid_user_full_name}}</td>
+	        {{/admin}}
+	        <td>{{description}}</td>
+	        <td>{{#tags}}#{{tag}} {{/tags}}</td>
+	      </tr>
+	      {{/bills}}
+      </table>
+      <p class="well">Kuvaathan kuitin heti :)</p>
+      {{/bills}}
+    </div>
+    <div id="tags-modal" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Tägit</h4>
+          </div>
+          <div class="modal-body">
+            <ul id="tag-list">
+            </ul>
+            <span class="well">Tägin poistaminen listalta ei poista sitä kuluista.</span>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Sulje</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/bills.js"></script>
+  </body>
+</html>

@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-datepicker.min.css">
+    <title>{{app_title}}</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>{{app_title}}</h1>
+      <h2>{{current_user.full_name}}</h2>
+      {{#bill}}<h2>Lasku #{{bill_id}}</h2>{{/bill}}
+      {{^bill}}<h2>Uusi lasku</h2>{{/bill}}
+      <form id="bill-form" enctype="multipart/form-data"
+            {{#bill}}method="POST" action="/bill/{{bill_id}}"{{/bill}}
+            {{^bill}}method="POST" action="/bill"{{/bill}}>
+        <div class="btn-group">
+          <input type="submit" class="btn btn-success" value="Tallenna">
+          <a class="btn btn-warning" href="/{{#bill}}bill/{{bill_id}}{{/bill}}">Peruuta</a>
+        </div>
+        <table class="table table-striped">
+          <tr>
+            <th>Maksaja:</th>
+            <td>
+              {{#admin}}
+              <select class="form-control" name="paid_user_id" value="{{#bill}}{{paid_user_id}}{{/bill}}">
+                {{#users}}
+                <option value="{{user_id}}" {{#is_paid_user}}selected{{/is_paid_user}}>{{full_name}}</option>
+                {{/users}}
+              </select>
+              {{/admin}}
+              {{^admin}}
+              {{#bill}}{{paid_user.full_name}}{{/bill}}
+              {{^bill}}{{current_user.full_name}}{{/bill}}
+              {{/admin}}
+            </td>
+          </tr>
+          <tr>
+            <th>Maksupvm:</th>
+            <td>
+              <input type="text" class="datepicker"
+                     data-provide="datepicker" data-date-language="fi"
+                     name="paid_date_fi"
+                     value="{{#bill}}{{paid_date_fi}}{{/bill}}">
+            </td>
+          </tr>
+          <tr>
+            <th>Tyyppi:</th>
+            <td>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="paid_type" value="self" {{#bill}}{{paid_type_self_checked}}{{/bill}}>Hankinnat omalla rahalla
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="paid_type" value="card" {{#bill}}{{paid_type_card_checked}}{{/bill}}>Yhdistyksen pankkikortin käyttö
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="paid_type" value="ebank" {{#bill}}{{paid_type_ebank_checked}}{{/bill}}>Yhdistyksen verkkopankkimaksu
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="paid_type" value="car" {{#bill}}{{paid_type_car_checked}}{{/bill}}>
+                  Kilometrikorvaus (<span id="euros-per-kilometer-display"></span> &euro;/km)
+                  <span class="car" style="display: none">
+                    Matka: <input id="kilometer-input" type="number" min="0" max="9999" value="1"> km
+                  </span>
+                </label>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Summa:</th>
+            <td>
+              <span class="car">
+                <span id="total-cost-display"></span> &euro;
+              </span>
+              <div class="input-group notcar">
+                <span class="input-group-addon">&euro;</span>
+                <input id="total-cost-input" type="number" value="" min="0" max="99999" step="0.01"
+                       data-number-to-fixed="2" data-number-stepfactor="100" class="form-control currency" id="c2" />
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Tägit:</th>
+            <td>
+              <div class="btn-group" data-toggle="buttons">
+                {{#tags}}
+                <label class="btn btn-primary {{#active}}active{{/active}}">
+                  <input type="checkbox" class="tag-checkbox" value="{{tag}}" {{#active}}checked{{/active}}> #{{tag}}
+                </label>
+                {{/tags}}
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Kuva:</th>
+            <td>
+              <button type="button" class="btn" id="image-select-button">Valitse kuva...</button>
+              <button type="button" class="btn" id="image-remove-button">Poista kuva</button>
+              <button type="button" class="btn" id="image-rotate-button">Kierrä 90&deg;</button>
+              <div class="progress" id="image-upload-progress" style="display: none">
+                <div id="image-upload-progress-bar" class="progress-bar"
+                     role="progressbar" aria-valuenow="0"
+                     aria-valuemin="0" aria-valuemax="100"
+                     style="width: 0%;"></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Kulun selvennys:</th>
+            <td><textarea name="description" cols="80" rows="4">{{#bill}}{{description}}{{/bill}}</textarea></td>
+          </tr>
+          {{#admin}}
+          <tr>
+            <th>Tili kirjanpidossa:</th>
+            <td>
+              <select name="account">
+                {{#accounts}}
+                <option value="{{account_id}}">{{account_title}}</option>
+                {{/accounts}}
+              </select>
+            </td>
+          </tr>
+          {{/admin}}
+          <tr>
+            <th>Korvattu maksajalle:</th>
+            <td>
+              <input type="text" class="datepicker"
+                     data-provide="datepicker" data-date-language="fi"
+                     name="closed_date_fi"
+                     value="{{#bill}}{{closed_date_fi}}{{/bill}}">
+              {{#admin}}
+              <button type="button" class="btn btn-danger">Poista</button>
+              {{/admin}}
+              </td>
+          </tr>
+          <tr>
+            <th>Historia</th>
+            <td>
+              {{#bill}}
+              {{#history}}
+              <li>{{date}} - {{description}}</li>
+              {{/history}}
+              {{/bill}}
+            </td>
+          </tr>
+        </table>
+        <input type="hidden" id="unit-count" name="unit_count"
+               value="{{#bill}}{{unit_count}}{{/bill}}">
+        <input type="hidden" id="unit-cost-cents" name="unit_cost_cents"
+               value="{{#bill}}{{unit_cost_cents}}{{/bill}}">
+        <input type="hidden" id="tags" name="tags"
+               value="{{#bill}}{{#tags}}{{/tags}}{{/bill}}">
+        <input type="hidden" id="image-id" name="image_id"
+               value="{{#bill}}{{image_id}}{{/bill}}">
+      </form>
+      <form id="image-upload-form" enctype="multipart/form-data"
+            style="display: none">
+        <input type="file" name="file" id="image-upload-file"
+               accept=".jpeg,.jpg,.png,image/jpeg,image/png">
+      </form>
+      <div id="bill-image-container"></div>
+      <div id="bill-image-placeholder" class="well">
+        Valitse kameralla, skannerilla tai <a target="_blank"
+                                              href="https://www.take-a-screenshot.org/">ruudunkaappauksella</a>
+        otettu kuva laskusta tai kuitista. Tuetut tiedostomuodot ovat JPEG ja
+        PNG.
+      </div>
+      <script src="/static/js/jquery.min.js"></script>
+      <script src="/static/js/bootstrap.min.js"></script>
+      <script src="/static/js/bootstrap-datepicker.min.js"></script>
+      <script src="/static/js/bootstrap-datepicker.fi.min.js"></script>
+      <script src="/static/js/jq-ajax-progress.min.js"></script>
+      <script src="/static/js/bill.js"></script>
+    </div>
+  </body>
+</html>
