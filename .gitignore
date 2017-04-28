@@ -1,5 +1,7 @@
 /.bundle
 /.env
 /.gem
+/data
 /massikone.tgz
+/massikone-docker.tgz
 /vendor
