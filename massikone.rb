@@ -9,7 +9,6 @@ require "omniauth"
 require "omniauth-google-oauth2"
 require "roda"
 require "sequel"
-require "sqlite3"
 require "zip"
 
 
