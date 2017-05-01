@@ -123,12 +123,12 @@ class Massikone < Roda
             r.halt(403, "Seuraavia tietoja ei saatu: #{missing.join(", ")}")
           end
           puts "Login #{[uid_field, uid, email, full_name].inspect}"
-          user = DB["select * from users where #{uid_field} = ?", uid].first
+          user = Model::DB["select * from users where #{uid_field} = ?", uid].first
           unless user
-            DB["insert into users (#{uid_field}) values (?)", uid].insert
-            user = DB["select * from users where #{uid_field} = ?", uid].first
+            Model::DB["insert into users (#{uid_field}) values (?)", uid].insert
+            user = Model::DB["select * from users where #{uid_field} = ?", uid].first
           end
-          DB["update users set email = ?, full_name = ? where #{uid_field} = ?", email, full_name, uid].update
+          Model::DB["update users set email = ?, full_name = ? where #{uid_field} = ?", email, full_name, uid].update
           session[:user_id] = user[:user_id]
           r.redirect "/"
         end
@@ -147,12 +147,12 @@ class Massikone < Roda
     end
 
     current_user = if session[:user_id]
-                     DB[:users].where(:user_id => session[:user_id]).first
+                     Model::DB[:users].where(:user_id => session[:user_id]).first
                    else
                      nil
                    end
 
-    users = DB.fetch("select user_id, full_name from users").all
+    users = Model::DB.fetch("select user_id, full_name from users").all
     users.each do |user|
       words = user[:full_name].split.map {|w| w.capitalize}
       user[:full_name] = words.join(" ")
@@ -185,21 +185,21 @@ class Massikone < Roda
           r.is do
             r.get do
               response["Content-Type"] = "text/plain"
-              rotate_image(image_id)
+              Model.rotate_image(image_id)
             end
           end
         end
 
         r.get :image_id do |image_id|
           # TODO http header, esp. caching
-          r.pass unless valid_image_id?(image_id)
-          fetch_image_data(image_id)
+          r.pass unless Model.valid_image_id?(image_id)
+          Model.fetch_image_data(image_id)
         end
 
         r.is do
           r.post do
             response["Content-Type"] = "text/plain"
-            store_image_file(r[:file][:tempfile])
+            Model.store_image_file(r[:file][:tempfile])
           end
         end
 
@@ -212,13 +212,13 @@ class Massikone < Roda
         # no longer in the tags list. This is intentional.
 
         r.get do
-          DB.fetch("select distinct tag from tags order by tag").all
+          Model::DB.fetch("select distinct tag from tags order by tag").all
         end
 
         r.put do
-          DB.delete("delete from tags")
+          Model::DB.delete("delete from tags")
           r.body.each do |tag|
-            DB.insert("insert into tags (tag) values (?)", tag)
+            Model::DB.insert("insert into tags (tag) values (?)", tag)
           end
         end
 
@@ -232,7 +232,7 @@ class Massikone < Roda
     end
 
     r.root do
-      bills, all_tags = fetch_bills_and_all_tags current_user
+      bills, all_tags = Model.fetch_bills_and_all_tags current_user
       mustache "bills",
                :current_user => current_user,
                :admin => admin_data,
@@ -250,7 +250,7 @@ class Massikone < Roda
       r.is ":bill_id" do |bill_id|
 
         r.get do
-          bill = fetch_bill(bill_id)
+          bill = Model.fetch_bill(bill_id)
           u = users.find do |u| u[:user_id] == bill[:paid_user_id] end
           u[:is_paid_user] = true if u
           u = users.find do |u| u[:user_id] == bill[:closed_user_id] end
@@ -265,10 +265,10 @@ class Massikone < Roda
         end
 
         r.post do
-          bill = DB.fetch("select * from bills where bill_id = :bill_id",
+          bill = Model::DB.fetch("select * from bills where bill_id = :bill_id",
                           :bill_id=>bill_id).first
           r.halt(404, "No such bill") unless bill
-          update_bill! bill_id, r, current_user
+          Model.update_bill! bill_id, r, current_user
           r.redirect "/bill/#{bill_id}"
         end
 
@@ -284,9 +284,9 @@ class Massikone < Roda
         end
 
         r.post do
-          bill_id = DB[:bills].insert(
+          bill_id = Model::DB[:bills].insert(
             :created_date => DateTime.now.strftime("%Y-%m-%d"))
-          update_bill! bill_id, r, current_user
+          Model.update_bill! bill_id, r, current_user
           r.redirect "/bill/#{bill_id}"
         end
 
@@ -304,14 +304,14 @@ class Massikone < Roda
       end
 
       r.get "massikone.ofx" do
-        bills, all_tags = fetch_bills_and_all_tags current_user
+        bills, all_tags = Model.fetch_bills_and_all_tags current_user
         response["Content-Type"] = "text/xml"
         mustache "report/massikone.ofx",
                  :bills => bills
       end
 
       r.get "massikone.zip" do
-        bills = DB.fetch("select bill_id, image_id, description, tags from bills"+
+        bills = Model::DB.fetch("select bill_id, image_id, description, tags from bills"+
                          " order by bill_id").all
         zipfilepath = "/tmp/massikone.zip"  # TODO use mktemp
         FileUtils.rm_f(zipfilepath)
@@ -323,7 +323,7 @@ class Massikone < Roda
                                  bill[:bill_id],
                                  slug(bill[:description] || bill[:tags]),
                                  File.extname(bill[:image_id]))
-              image = DB.fetch("select image_data from images"+
+              image = Model::DB.fetch("select image_data from images"+
                                " where image_id = ?", bill[:image_id]).first
               zipfile.get_output_stream(imginzip) do |output|
                 output.write image[:image_data]
