@@ -13,19 +13,6 @@ require "zip"
 
 require_relative "model"
 
-FI_DATE = "%d.%m.%Y"
-ISO_DATE = "%Y-%m-%d"
-
-def fi_from_iso_date(str)
-  return nil unless str and not str.empty?
-  DateTime.strptime(str, ISO_DATE).strftime(FI_DATE)
-end
-
-def iso_from_fi_date(str)
-  return nil unless str and not str.empty?
-  DateTime.strptime(str, FI_DATE).strftime(ISO_DATE)
-end
-
 def slug(str)
   return "" if str.nil?
   str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '').gsub(/^-/, '').gsub(/-$/, '').gsub(/--+/, '')
@@ -50,12 +37,6 @@ def load_account_tree
     list.push({:account_id => k, :account_title => v})
   end
   list
-end
-
-def amount_from_cents(cents)
-  return "" if cents.nil?
-  euros, cents = cents.divmod(100)
-  sprintf("%d,%02d", euros, cents)
 end
 
 # We don't need the compexity of tilt.
