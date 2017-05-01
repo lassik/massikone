@@ -266,7 +266,7 @@ module Model
   end
 
   def self.get_bills_for_report
-    Model::DB.fetch(
+    DB.fetch(
       "select bill_id, description, tags,"+
       " images.image_id as image_id, images.image_data as image_data"+
       " from bills"+
