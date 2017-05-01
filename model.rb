@@ -261,6 +261,15 @@ module Model
     [bills, all_tags]
   end
 
+  def self.get_bills_for_report
+    Model::DB.fetch(
+      "select bill_id, description, tags,"+
+      " images.image_id as image_id, images.image_data as image_data"+
+      " from bills"+
+      " left join images on bills.image_id = images.image_id"+
+      " order by bill_id").all
+  end
+
   def self.update_bill!(bill_id, r, current_user)
     # TODO: don't allow updating a closed bill
     bill = {}

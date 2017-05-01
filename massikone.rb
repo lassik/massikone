@@ -266,22 +266,19 @@ class Massikone < Roda
       end
 
       r.get "massikone.zip" do
-        bills = Model::DB.fetch("select bill_id, image_id, description, tags from bills"+
-                         " order by bill_id").all
+        bills = Model.get_bills_for_report()
         zipfilepath = "/tmp/massikone.zip"  # TODO use mktemp
         FileUtils.rm_f(zipfilepath)
         missing = []
         Zip::File.open(zipfilepath, Zip::File::CREATE) do |zipfile|
           bills.each do |bill|
-            if bill[:image_id] and bill[:image_id] != ""
+            if bill[:image_data]
               imginzip = sprintf("massikone/tosite-%04d-%s%s",
                                  bill[:bill_id],
                                  slug(bill[:description] || bill[:tags]),
                                  File.extname(bill[:image_id]))
-              image = Model::DB.fetch("select image_data from images"+
-                               " where image_id = ?", bill[:image_id]).first
               zipfile.get_output_stream(imginzip) do |output|
-                output.write image[:image_data]
+                output.write bill[:image_data]
               end
             else
               missing.push("##{bill[:bill_id]}")
