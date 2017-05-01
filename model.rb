@@ -135,6 +135,10 @@ module Model
     user
   end
 
+  def self.get_user(user_id)
+    DB[:users].where(:user_id => user_id).first
+  end
+
   # NOTE: The available tags are merely the ones that users can choose from
   # when *adding new tags* to bills. A bill can have *old* tags that are no
   # longer in the available tags list. This is intentional.

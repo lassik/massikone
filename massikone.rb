@@ -121,11 +121,8 @@ class Massikone < Roda
       r.redirect "/"
     end
 
-    current_user = if session[:user_id]
-                     Model::DB[:users].where(:user_id => session[:user_id]).first
-                   else
-                     nil
-                   end
+    current_user = nil
+    current_user = Model.get_user(session[:user_id]) if session[:user_id]
 
     users = Model.get_users()
 
