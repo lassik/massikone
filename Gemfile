@@ -1,27 +1,27 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-ruby "2.2.7"
+ruby '2.2.7'
 
-gem "puma"
-gem "roda"
-gem "mustache"
+gem 'mustache'
+gem 'puma'
+gem 'roda'
 
-gem "omniauth"
-gem "omniauth-google-oauth2"
+gem 'omniauth'
+gem 'omniauth-google-oauth2'
 
-gem "sequel"
+gem 'sequel'
 group :sqlite3 do
-  gem "sqlite3"
+  gem 'sqlite3'
 end
 group :mysql do
-  gem "mysql"
+  gem 'mysql'
 end
 group :pg do
-  gem "pg"
+  gem 'pg'
 end
 
-gem "rubyzip"
+gem 'rubyzip'
 
 group :development do
-  gem "foreman"
+  gem 'foreman'
 end
