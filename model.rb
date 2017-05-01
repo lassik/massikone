@@ -267,4 +267,12 @@ module Model
     bill_id
   end
 
+  def self.put_bill(bill_id, params, current_user)
+    bill = DB.fetch("select * from bills where bill_id = :bill_id",
+                    :bill_id=>bill_id).first
+    raise "No such bill" unless bill
+    update_bill! bill_id, params, current_user
+    nil
+  end
+
 end

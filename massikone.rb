@@ -242,10 +242,7 @@ class Massikone < Roda
         end
 
         r.post do
-          bill = Model::DB.fetch("select * from bills where bill_id = :bill_id",
-                          :bill_id=>bill_id).first
-          r.halt(404, "No such bill") unless bill
-          Model.update_bill! bill_id, r, current_user
+          Model.put_bill(bill_id, r, current_user)
           r.redirect "/bill/#{bill_id}"
         end
 
