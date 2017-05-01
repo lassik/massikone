@@ -146,17 +146,7 @@ class Massikone < Roda
                      nil
                    end
 
-    users = Model::DB.fetch("select user_id, full_name from users").all
-    users.each do |user|
-      words = user[:full_name].split.map {|w| w.capitalize}
-      user[:full_name] = words.join(" ")
-      user[:short_name] = if words.length >= 2 then
-                            "#{words[0]} #{words[1][0]}"
-                          else
-                            user[:full_name]
-                          end
-    end
-    users.sort! {|a,b| a[:full_name] <=> b[:full_name]}
+    users = Model.get_users()
 
     admin_data = if current_user and current_user[:is_admin]
                    {
