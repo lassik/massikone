@@ -78,7 +78,7 @@ module Model
   end
 
   def self.valid_user_id(x)
-    return nil unless x
+    return nil unless x and not x.empty?
     x = x.to_i
     raise unless x >= 1
     x
