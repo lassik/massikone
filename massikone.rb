@@ -122,13 +122,7 @@ class Massikone < Roda
           unless missing.empty?
             r.halt(403, "Seuraavia tietoja ei saatu: #{missing.join(", ")}")
           end
-          puts "Login #{[uid_field, uid, email, full_name].inspect}"
-          user = Model::DB["select * from users where #{uid_field} = ?", uid].first
-          unless user
-            Model::DB["insert into users (#{uid_field}) values (?)", uid].insert
-            user = Model::DB["select * from users where #{uid_field} = ?", uid].first
-          end
-          Model::DB["update users set email = ?, full_name = ? where #{uid_field} = ?", email, full_name, uid].update
+          user = Model::put_user(uid_field, uid, email, full_name)
           session[:user_id] = user[:user_id]
           r.redirect "/"
         end

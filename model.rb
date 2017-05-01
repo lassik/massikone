@@ -90,6 +90,17 @@ module Model
     not not /^[0-9a-f]{40}\.(jpeg|png)$/.match image_id
   end
 
+  def self.put_user(uid_field, uid, email, full_name)
+    puts "Login #{[uid_field, uid, email, full_name].inspect}"
+    user = DB["select * from users where #{uid_field} = ?", uid].first
+    unless user
+      DB["insert into users (#{uid_field}) values (?)", uid].insert
+      user = DB["select * from users where #{uid_field} = ?", uid].first
+    end
+    DB["update users set email = ?, full_name = ? where #{uid_field} = ?", email, full_name, uid].update
+    user
+  end
+
   def self.fetch_image_data(image_id)
     raise unless valid_image_id?(image_id)
     image = DB.fetch("select image_data from images"+
