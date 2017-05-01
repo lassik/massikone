@@ -177,7 +177,7 @@ class Massikone < Roda
         r.get :image_id do |image_id|
           # TODO http header, esp. caching
           r.pass unless Model.valid_image_id?(image_id)
-          Model.fetch_image_data(image_id)
+          Model.get_image_data(image_id)
         end
 
         r.is do
@@ -209,7 +209,7 @@ class Massikone < Roda
     end
 
     r.root do
-      bills, all_tags = Model.fetch_bills_and_all_tags current_user
+      bills, all_tags = Model.get_bills_and_all_tags current_user
       mustache "bills",
                :current_user => current_user,
                :admin => admin_data,
@@ -227,7 +227,7 @@ class Massikone < Roda
       r.is ":bill_id" do |bill_id|
 
         r.get do
-          bill = Model.fetch_bill(bill_id)
+          bill = Model.get_bill(bill_id)
           u = users.find do |u| u[:user_id] == bill[:paid_user_id] end
           u[:is_paid_user] = true if u
           u = users.find do |u| u[:user_id] == bill[:closed_user_id] end
@@ -278,7 +278,7 @@ class Massikone < Roda
       end
 
       r.get "massikone.ofx" do
-        bills, all_tags = Model.fetch_bills_and_all_tags current_user
+        bills, all_tags = Model.get_bills_and_all_tags current_user
         response["Content-Type"] = "text/xml"
         mustache "report/massikone.ofx",
                  :bills => bills

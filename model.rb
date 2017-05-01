@@ -131,7 +131,7 @@ module Model
     end
   end
 
-  def self.fetch_image_data(image_id)
+  def self.get_image_data(image_id)
     raise unless valid_image_id?(image_id)
     image = DB.fetch("select image_data from images"+
                      " where image_id = ?", image_id).first
@@ -185,7 +185,7 @@ module Model
 
   def self.rotate_image(old_image_id)
     raise unless valid_image_id?(old_image_id)
-    old_image_data = fetch_image_data(old_image_id)
+    old_image_data = get_image_data(old_image_id)
     image_format = File.extname(old_image_id)[1..-1]
     new_image_data, err_msg, status = Open3.capture3(
                                "convert",
@@ -199,7 +199,7 @@ module Model
     store_image_data(new_image_data, image_format)
   end
 
-  def self.fetch_bill(bill_id)
+  def self.get_bill(bill_id)
     bill = DB.fetch("select * from bills where bill_id = :bill_id", :bill_id => bill_id).first
     return nil unless bill
     bill[:paid_type] = valid_paid_type(bill[:paid_type])
@@ -215,7 +215,7 @@ module Model
     bill
   end
 
-  def self.fetch_bills_and_all_tags(current_user)
+  def self.get_bills_and_all_tags(current_user)
     puts("current user is #{current_user.inspect}")
     all_tags = []
     sql = ("select bill_id, unit_count * unit_cost_cents as cents, paid_date, tags, description, pu.full_name as paid_user_full_name"+
