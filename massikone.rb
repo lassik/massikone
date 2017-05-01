@@ -191,12 +191,8 @@ class Massikone < Roda
 
       r.on "tags" do
 
-        # NOTE: The tags list merely controls what tags users can choose from
-        # when *adding new tags* to bills. A bill can have *old* tags that are
-        # no longer in the tags list. This is intentional.
-
         r.get do
-          Model::DB.fetch("select distinct tag from tags order by tag").all
+          Model.get_available_tags()
         end
 
         r.put do

@@ -116,6 +116,14 @@ module Model
     user
   end
 
+  # NOTE: The available tags are merely the ones that users can choose from
+  # when *adding new tags* to bills. A bill can have *old* tags that are no
+  # longer in the available tags list. This is intentional.
+
+  def self.get_available_tags()
+    DB.fetch("select distinct tag from tags order by tag").all
+  end
+
   def self.fetch_image_data(image_id)
     raise unless valid_image_id?(image_id)
     image = DB.fetch("select image_data from images"+
