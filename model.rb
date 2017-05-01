@@ -40,7 +40,7 @@ module Model
   end
 
   DB.create_table? :images do
-    Integer :image_id
+    String :image_id
     File :image_data
   end
 
