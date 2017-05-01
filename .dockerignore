@@ -1,0 +1,5 @@
+.*
+*.tgz
+data
+docker-compose.yml
+Dockerfile

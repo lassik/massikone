@@ -9,7 +9,8 @@ RUN mkdir /data && chown massikone:massikone /data
 EXPOSE 5000
 VOLUME /data
 WORKDIR /massikone
-ADD massikone-docker.tgz /massikone/
+COPY . /massikone/
+RUN chown -R massikone:massikone /massikone
 RUN (cd /massikone && bundle install)
 USER massikone
 CMD puma -p 5000
