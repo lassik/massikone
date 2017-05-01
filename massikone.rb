@@ -196,10 +196,7 @@ class Massikone < Roda
         end
 
         r.put do
-          Model::DB.delete("delete from tags")
-          r.body.each do |tag|
-            Model::DB.insert("insert into tags (tag) values (?)", tag)
-          end
+          Model.put_available_tags(r.body)
         end
 
       end

@@ -124,6 +124,13 @@ module Model
     DB.fetch("select distinct tag from tags order by tag").all
   end
 
+  def self.put_available_tags(tags)
+    DB.delete("delete from tags")
+    tags.each do |tag|
+      DB.insert("insert into tags (tag) values (?)", tag)
+    end
+  end
+
   def self.fetch_image_data(image_id)
     raise unless valid_image_id?(image_id)
     image = DB.fetch("select image_data from images"+
