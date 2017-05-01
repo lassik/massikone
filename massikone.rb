@@ -239,10 +239,8 @@ class Massikone < Roda
         end
 
         r.post do
-          bill_id = Model::DB[:bills].insert(
-            :created_date => DateTime.now.strftime("%Y-%m-%d"))
-          Model.update_bill! bill_id, r, current_user
-          r.redirect "/bill/#{bill_id}"
+          bill = Model.post_bill(r, current_user)
+          r.redirect "/bill/#{bill[:bill_id]}"
         end
 
       end

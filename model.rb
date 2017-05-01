@@ -291,8 +291,9 @@ module Model
     bill[:image_id] = valid_image_id(r[:image_id])
     bill[:tags] = valid_tags(r[:tags])
     bill[:description] = r[:description]
+    bill[:bill_id] = bill_id
     DB[:bills].where(:bill_id=>bill_id).update(bill)
-    bill_id
+    bill
   end
 
   def self.put_bill(bill_id, params, current_user)
@@ -300,7 +301,12 @@ module Model
                     :bill_id=>bill_id).first
     raise "No such bill" unless bill
     update_bill! bill_id, params, current_user
-    nil
+  end
+
+  def self.post_bill(params, current_user)
+    bill_id = DB[:bills].insert(
+      :created_date => DateTime.now.strftime("%Y-%m-%d"))
+    update_bill! bill_id, params, current_user
   end
 
 end
