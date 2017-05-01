@@ -1,4 +1,4 @@
-FROM ruby:alpine
+FROM ruby:2.2.7-alpine
 RUN apk add --update imagemagick build-base sqlite-dev
 RUN echo "gem: --no-rdoc --no-ri" > /etc/gemrc
 RUN addgroup massikone && adduser -D -h /massikone -G massikone massikone
