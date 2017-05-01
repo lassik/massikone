@@ -1,3 +1,6 @@
+require 'date'
+require 'open3'
+
 require 'sequel'
 
 module Model

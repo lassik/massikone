@@ -1,14 +1,10 @@
 #! /usr/bin/env ruby
 # coding: utf-8
 
-require 'date'
-require 'open3'
-
 require 'mustache'
 require 'omniauth'
 require 'omniauth-google-oauth2'
 require 'roda'
-require 'sequel'
 require 'zip'
 
 require_relative 'model'
