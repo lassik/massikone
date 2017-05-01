@@ -14,41 +14,44 @@ require "zip"
 
 DB = Sequel.connect(ENV.fetch("DATABASE_URL"))
 
-if false
+DB.create_table? :users do
+  primary_key :user_id
+  String  :email
+  String  :full_name
+  Boolean :is_admin
+  String  :user_id_google_oauth2
+end
 
-  DB.create_table :users do
-    String  :email
-    String  :full_name
-    String  :iban
-    Boolean :is_admin
-    String  :user_id_google_oauth2
-  end
+DB.create_table? :bills do
+  primary_key :bill_id
+  String  :image_id
+  String  :tags
+  String  :description
+  Integer :unit_count
+  Integer :unit_cost_cents
+  String  :paid_date
+  Integer :paid_user_id
+  String  :reimbursed_date
+  Integer :reimbursed_user_id
+  String  :closed_date
+  Integer :closed_user_id
+  String  :created_date
+  String  :paid_type
+  String  :closed_type
+end
 
-  DB.create_table :bills do
-    primary_key :bill_id
-    String  :bill_type  # "own" | "orgbank" | "car"
-    String  :image_id
-    String  :tags
-    String  :description
-    Integer :unit_count
-    Integer :unit_cost_cents
-    String  :paid_date
-    Integer :paid_user_id
-    String  :reimbursed_date
-    Integer :reimbursed_user_id
-    String  :closed_date
-    Integer :closed_user_id
-    String  :created_date
-  end
+DB.create_table? :tags do
+  String :tag
+end
 
-  DB.create_table :history do
-    Integer :bill_id
-    String :timestamp
-    String :operation
-    String :done_by
-    String
-  end
+DB.create_table? :bill_tags do
+  Integer :bill_id
+  String :tag
+end
 
+DB.create_table? :images do
+  Integer :image_id
+  File :image_data
 end
 
 FI_DATE = "%d.%m.%Y"
