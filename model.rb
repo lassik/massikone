@@ -3,6 +3,8 @@ require 'open3'
 
 require 'sequel'
 
+require_relative 'util'
+
 module Model
   DB = Sequel.connect(ENV.fetch('DATABASE_URL'))
 
@@ -114,13 +116,8 @@ module Model
   def self.get_users
     users = DB.fetch('select user_id, full_name from users').all
     users.each do |user|
-      words = user[:full_name].split.map(&:capitalize)
-      user[:full_name] = words.join(' ')
-      user[:short_name] = if words.length >= 2
-                            "#{words[0]} #{words[1][0]}"
-                          else
-                            user[:full_name]
-                          end
+      user[:full_name], user[:short_name] = \
+                        Util.derive_full_and_short_name(user[:full_name])
     end
     users.sort! { |a, b| a[:full_name] <=> b[:full_name] }
     users
