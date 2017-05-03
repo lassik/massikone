@@ -179,7 +179,7 @@ module Model
     end
     unless new_image_format
       # TODO: better error message for user. does roda have a good pre-made exception class we can use?
-      raise "Bad image format: #{err_msg}"
+      raise "Bad image format: #{old_image_format.inspect} #{err_msg.inspect}"
     end
     new_image_data, err_msg, status = Open3.capture3(
       'convert',
