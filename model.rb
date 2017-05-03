@@ -1,3 +1,5 @@
+# coding: utf-8
+
 require 'date'
 require 'open3'
 
@@ -104,8 +106,16 @@ module Model
     users
   end
 
-  def self.put_user(uid_field, uid, email, full_name)
-    puts "Login #{[uid_field, uid, email, full_name].inspect}"
+  def self.put_user(provider:, uid:, email:, full_name:)
+    puts "Login #{[provider, uid, email, full_name].inspect}"
+    uid_field = "user_id_#{provider}"
+    missing = []
+    missing.push('käyttäjä-ID') unless uid
+    missing.push('nimi') unless full_name
+    missing.push('sähköposti') unless email
+    unless missing.empty?
+      raise "Seuraavia tietoja ei saatu: #{missing.join(', ')}"
+    end
     user = DB["select * from users where #{uid_field} = ?", uid].first
     unless user
       DB["insert into users (#{uid_field}) values (?)", uid].insert

@@ -81,18 +81,10 @@ class Massikone < Roda
         r.is ['callback', { method: %w[get post] }] do
           auth = request.env['omniauth.auth']
           r.halt(403, 'Forbidden') unless auth && auth['provider'] == provider
-          uid_field = "user_id_#{provider}"
-          uid = auth['uid']
-          email = auth['info']['email']
-          full_name = auth['info']['name']
-          missing = []
-          missing.push('käyttäjä-ID') unless uid
-          missing.push('nimi') unless full_name
-          missing.push('sähköposti') unless email
-          unless missing.empty?
-            r.halt(403, "Seuraavia tietoja ei saatu: #{missing.join(', ')}")
-          end
-          user = Model.put_user(uid_field, uid, email, full_name)
+          user = Model.put_user provider: provider,
+                                uid: auth['uid'],
+                                email: auth['info']['email'],
+                                full_name: auth['info']['name']
           session[:user_id] = user[:user_id]
           r.redirect '/'
         end
