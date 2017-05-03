@@ -170,6 +170,7 @@ module Model
       '-format', '%[m]',
       tmpfilename
     )
+    old_image_format.chomp!
     new_image_format = nil
     if status.exitstatus == 0
       new_image_format = case old_image_format
