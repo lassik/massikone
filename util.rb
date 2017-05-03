@@ -1,5 +1,4 @@
 module Util
-
   FI_DATE = '%d.%m.%Y'.freeze
   ISO_DATE = '%Y-%m-%d'.freeze
 
@@ -31,5 +30,4 @@ module Util
     short_name = "#{words[0]} #{words[1][0]}" unless words.length < 2
     [full_name, short_name]
   end
-
 end

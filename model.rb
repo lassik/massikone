@@ -100,7 +100,7 @@ module Model
     users = DB.fetch('select user_id, full_name from users').all
     users.each do |user|
       user[:full_name], user[:short_name] = \
-                        Util.full_and_short_name(user[:full_name])
+        Util.full_and_short_name(user[:full_name])
     end
     users.sort! { |a, b| a[:full_name] <=> b[:full_name] }
     users
