@@ -13,7 +13,3 @@ gem 'sequel'
 gem 'mysql', group: :mysql
 gem 'pg', group: :pg
 gem 'sqlite3', group: :sqlite3
-
-group :development do
-  gem 'foreman'
-end
