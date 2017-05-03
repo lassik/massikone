@@ -48,25 +48,6 @@ module Model
     File :image_data
   end
 
-  FI_DATE = '%d.%m.%Y'.freeze
-  ISO_DATE = '%Y-%m-%d'.freeze
-
-  def self.fi_from_iso_date(str)
-    return nil unless str && !str.empty?
-    DateTime.strptime(str, ISO_DATE).strftime(FI_DATE)
-  end
-
-  def self.iso_from_fi_date(str)
-    return nil unless str && !str.empty?
-    DateTime.strptime(str, FI_DATE).strftime(ISO_DATE)
-  end
-
-  def self.amount_from_cents(cents)
-    return '' if cents.nil?
-    euros, cents = cents.divmod(100)
-    sprintf('%d,%02d', euros, cents)
-  end
-
   VALID_PAID_TYPES = %w[car card ebank self].freeze
 
   def self.valid_paid_type(x)
@@ -230,8 +211,8 @@ module Model
     end
     bill[:paid_user] = DB.fetch('select * from users where user_id = :user_id', user_id: bill[:paid_user_id]).first
     bill[:closed_user] = DB.fetch('select * from users where user_id = :user_id', user_id: bill[:closed_user_id]).first
-    bill[:paid_date_fi] = fi_from_iso_date(bill[:paid_date])
-    bill[:closed_date_fi] = fi_from_iso_date(bill[:closed_date])
+    bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
+    bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
     bill[:tags] = (bill[:tags] ? bill[:tags].split.sort.uniq : [])
     bill
   end
@@ -248,7 +229,7 @@ module Model
               DB.fetch(sql + ' where paid_user_id = ? order by bill_id', current_user[:user_id]).all
             end
     bills.each do |bill|
-      bill[:amount] = amount_from_cents(bill[:cents])
+      bill[:amount] = Util.amount_from_cents(bill[:cents])
       bill[:tags] = []
       DB.fetch('select distinct tag from bill_tags where bill_id = ? order by tag', bill[:bill_id]).each do |relation|
         tag = { tag: relation[:tag] }
@@ -281,13 +262,13 @@ module Model
       bill[:paid_user_id] = valid_user_id(r[:paid_user_id])
       bill[:closed_type] = valid_closed_type(r[:closed_type])
       bill[:closed_user_id] = valid_user_id(r[:closed_user_id])
-      bill[:closed_date] = iso_from_fi_date(r[:closed_date_fi])
+      bill[:closed_date] = Util.iso_from_fi_date(r[:closed_date_fi])
     else
       # TODO: proper errors
       bill[:paid_user_id] ||= current_user[:user_id]
       raise unless bill[:paid_user_id] == current_user[:user_id]
     end
-    bill[:paid_date] = iso_from_fi_date(r[:paid_date_fi])
+    bill[:paid_date] = Util.iso_from_fi_date(r[:paid_date_fi])
     bill[:paid_type] = valid_paid_type(r[:paid_type])
     bill[:unit_count] = valid_nonneg_integer(r[:unit_count])
     bill[:unit_cost_cents] = valid_nonneg_integer(r[:unit_cost_cents])
