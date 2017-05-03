@@ -3,24 +3,16 @@ source 'https://rubygems.org'
 ruby '2.2.7'
 
 gem 'mustache'
-gem 'puma'
-gem 'roda'
-
 gem 'omniauth'
 gem 'omniauth-google-oauth2'
-
-gem 'sequel'
-group :sqlite3 do
-  gem 'sqlite3'
-end
-group :mysql do
-  gem 'mysql'
-end
-group :pg do
-  gem 'pg'
-end
-
+gem 'puma'
+gem 'roda'
 gem 'rubyzip'
+gem 'sequel'
+
+gem 'mysql', group: :mysql
+gem 'pg', group: :pg
+gem 'sqlite3', group: :sqlite3
 
 group :development do
   gem 'foreman'
