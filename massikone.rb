@@ -7,12 +7,8 @@ require 'omniauth-google-oauth2'
 require 'roda'
 require 'zip'
 
+require_relative 'util'
 require_relative 'model'
-
-def slug(str)
-  return '' if str.nil?
-  str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '').gsub(/^-/, '').gsub(/-$/, '').gsub(/--+/, '')
-end
 
 def load_account_tree
   items = {}
@@ -249,7 +245,7 @@ class Massikone < Roda
             if bill[:image_data]
               imginzip = sprintf('massikone/tosite-%04d-%s%s',
                                  bill[:bill_id],
-                                 slug(bill[:description] || bill[:tags]),
+                                 Util.slug(bill[:description] || bill[:tags]),
                                  File.extname(bill[:image_id]))
               zipfile.get_output_stream(imginzip) do |output|
                 output.write bill[:image_data]
