@@ -1,5 +1,5 @@
 module Util
-  FI_DATE = '%d.%m.%Y'.freeze
+  FI_DATE = '%-d.%-m.%Y'.freeze
   ISO_DATE = '%Y-%m-%d'.freeze
 
   def self.fi_from_iso_date(str)
