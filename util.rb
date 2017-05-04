@@ -22,8 +22,8 @@ module Util
   def self.slug(str)
     return '' if str.nil?
     str = str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '')
-    str = str.gsub(/^-/, '').gsub(/-$/, '').gsub(/--+/, '')
-    str = shorten str
+    str = str.gsub(/--+/, '-').gsub(/^-/, '')
+    str = shorten(str).gsub(/-$/, '')
     str
   end
 
