@@ -18,6 +18,10 @@ module Util
     sprintf('%d,%02d', euros, cents)
   end
 
+  def self.shorten(str)
+    str.strip[0..50]
+  end
+
   def self.slug(str)
     return '' if str.nil?
     str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '').gsub(/^-/, '').gsub(/-$/, '').gsub(/--+/, '')
