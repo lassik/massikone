@@ -191,6 +191,7 @@ module Model
       'convert',
       '-strip',
       '-define', 'png:include-chunk=none',
+      '-trim', '+repage',
       '-resize', '900x900>',
       '-colorspace', 'Gray',
       '-separate',
