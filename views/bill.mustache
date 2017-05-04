@@ -80,6 +80,13 @@
           </tr>
           {{#admin}}
           <tr>
+            <th>Summa:</th>
+            <td>
+              <input type="text" name="amount"
+                     value="{{#bill}}{{amount}}{{/bill}}"> &euro;
+            </td>
+          </tr>
+          <tr>
             <th>Tili kirjanpidossa:</th>
             <td>
               <select name="account">

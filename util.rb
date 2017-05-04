@@ -9,6 +9,16 @@ module Util
     DateTime.strptime(str, '%d.%m.%Y').strftime('%Y-%m-%d')
   end
 
+  def self.cents_from_amount(amount)
+    return nil if amount.nil? or amount == ''
+    unless amount =~ /^(\d+)(,(\d\d))?$/
+      raise "Invalid amount: #{amount.inspect}"
+    end
+    euros, cents = $1.to_i, ($3 or '0').to_i
+    cents = (euros * 100) + cents
+    cents
+  end
+
   def self.amount_from_cents(cents)
     return '' if cents.nil? or cents == 0
     euros, cents = cents.divmod(100)

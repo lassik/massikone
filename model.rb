@@ -231,6 +231,7 @@ module Model
     bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
     bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
     bill[:tags] = (bill[:tags] ? bill[:tags].split.sort.uniq : [])
+    bill[:amount] = Util.amount_from_cents(bill[:unit_cost_cents])
     bill
   end
 
@@ -291,8 +292,8 @@ module Model
     end
     bill[:paid_date] = Util.iso_from_fi_date(r[:paid_date_fi])
     bill[:paid_type] = valid_paid_type(r[:paid_type])
-    bill[:unit_count] = valid_nonneg_integer(r[:unit_count])
-    bill[:unit_cost_cents] = valid_nonneg_integer(r[:unit_cost_cents])
+    bill[:unit_count] = 1
+    bill[:unit_cost_cents] = Util.cents_from_amount(r[:amount])
     bill[:image_id] = valid_image_id(r[:image_id])
     bill[:tags] = valid_tags(r[:tags])
     bill[:description] = r[:description]
