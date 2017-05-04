@@ -10,7 +10,9 @@ module Util
   end
 
   def self.cents_from_amount(amount)
-    return nil if amount.nil? or amount == ''
+    return nil if amount.nil?
+    amount = amount.gsub /\s+/, ''
+    return nil if amount == ''
     unless amount =~ /^(\d+)(,(\d\d))?$/
       raise "Invalid amount: #{amount.inspect}"
     end
