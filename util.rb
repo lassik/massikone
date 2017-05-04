@@ -10,7 +10,7 @@ module Util
   end
 
   def self.amount_from_cents(cents)
-    return '' if cents.nil?
+    return '' if cents.nil? or cents == 0
     euros, cents = cents.divmod(100)
     sprintf('%d,%02d', euros, cents)
   end
