@@ -238,7 +238,7 @@ module Model
   def self.get_bills_and_all_tags(current_user)
     puts("current user is #{current_user.inspect}")
     all_tags = []
-    sql = 'select bill_id, unit_count * unit_cost_cents as cents, paid_date, tags, description, pu.full_name as paid_user_full_name'\
+    sql = 'select bill_id, unit_count * unit_cost_cents as cents, paid_date, tags, description, image_id, pu.full_name as paid_user_full_name'\
            ' from bills'\
            ' left join users pu on pu.user_id = bills.paid_user_id'
     bills = if current_user[:is_admin]
@@ -249,6 +249,7 @@ module Model
     bills.each do |bill|
       bill[:amount] = Util.amount_from_cents(bill[:cents])
       bill[:description] = Util.shorten(bill[:description])
+      bill[:image_missing] = (bill[:image_id].nil? || bill[:image_id].empty?)
       bill[:paid_user_full_name], = \
         Util.full_and_short_name(bill[:paid_user_full_name])
       bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
