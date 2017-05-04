@@ -26,7 +26,7 @@ module Util
   end
 
   def self.shorten(str)
-    str.strip[0..50]
+    str.partition("\n")[0].gsub(/\s+/, ' ').strip[0..50]
   end
 
   def self.slug(str)
