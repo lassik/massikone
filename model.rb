@@ -249,6 +249,7 @@ module Model
       bill[:description] = Util.shorten(bill[:description])
       bill[:paid_user_full_name], = \
         Util.full_and_short_name(bill[:paid_user_full_name])
+      bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
       bill[:tags] = []
       DB.fetch('select distinct tag from bill_tags where bill_id = ? order by tag', bill[:bill_id]).each do |relation|
         tag = { tag: relation[:tag] }
