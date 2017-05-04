@@ -1,0 +1,6 @@
+#!/bin/sh -
+set -eu
+cd "$(dirname "$0")/.."
+[ ! -e massikone.tgz ] || { echo "massikone.tgz already exists"; exit 1; }
+echo "Making massikone.tgz from latest master commit"
+git archive --output=massikone.tgz --prefix=massikone/ master
