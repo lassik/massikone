@@ -96,12 +96,16 @@ module Model
     !!/^[0-9a-f]{40}\.(jpeg|png)$/.match(image_id)
   end
 
+  def self.whack_user(user)
+    user = user.clone
+    user[:full_name], user[:short_name] = \
+      Util.full_and_short_name(user[:full_name])
+    user
+  end
+
   def self.get_users
     users = DB.fetch('select user_id, full_name from users').all
-    users.each do |user|
-      user[:full_name], user[:short_name] = \
-        Util.full_and_short_name(user[:full_name])
-    end
+    users.map! { |u| whack_user u }
     users.sort! { |a, b| a[:full_name] <=> b[:full_name] }
     users
   end
