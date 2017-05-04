@@ -57,7 +57,7 @@
       <table class="table table-striped table-hover">
 	      <tr>
 	        <th>Kulu</th>
-	        <th>Pvm</th>
+	        <th class="text-right">Pvm</th>
 	        <th class="text-right">&euro;</th>
 	        {{#admin}}
 	        <th>Maksaja</th>
@@ -68,7 +68,7 @@
 	      {{#bills}}
 	      <tr class="clickable-row {{#tags}}tag{{tag_index}} {{/tags}}" data-href="/bill/{{bill_id}}" style="cursor: pointer">
 	        <td><a class="btn btn-default" href="/bill/{{bill_id}}">{{bill_id}}</a></td>
-	        <td>{{paid_date_fi}}</td>
+	        <td class="text-right">{{paid_date_fi}}</td>
 	        <td class="text-right">{{amount}}</td>
 	        {{#admin}}
 	        <td>{{paid_user_full_name}}</td>
