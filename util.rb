@@ -31,6 +31,7 @@ module Util
 
   def self.slug(str)
     return '' if str.nil?
+    str = str.partition("\n")[0]
     str = str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '')
     str = str.gsub(/--+/, '-').gsub(/^-/, '')
     str = shorten(str).gsub(/-$/, '')
