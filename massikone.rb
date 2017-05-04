@@ -11,23 +11,26 @@ require_relative 'util'
 require_relative 'model'
 
 def load_account_tree
-  items = {}
+  # H;1011;Vastaavaa;0 -- Heading ; first account ID ; title ; level
+  # A;1011;Perustamismenot;0 -- Account ; ID ; title ; flags
+  # Sort by ID. Multiple headings (and one account) can share the same ID.
+  # Sort those by level (assume all accounts are deeper than any heading).
+  list = []
   File.foreach('chart-of-accounts.txt').drop(1).each do |line|
     fields = line.chomp.split(';')
-    raise fields.length.to_s unless fields.length == 4
-    rowtype = fields[0]
-    raise rowtype.to_s unless %w[A H].include?(rowtype)
-    rownum = fields[1].to_i
-    title = fields[2]
-    level = rowtype == 'H' ? fields[3].to_i : nil
-    key = "#{rownum}-#{level || 9999}"
-    raise if items.key?(key)
-    items[key] = (level ? '-' * (level + 1) + ' ' : '---- ') + title
+    raise unless fields.length == 4
+    row_type, account_id, title, last_field = fields
+    account_id, last_field = account_id.to_i, last_field.to_i
+    dash_level = { 'H' => 1 + last_field, 'A' => nil }[row_type]
+    htag_level = { 'H' => [2 + last_field, 6].min, 'A' => nil }[row_type]
+    sort_level = { 'H' => last_field, 'A' => 9 }[row_type]
+    sort_key = 10 * account_id + sort_level
+    prefix = (row_type == 'H') ? ('=' * dash_level) : account_id.to_s
+    account_id = nil unless row_type == 'A'
+    list.push(account_id: account_id, title: title,
+              prefix: prefix, htag_level: htag_level, sort_key: sort_key)
   end
-  list = []
-  items.sort.each do |k, v|
-    list.push(account_id: k, account_title: v)
-  end
+  list.sort! { |a, b| a[:sort_key] <=> b[:sort_key] }
   list
 end
 

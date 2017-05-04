@@ -8,7 +8,12 @@
   <body>
     <h1>Tilikartta</h1>
     {{#accounts}}
-    {{account_id}} - {{account_title}}<br>
+    {{^account_id}}
+    <h{{htag_level}}>{{title}}</h{{htag_level}}>
+    {{/account_id}}
+    {{#account_id}}
+    {{account_id}} {{title}}<br>
+    {{/account_id}}
     {{/accounts}}
   </body>
 </html>
