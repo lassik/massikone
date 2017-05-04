@@ -87,42 +87,7 @@ $(function() {
         return formatEuros(cents / 100.0);
     }
 
-    function getCentsPerKilometer() {
-        return 43;
-    }
-
-    function setPaidTypeNoUpdate(paidType) {
-        paidType = paidType ? paidType : "self";
-        $("#bill-form input[name=paid_type]").val([paidType]);
-        return paidType;
-    }
-
-    function getPaidType() {
-        return setPaidTypeNoUpdate($("#bill-form input[name=paid_type]:checked").val());
-    }
-
-    function updateCost() {
-        var paidType = getPaidType();
-        var isCar = (paidType === "car");
-        $(".car").toggle(isCar);
-        $(".notcar").toggle(!isCar);
-        var unit_count = isCar ? Number($("#kilometer-input").val()) : 1;
-        var unit_cost_cents = isCar ? getCentsPerKilometer() : $("#total-cost-input").val();
-        var total_cost_cents = unit_count * unit_cost_cents;
-        $("#euros-per-kilometer-display").text(formatCents(getCentsPerKilometer()));
-        $("#total-cost-display").text(formatCents(total_cost_cents));
-    }
-
-    function setPaidType(paidType) {
-        setPaidTypeNoUpdate(paidType);
-        updateCost();
-    }
-
-    $("#kilometer-input").on("input", updateCost);
-    $("#total-cost-input").on("input", updateCost);
-    $("#bill-form input[name=paid_type]").change(updateCost);
     $("#bill-form input[name=paid_user_id]").val($("#paid-user-id-init").val());
-    setPaidType($("#paid-type-init").val());
     setImageId(getImageId());
 
 });
