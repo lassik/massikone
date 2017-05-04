@@ -23,6 +23,7 @@ module Util
     return '' if str.nil?
     str = str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '')
     str = str.gsub(/^-/, '').gsub(/-$/, '').gsub(/--+/, '')
+    str = shorten str
     str
   end
 
