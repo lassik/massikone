@@ -118,6 +118,7 @@ module Model
     end
     user = DB["select * from users where #{uid_field} = ?", uid].first
     unless user
+      puts "Creating new user since existing one not found: #{[uid_field, uid].inspect}"
       DB["insert into users (#{uid_field}) values (?)", uid].insert
       user = DB["select * from users where #{uid_field} = ?", uid].first
     end
