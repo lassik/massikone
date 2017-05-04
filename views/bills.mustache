@@ -15,7 +15,6 @@
       <div class="btn-group" role="group" aria-label="Basic example">
         <a class="btn btn-info btn-lg" href="/bill">Uusi lasku</a>
         {{#admin}}
-        <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#tags-modal">Tägit</button>
         <div class="btn-group">
           <button class="btn btn-info btn-lg dropdown-toggle" type="button" data-toggle="dropdown">Raportit <span class="caret"></span></button>
           <ul class="dropdown-menu">
@@ -86,24 +85,6 @@
       </table>
       <p class="well">Kuvaathan kuitin heti :)</p>
       {{/bills}}
-    </div>
-    <div id="tags-modal" class="modal fade" role="dialog">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title">Tägit</h4>
-          </div>
-          <div class="modal-body">
-            <ul id="tag-list">
-            </ul>
-            <span class="well">Tägin poistaminen listalta ei poista sitä kuluista.</span>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Sulje</button>
-          </div>
-        </div>
-      </div>
     </div>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
