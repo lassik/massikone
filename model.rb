@@ -247,6 +247,8 @@ module Model
     bills.each do |bill|
       bill[:amount] = Util.amount_from_cents(bill[:cents])
       bill[:description] = Util.shorten(bill[:description])
+      bill[:paid_user_full_name], = \
+        Util.full_and_short_name(bill[:paid_user_full_name])
       bill[:tags] = []
       DB.fetch('select distinct tag from bill_tags where bill_id = ? order by tag', bill[:bill_id]).each do |relation|
         tag = { tag: relation[:tag] }

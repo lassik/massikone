@@ -28,7 +28,7 @@ module Util
   end
 
   def self.full_and_short_name(full_name)
-    words = full_name.split.map(&:capitalize)
+    words = (full_name or "").split.map(&:capitalize)
     full_name = words.join(' ')
     short_name = full_name
     short_name = "#{words[0]} #{words[1][0]}" unless words.length < 2
