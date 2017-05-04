@@ -1,14 +1,12 @@
 module Util
-  ISO_DATE = '%Y-%m-%d'.freeze
-
   def self.fi_from_iso_date(str)
     return nil unless str && !str.empty?
-    DateTime.strptime(str, ISO_DATE).strftime('%-d.%-m.%Y')
+    DateTime.strptime(str, '%Y-%m-%d').strftime('%-d.%-m.%Y')
   end
 
   def self.iso_from_fi_date(str)
     return nil unless str && !str.empty?
-    DateTime.strptime(str, '%d.%m.%Y').strftime(ISO_DATE)
+    DateTime.strptime(str, '%d.%m.%Y').strftime('%Y-%m-%d')
   end
 
   def self.amount_from_cents(cents)
