@@ -21,7 +21,9 @@ module Util
 
   def self.slug(str)
     return '' if str.nil?
-    str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '').gsub(/^-/, '').gsub(/-$/, '').gsub(/--+/, '')
+    str = str.downcase.gsub(/\s+/, '-').gsub(/[^\w-]/, '')
+    str = str.gsub(/^-/, '').gsub(/-$/, '').gsub(/--+/, '')
+    str
   end
 
   def self.full_and_short_name(full_name)
