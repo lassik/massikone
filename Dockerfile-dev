@@ -7,7 +7,7 @@ ENV BUNDLE_WITHOUT=mysql:pg
 ENV RACK_ENV=deployment
 ENV DATABASE_URL=sqlite:///massikone/data/massikone.db
 
-RUN apk add --update imagemagick build-base sqlite-dev
+RUN apk add --update imagemagick build-base sqlite sqlite-dev
 RUN echo "gem: --no-rdoc --no-ri" > /etc/gemrc
 RUN addgroup massikone && adduser -D -G massikone massikone -H /home/massikone
 
