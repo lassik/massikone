@@ -4,7 +4,7 @@ RUN echo "gem: --no-rdoc --no-ri" > /etc/gemrc
 RUN addgroup massikone && adduser -D -h /massikone -G massikone massikone
 ENV BUNDLE_WITHOUT=mysql:pg
 ENV RACK_ENV=deployment
-ENV DATABASE_URL=sqlite:///data/massikone.sqlite
+ENV DATABASE_URL=sqlite:///data/massikone.db
 RUN mkdir /data && chown massikone:massikone /data
 EXPOSE 5000
 VOLUME /data
