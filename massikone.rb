@@ -50,8 +50,6 @@ class Massikone < Roda
     [:google_oauth2]
   end
 
-  @@accounts = Util.load_account_tree
-
   route do |r|
     r.public
 
@@ -165,7 +163,6 @@ class Massikone < Roda
           mustache :bill,
                    admin: admin_data,
                    current_user: current_user,
-                   accounts: @@accounts,
                    tags: [{ tag: 'ruoka', active: false }],
                    bill: bill
         end
@@ -181,7 +178,7 @@ class Massikone < Roda
           mustache :bill,
                    current_user: current_user,
                    admin: admin_data,
-                   accounts: @@accounts
+                   accounts: Model::Accounts
         end
 
         r.post do
@@ -196,7 +193,7 @@ class Massikone < Roda
     r.on 'report' do
       r.get 'chart-of-accounts' do
         mustache 'report/chart-of-accounts',
-                 accounts: @@accounts
+                 accounts: Model::Accounts
       end
 
       r.get 'massikone.ofx' do

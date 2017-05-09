@@ -49,6 +49,7 @@ module Model
     String :image_id
     File :image_data
   end
+  Accounts = Util.load_account_tree
 
   VALID_PAID_TYPES = %w[car card ebank self].freeze
 
