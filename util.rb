@@ -16,13 +16,14 @@ module Util
     unless amount =~ /^(\d+)(,(\d\d))?$/
       raise "Invalid amount: #{amount.inspect}"
     end
-    euros, cents = $1.to_i, ($3 or '0').to_i
+    euros = Regexp.last_match(1).to_i
+    cents = (Regexp.last_match(3) || '0').to_i
     cents = (euros * 100) + cents
     cents
   end
 
   def self.amount_from_cents(cents)
-    return '' if cents.nil? or cents == 0
+    return '' if cents.nil? || cents == 0
     euros, cents = cents.divmod(100)
     sprintf('%d,%02d', euros, cents)
   end
@@ -41,7 +42,7 @@ module Util
   end
 
   def self.full_and_short_name(full_name)
-    words = (full_name or "").split.map(&:capitalize)
+    words = (full_name || '').split.map(&:capitalize)
     full_name = words.join(' ')
     short_name = full_name
     short_name = "#{words[0]} #{words[1][0]}" unless words.length < 2
@@ -58,12 +59,13 @@ module Util
       fields = line.chomp.split(';')
       raise unless fields.length == 4
       row_type, account_id, title, last_field = fields
-      account_id, last_field = account_id.to_i, last_field.to_i
+      account_id = account_id.to_i
+      last_field = last_field.to_i
       dash_level = { 'H' => 1 + last_field, 'A' => nil }[row_type]
       htag_level = { 'H' => [2 + last_field, 6].min, 'A' => nil }[row_type]
       sort_level = { 'H' => last_field, 'A' => 9 }[row_type]
       sort_key = 10 * account_id + sort_level
-      prefix = (row_type == 'H') ? ('=' * dash_level) : account_id.to_s
+      prefix = row_type == 'H' ? ('=' * dash_level) : account_id.to_s
       account_id = nil unless row_type == 'A'
       list.push(account_id: account_id, title: title,
                 prefix: prefix, htag_level: htag_level, sort_key: sort_key)
