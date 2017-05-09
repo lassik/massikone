@@ -1,16 +1,20 @@
 FROM ruby:2.2.7-alpine
-RUN apk add --update imagemagick build-base sqlite sqlite-dev
-RUN echo "gem: --no-rdoc --no-ri" > /etc/gemrc
-RUN addgroup massikone && adduser -D -h /massikone -G massikone massikone
+
+VOLUME /data
+EXPOSE 5000
+
 ENV BUNDLE_WITHOUT=mysql:pg
 ENV RACK_ENV=deployment
 ENV DATABASE_URL=sqlite:///data/massikone.db
-RUN mkdir /data && chown massikone:massikone /data
-EXPOSE 5000
-VOLUME /data
+
+RUN apk add --update imagemagick build-base sqlite sqlite-dev
+RUN echo "gem: --no-rdoc --no-ri" > /etc/gemrc
+RUN addgroup massikone && adduser -D -G massikone massikone -H /home/massikone
+
+COPY . /massikone
 WORKDIR /massikone
-COPY . /massikone/
-RUN chown -R massikone:massikone /massikone
-RUN (cd /massikone && bundle install)
+RUN bundle install
+RUN chown -R massikone:massikone .
+RUN chown -R massikone:massikone /data
 USER massikone
 CMD puma -p 5000
