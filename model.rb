@@ -73,6 +73,7 @@ module Model
   end
 
   def self.valid_nonneg_integer(x)
+    return 0 if x.nil?
     x = x.to_i
     raise unless x >= 0
     x
