@@ -10,7 +10,7 @@ COPY . /massikone
 WORKDIR /massikone
 RUN apk add --update imagemagick build-base sqlite sqlite-libs sqlite-dev
 RUN adduser -D massikone
-RUN bundle install
+RUN bundle install --no-cache
 RUN chown -R massikone:massikone .
 RUN chown -R massikone:massikone /massikone/data
 USER massikone
