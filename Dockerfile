@@ -25,6 +25,5 @@ RUN apk update \
     && rm -rf /var/cache/apk/*
 RUN adduser -D massikone
 RUN chown -R massikone:massikone .
-RUN chown -R massikone:massikone /massikone/data
 USER massikone
 CMD puma -p 5000
