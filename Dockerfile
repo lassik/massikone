@@ -8,7 +8,7 @@ ENV RACK_ENV=deployment
 ENV DATABASE_URL=sqlite:///data/massikone.db
 
 RUN apk add --update imagemagick build-base sqlite sqlite-dev
-RUN addgroup massikone && adduser -D -G massikone massikone -H /home/massikone
+RUN adduser -D massikone
 
 COPY . /massikone
 WORKDIR /massikone
