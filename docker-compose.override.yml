@@ -1,12 +1,5 @@
 version: "2"
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    ports:
-      - "5000:5000"
     volumes:
       - .:/massikone
-    env_file:
-      - .env

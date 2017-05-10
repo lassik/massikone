@@ -5,6 +5,8 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./data:/data
+      - ./data:/massikone/data
     env_file:
       - .env
+    environment:
+      DATABASE_URL: "sqlite:///massikone/data/massikone.db"
