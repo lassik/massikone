@@ -3,7 +3,6 @@ FROM ruby:2.2.7-alpine
 VOLUME /massikone/data
 EXPOSE 5000
 
-ENV BUNDLE_WITHOUT=mysql:pg
 ENV RACK_ENV=deployment
 
 COPY . /massikone
@@ -11,10 +10,15 @@ WORKDIR /massikone
 RUN apk update \
     && apk add \
         imagemagick \
+        mariadb-client-libs \
+        mariadb-libs \
+        postgresql-libs \
         sqlite \
         sqlite-libs \
     && apk add --virtual builddeps \
        build-base \
+       mariadb-dev \
+       postgresql-dev \
        sqlite-dev \
     && bundle install --no-cache \
     && apk del builddeps \
