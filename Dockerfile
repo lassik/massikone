@@ -8,7 +8,7 @@ ENV RACK_ENV=deployment
 
 COPY . /massikone
 WORKDIR /massikone
-RUN apk add --update imagemagick build-base sqlite sqlite-dev
+RUN apk add --update imagemagick build-base sqlite sqlite-libs sqlite-dev
 RUN adduser -D massikone
 RUN bundle install
 RUN chown -R massikone:massikone .
