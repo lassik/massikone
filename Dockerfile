@@ -22,7 +22,7 @@ RUN apk update \
        sqlite-dev \
     && bundle install --no-cache \
     && apk del builddeps \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/cache/apk
 RUN adduser -D massikone
 RUN chown -R massikone:massikone .
 USER massikone
