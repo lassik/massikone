@@ -9,6 +9,7 @@ require_relative 'util'
 
 module Model
   DB = Sequel.connect(ENV.fetch('DATABASE_URL'))
+  DB.loggers << Logger.new($stdout)
 
   DB.create_table? :users do
     primary_key :user_id
