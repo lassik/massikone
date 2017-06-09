@@ -9,7 +9,12 @@ require_relative 'util'
 
 module Model
   DB = Sequel.connect(ENV.fetch('DATABASE_URL'))
-  DB.loggers << Logger.new($stdout)
+
+  sql_logger = Logger.new($stdout)
+  sql_logger.formatter = proc do |serverity, time, progname, msg|
+    "#{time}: SQL: #{msg}"
+  end
+  DB.loggers << sql_logger
 
   DB.create_table? :users do
     primary_key :user_id
