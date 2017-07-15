@@ -164,8 +164,7 @@ module Model
 
   def self.get_image_data(image_id)
     raise unless valid_image_id?(image_id)
-    image = DB.fetch('select image_data from images'\
-                     ' where image_id = ?', image_id).first
+    image = DB[:images].select(:image_data).where(image_id: image_id).first
     # TODO: what if not found
     image[:image_data]
   end
