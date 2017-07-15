@@ -113,7 +113,7 @@ module Model
   end
 
   def self.get_users
-    users = DB.fetch('select user_id, full_name from users').all
+    users = DB[:users].select(:user_id, :full_name).all
     users.map! { |u| whack_user u }
     users.sort! { |a, b| a[:full_name] <=> b[:full_name] }
     users
@@ -129,13 +129,17 @@ module Model
     unless missing.empty?
       raise "Seuraavia tietoja ei saatu: #{missing.join(', ')}"
     end
-    user = DB["select * from users where #{uid_field} = ?", uid].first
-    unless user
+    users = DB[:users].select(:user_id, :email, :full_name, :is_admin).where(uid_field.to_sym => uid)
+    user = users.first
+    if user
+      puts "Found existing user: #{[uid_field, uid].inspect}"
+    else
       puts "Creating new user since existing one not found: #{[uid_field, uid].inspect}"
-      DB["insert into users (#{uid_field}) values (?)", uid].insert
-      user = DB["select * from users where #{uid_field} = ?", uid].first
+      DB[:users].insert(uid_field.to_sym => uid)
+      user = users.first
     end
-    DB["update users set email = ?, full_name = ? where #{uid_field} = ?", email, full_name, uid].update
+    DB[:users].update(:email => email, :full_name => full_name, uid_field.to_sym => uid)
+    puts("USER IS #{user.inspect}")
     user
   end
 
