@@ -25,7 +25,7 @@ module Util
   def self.amount_from_cents(cents)
     return '' if cents.nil? || cents == 0
     euros, cents = cents.divmod(100)
-    sprintf('%d,%02d', euros, cents)
+    format('%d,%02d', euros, cents)
   end
 
   def self.shorten(str)

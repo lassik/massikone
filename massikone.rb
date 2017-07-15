@@ -211,10 +211,10 @@ class Massikone < Roda
         Zip::File.open(zipfilepath, Zip::File::CREATE) do |zipfile|
           bills.each do |bill|
             if bill[:image_data]
-              imginzip = sprintf('massikone/tosite-%04d-%s%s',
-                                 bill[:bill_id],
-                                 Util.slug(bill[:description] || bill[:tags]),
-                                 File.extname(bill[:image_id]))
+              imginzip = format('massikone/tosite-%04d-%s%s',
+                                bill[:bill_id],
+                                Util.slug(bill[:description] || bill[:tags]),
+                                File.extname(bill[:image_id]))
               zipfile.get_output_stream(imginzip) do |output|
                 output.write bill[:image_data]
               end
