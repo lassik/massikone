@@ -11,8 +11,9 @@ module Model
   DB = Sequel.connect(ENV.fetch('DATABASE_URL'))
 
   sql_logger = Logger.new($stdout)
-  sql_logger.formatter = proc do |serverity, time, progname, msg|
-    "#{time}: SQL: #{msg}"
+  sql_logger.formatter = proc do |_serverity, time, _progname, msg|
+    # Log all SQL statements except SELECT statements.
+    /[^a-z]+ select /i.match(msg) ? '' : "#{time}: SQL: #{msg}\n"
   end
   DB.loggers << sql_logger
 
