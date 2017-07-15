@@ -152,13 +152,13 @@ module Model
   # longer in the available tags list. This is intentional.
 
   def self.get_available_tags
-    DB.fetch('select distinct tag from tags order by tag').all
+    DB[:tags].select(:tag).order(:tag).distinct.all
   end
 
   def self.put_available_tags(tags)
-    DB.delete('delete from tags')
+    DB[:tags].delete
     tags.each do |tag|
-      DB.insert('insert into tags (tag) values (?)', tag)
+      DB[:tags].insert(tag: tag)
     end
   end
 
