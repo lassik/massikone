@@ -231,15 +231,15 @@ module Model
   end
 
   def self.get_bill(bill_id)
-    bill = DB.fetch('select * from bills where bill_id = :bill_id', bill_id: bill_id).first
+    bill = DB[:bills].where(bill_id: bill_id).first
     return nil unless bill
     bill[:paid_type] = valid_paid_type(bill[:paid_type])
     VALID_PAID_TYPES.each do |pt|
       bill["paid_type_#{pt}_checked".to_sym] =
         (bill[:paid_type] == pt ? 'checked' : '')
     end
-    bill[:paid_user] = DB.fetch('select * from users where user_id = :user_id', user_id: bill[:paid_user_id]).first
-    bill[:closed_user] = DB.fetch('select * from users where user_id = :user_id', user_id: bill[:closed_user_id]).first
+    bill[:paid_user] = DB[:users].where(user_id: bill[:paid_user_id]).first
+    bill[:closed_user] = DB[:users].where(user_id: bill[:closed_user_id]).first
     bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
     bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
     bill[:tags] = (bill[:tags] ? bill[:tags].split.sort.uniq : [])
@@ -250,14 +250,15 @@ module Model
   def self.get_bills_and_all_tags(current_user)
     puts("current user is #{current_user.inspect}")
     all_tags = []
-    sql = 'select bill_id, unit_count * unit_cost_cents as cents, paid_date, tags, description, image_id, pu.full_name as paid_user_full_name'\
-           ' from bills'\
-           ' left join users pu on pu.user_id = bills.paid_user_id'
-    bills = if current_user[:is_admin]
-              DB.fetch(sql + ' order by bill_id').all
-            else
-              DB.fetch(sql + ' where paid_user_id = ? order by bill_id', current_user[:user_id]).all
-            end
+    bills = DB[:bills].left_outer_join(:users, :user_id => :paid_user_id).
+              select{[bill_id, paid_date, tags, description, image_id,
+                      (unit_count * unit_cost_cents).as(:cents),
+                      full_name.as(:paid_user_full_name)]}.
+              order(:bill_id)
+    unless current_user[:is_admin]
+      bills = bills.where(paid_user_id: current_user[:user_id])
+    end
+    bills = bills.all
     bills.each do |bill|
       bill[:amount] = Util.amount_from_cents(bill[:cents])
       bill[:description] = Util.shorten(bill[:description])
@@ -266,7 +267,7 @@ module Model
         Util.full_and_short_name(bill[:paid_user_full_name])
       bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
       bill[:tags] = []
-      DB.fetch('select distinct tag from bill_tags where bill_id = ? order by tag', bill[:bill_id]).each do |relation|
+      DB[:bill_tags].select(:tag).order(:tag).distinct.where(bill_id: bill[:bill_id]).each do |relation|
         tag = { tag: relation[:tag] }
         bill[:tags].push(tag)
         all_tags.push(tag)
@@ -280,13 +281,11 @@ module Model
   end
 
   def self.get_bills_for_report
-    DB.fetch(
-      'select bill_id, description, tags,'\
-      ' images.image_id as image_id, images.image_data as image_data'\
-      ' from bills'\
-      ' left join images on bills.image_id = images.image_id'\
-      ' order by bill_id'
-    ).all
+    DB[:bills].left_outer_join(:images, :image_id => :image_id).
+      select(:bill_id, :description, :tags,
+             Sequel.qualify(:images, :image_id),
+             :image_data).
+      order(:bill_id).all
   end
 
   def self.update_bill!(bill_id, r, current_user)
@@ -316,8 +315,7 @@ module Model
   end
 
   def self.put_bill(bill_id, params, current_user)
-    bill = DB.fetch('select * from bills where bill_id = :bill_id',
-                    bill_id: bill_id).first
+    bill = DB[:bills].where(bill_id: bill_id).first
     raise 'No such bill' unless bill
     update_bill! bill_id, params, current_user
   end
