@@ -250,11 +250,13 @@ module Model
   def self.get_bills_and_all_tags(current_user)
     puts("current user is #{current_user.inspect}")
     all_tags = []
-    bills = DB[:bills].left_outer_join(:users, :user_id => :paid_user_id).
-              select{[bill_id, paid_date, tags, description, image_id,
-                      (unit_count * unit_cost_cents).as(:cents),
-                      full_name.as(:paid_user_full_name)]}.
-              order(:bill_id)
+    bills = DB[:bills].left_outer_join(:users, user_id: :paid_user_id)
+                      .select do
+      [bill_id, paid_date, tags, description, image_id,
+       (unit_count * unit_cost_cents).as(:cents),
+       full_name.as(:paid_user_full_name)]
+    end
+                      .order(:bill_id)
     unless current_user[:is_admin]
       bills = bills.where(paid_user_id: current_user[:user_id])
     end
@@ -281,11 +283,11 @@ module Model
   end
 
   def self.get_bills_for_report
-    DB[:bills].left_outer_join(:images, :image_id => :image_id).
-      select(:bill_id, :description, :tags,
-             Sequel.qualify(:images, :image_id),
-             :image_data).
-      order(:bill_id).all
+    DB[:bills].left_outer_join(:images, image_id: :image_id)
+              .select(:bill_id, :description, :tags,
+                      Sequel.qualify(:images, :image_id),
+                      :image_data)
+              .order(:bill_id).all
   end
 
   def self.update_bill!(bill_id, r, current_user)
