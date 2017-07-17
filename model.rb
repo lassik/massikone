@@ -17,6 +17,11 @@ module Model
   end
   DB.loggers << sql_logger
 
+  DB.create_table? :preference do
+    String :name, primary_key: true
+    String :value, null: false
+  end
+
   DB.create_table? :user do
     primary_key :user_id
     String  :email
@@ -327,5 +332,28 @@ module Model
       created_date: DateTime.now.strftime('%Y-%m-%d')
     )
     update_bill! bill_id, params, current_user
+  end
+
+  DEFAULT_PREFERENCES = {
+    'org_full_name'=> '',
+    'org_short_name'=> '',
+  }
+
+  def self.get_preferences
+    prefs = DEFAULT_PREFERENCES.dup
+    DB[:preference].select(:name, :value).each do |pref|
+      prefs[pref[:name]] = pref[:value]
+    end
+    prefs
+  end
+
+  def self.put_preferences(prefs)
+    raise unless prefs.keys.all? {|name| DEFAULT_PREFERENCES.keys.include?(name)}
+    prefs.each_pair do |name, value|
+      if 1 != DB[:preference].where(name: name).update(value: value)
+        DB[:preference].insert(name: name, value: value)
+      end
+    end
+    nil
   end
 end

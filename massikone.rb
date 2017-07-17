@@ -15,7 +15,8 @@ def mustache(template, opts = {})
   view = Mustache.new
   view.template_file = "views/#{template}.mustache"
   opts.each_pair { |k, v| view[k.to_sym] = v }
-  view[:organization] = ENV['ORGANIZATION']
+  prefs = Model.get_preferences
+  view[:organization] = prefs['org_short_name']
   view[:app_title] = "#{view[:organization]} Massikone"
   view.render
 end
@@ -119,6 +120,13 @@ class Massikone < Roda
         end
       end
 
+      r.on 'preferences' do
+        r.put do
+          Model.put_preferences(r.body)
+          ''
+        end
+      end
+
       r.on 'tags' do
         r.get do
           Model.get_available_tags
@@ -189,6 +197,15 @@ class Massikone < Roda
     end
 
     r.halt(403, 'Forbidden') unless admin_data
+
+    r.on 'preferences' do
+      r.get do
+        mustache :preferences,
+                 current_user: current_user,
+                 admin: admin_data,
+                 preferences: Model.get_preferences
+      end
+    end
 
     r.on 'report' do
       r.get 'chart-of-accounts' do
