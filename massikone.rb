@@ -7,8 +7,9 @@ require 'omniauth-google-oauth2'
 require 'roda'
 require 'zip'
 
-require_relative 'util'
 require_relative 'model'
+require_relative 'reports'
+require_relative 'util'
 
 # We don't need the compexity of tilt.
 def mustache(template, opts = {})
@@ -209,8 +210,12 @@ class Massikone < Roda
 
     r.on 'report' do
       r.get 'chart-of-accounts' do
-        mustache 'report/chart-of-accounts',
-                 accounts: Model::Accounts
+        pdf_data, filename = Reports.chart_of_accounts_pdf(
+          accounts: Model::Accounts
+        )
+        response['Content-Type'] = 'application/pdf'
+        response['Content-Disposition'] = "inline; filename=\"#{filename}\""
+        pdf_data
       end
 
       r.get 'massikone.ofx' do
