@@ -10,8 +10,9 @@ require_relative 'model'
 require_relative 'util'
 
 module Reports
-  def self.chart_of_accounts_pdf(accounts:)
+  def self.chart_of_accounts_pdf
     # TODO: Exclude accounts (and headings) that haven't been used this period.
+    accounts = Model::Accounts
     prefs = Model.get_preferences
     org_short_name = prefs['org_short_name']
     org_full_name = prefs['org_full_name']

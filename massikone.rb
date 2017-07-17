@@ -210,9 +210,7 @@ class Massikone < Roda
 
     r.on 'report' do
       r.get 'chart-of-accounts' do
-        pdf_data, filename = Reports.chart_of_accounts_pdf(
-          accounts: Model::Accounts
-        )
+        pdf_data, filename = Reports.chart_of_accounts_pdf
         response['Content-Type'] = 'application/pdf'
         response['Content-Disposition'] = "inline; filename=\"#{filename}\""
         pdf_data
