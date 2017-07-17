@@ -48,7 +48,15 @@ module Reports
     [pdf_data, filename]
   end
 
+  def self.generate_zipfile(&block)
+    zipfilepath = '/tmp/massikone.zip' # TODO: use mktemp
+    FileUtils.rm_f(zipfilepath)
+    Zip::File.open(zipfilepath, Zip::File::CREATE, &block)
+    zipfilepath
+  end
+
   def self.add_bill_images_to_zip(zipfile, subdir)
+    subdir = File.join(File.basename(zipfile.name, '.zip'), subdir)
     missing = []
     bills = Model.get_bills_for_report
     bills.each do |bill|
@@ -72,11 +80,8 @@ module Reports
   end
 
   def self.bill_images_zip
-    zipfilepath = '/tmp/massikone.zip' # TODO: use mktemp
-    FileUtils.rm_f(zipfilepath)
-    Zip::File.open(zipfilepath, Zip::File::CREATE) do |zipfile|
-      add_bill_images_to_zip(zipfile, 'massikone')
+    generate_zipfile do |zipfile|
+      add_bill_images_to_zip(zipfile, '')
     end
-    zipfilepath
   end
 end
