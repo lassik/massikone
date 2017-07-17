@@ -84,4 +84,15 @@ module Reports
       add_bill_images_to_zip(zipfile, '')
     end
   end
+
+  def self.full_statement_zip
+    generate_zipfile do |zipfile|
+      subdir = File.basename(zipfile.name, '.zip')
+      pdf_data, filename = chart_of_accounts_pdf
+      zipfile.get_output_stream(File.join(subdir, filename)) do |output|
+        output.write pdf_data
+      end
+      add_bill_images_to_zip(zipfile, 'tositteet')
+    end
+  end
 end

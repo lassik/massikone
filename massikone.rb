@@ -223,7 +223,7 @@ class Massikone < Roda
       end
 
       r.get 'massikone.zip' do
-        filename = Reports.bill_images_zip
+        filename = Reports.full_statement_zip
         r.send_file filename
       end
     end
