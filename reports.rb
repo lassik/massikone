@@ -48,30 +48,34 @@ module Reports
     [pdf_data, filename]
   end
 
-  def self.bill_images_zip
+  def self.add_bill_images_to_zip(zipfile, subdir)
+    missing = []
     bills = Model.get_bills_for_report
+    bills.each do |bill|
+      if bill[:image_data]
+        imginzip = format('%s/tosite-%04d-%s%s',
+                          subdir, bill[:bill_id],
+                          Util.slug(bill[:description] || bill[:tags]),
+                          File.extname(bill[:image_id]))
+        zipfile.get_output_stream(imginzip) do |output|
+          output.write bill[:image_data]
+        end
+      else
+        missing.push("##{bill[:bill_id]}")
+      end
+    end
+    unless missing.empty?
+      zipfile.get_output_stream(format('%s/puuttuvat.txt', subdir)) do |out|
+        out.write(missing.join("\r\n"))
+      end
+    end
+  end
+
+  def self.bill_images_zip
     zipfilepath = '/tmp/massikone.zip' # TODO: use mktemp
     FileUtils.rm_f(zipfilepath)
-    missing = []
     Zip::File.open(zipfilepath, Zip::File::CREATE) do |zipfile|
-      bills.each do |bill|
-        if bill[:image_data]
-          imginzip = format('massikone/tosite-%04d-%s%s',
-                            bill[:bill_id],
-                            Util.slug(bill[:description] || bill[:tags]),
-                            File.extname(bill[:image_id]))
-          zipfile.get_output_stream(imginzip) do |output|
-            output.write bill[:image_data]
-          end
-        else
-          missing.push("##{bill[:bill_id]}")
-        end
-      end
-      unless missing.empty?
-        zipfile.get_output_stream('massikone/puuttuvat.txt') do |out|
-          out.write(missing.join("\r\n"))
-        end
-      end
+      add_bill_images_to_zip(zipfile, 'massikone')
     end
     zipfilepath
   end
