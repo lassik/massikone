@@ -15,20 +15,20 @@ module Reports
     bills = Model.get_bills_for_journal
     prefs = Model.get_preferences
     org_full_name = prefs['org_full_name']
-    filename = generate_filename('paivakirja')+'.pdf'
+    filename = generate_filename('paivakirja') + '.pdf'
     pdf_data = Prawn::Document.new do
       font 'Helvetica'
       text org_full_name, size: 18
-      text "Päiväkirja", size: 14
+      text 'Päiväkirja', size: 14
       move_down 10
-      text "Nro Päivämäärä"
-      text "Tili Debet Kredit Selite"
+      text 'Nro Päivämäärä'
+      text 'Tili Debet Kredit Selite'
       stroke_horizontal_rule
       move_down 10
-      rows = bills.map do |bill|
+      rows = bills.flat_map do |bill|
         [[bill[:bill_id], bill[:paid_date_fi]],
          [bill[:account_id], bill[:title], bill[:amount], bill[:description]]]
-      end.flatten(1)
+      end
       Prawn::Table.new(rows, self).draw
       number_pages 'Sivu <page>/<total>',
                    at: [bounds.right - 150, 0],
@@ -43,11 +43,11 @@ module Reports
     accounts = Model::Accounts
     prefs = Model.get_preferences
     org_full_name = prefs['org_full_name']
-    filename = generate_filename('tilikartta')+'.pdf'
+    filename = generate_filename('tilikartta') + '.pdf'
     pdf_data = Prawn::Document.new do
       font 'Helvetica'
       text org_full_name, size: 18
-      text "Tilikartta", size: 14
+      text 'Tilikartta', size: 14
       move_down 10
       stroke_horizontal_rule
       move_down 10
@@ -76,7 +76,7 @@ module Reports
   private_class_method def self.generate_zipfile(document, &block)
     prefs = Model.get_preferences
     org_short_name = prefs['org_short_name']
-    zipfilepath = '/tmp/'+generate_filename(document)+'.zip' # TODO: use mktemp
+    zipfilepath = '/tmp/' + generate_filename(document) + '.zip' # TODO: use mktemp
     FileUtils.rm_f(zipfilepath)
     Zip::File.open(zipfilepath, Zip::File::CREATE, &block)
     zipfilepath
@@ -132,5 +132,4 @@ module Reports
     org_short_name = Model.get_preferences['org_short_name']
     Util.slug("#{org_short_name}-#{year}-#{document}")
   end
-
 end

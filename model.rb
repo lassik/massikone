@@ -346,9 +346,9 @@ module Model
   end
 
   DEFAULT_PREFERENCES = {
-    'org_full_name'=> '',
-    'org_short_name'=> '',
-  }
+    'org_full_name' => '',
+    'org_short_name' => ''
+  }.freeze
 
   def self.get_preferences
     prefs = DEFAULT_PREFERENCES.dup
@@ -359,9 +359,9 @@ module Model
   end
 
   def self.put_preferences(prefs)
-    raise unless prefs.keys.all? {|name| DEFAULT_PREFERENCES.keys.include?(name)}
+    raise unless prefs.keys.all? { |name| DEFAULT_PREFERENCES.keys.include?(name) }
     prefs.each_pair do |name, value|
-      if 1 != DB[:preference].where(name: name).update(value: value)
+      if DB[:preference].where(name: name).update(value: value) != 1
         DB[:preference].insert(name: name, value: value)
       end
     end
