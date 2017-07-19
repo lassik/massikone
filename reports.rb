@@ -15,14 +15,12 @@ module Reports
     # TODO: Exclude accounts (and headings) that haven't been used this period.
     accounts = Model::Accounts
     prefs = Model.get_preferences
-    org_short_name = prefs['org_short_name']
     org_full_name = prefs['org_full_name']
-    year = 2017 # TODO
-    filename = "#{org_short_name}-#{year}-tilikartta.pdf"
+    filename = generate_filename('tilikartta')+'.pdf'
     pdf_data = Prawn::Document.new do
       font 'Helvetica'
       text org_full_name, size: 18
-      text "Tilikartta #{year}", size: 14
+      text "Tilikartta", size: 14
       move_down 10
       stroke_horizontal_rule
       move_down 10
@@ -48,8 +46,10 @@ module Reports
     [pdf_data, filename]
   end
 
-  def self.generate_zipfile(&block)
-    zipfilepath = '/tmp/massikone.zip' # TODO: use mktemp
+  private_class_method def self.generate_zipfile(document, &block)
+    prefs = Model.get_preferences
+    org_short_name = prefs['org_short_name']
+    zipfilepath = '/tmp/'+generate_filename(document)+'.zip' # TODO: use mktemp
     FileUtils.rm_f(zipfilepath)
     Zip::File.open(zipfilepath, Zip::File::CREATE, &block)
     zipfilepath
@@ -80,13 +80,13 @@ module Reports
   end
 
   def self.bill_images_zip
-    generate_zipfile do |zipfile|
+    generate_zipfile('tositteet') do |zipfile|
       add_bill_images_to_zip(zipfile, '')
     end
   end
 
   def self.full_statement_zip
-    generate_zipfile do |zipfile|
+    generate_zipfile('tilinpaatos') do |zipfile|
       subdir = File.basename(zipfile.name, '.zip')
       pdf_data, filename = chart_of_accounts_pdf
       zipfile.get_output_stream(File.join(subdir, filename)) do |output|
@@ -95,4 +95,11 @@ module Reports
       add_bill_images_to_zip(zipfile, 'tositteet')
     end
   end
+
+  private_class_method def self.generate_filename(document)
+    year = 2017 # TODO
+    org_short_name = Model.get_preferences['org_short_name']
+    Util.slug("#{org_short_name}-#{year}-#{document}")
+  end
+
 end

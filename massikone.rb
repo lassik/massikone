@@ -224,6 +224,7 @@ class Massikone < Roda
 
       r.get 'massikone.zip' do
         filename = Reports.full_statement_zip
+        response['Content-Disposition'] = "attachment; filename=\"#{File.basename(filename)}\""
         r.send_file filename
       end
     end
