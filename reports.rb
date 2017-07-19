@@ -55,10 +55,10 @@ module Reports
     zipfilepath
   end
 
-  def self.add_bill_images_to_zip(zipfile, subdir)
+  private_class_method def self.add_bill_images_to_zip(zipfile, subdir)
     subdir = File.join(File.basename(zipfile.name, '.zip'), subdir)
     missing = []
-    bills = Model.get_bills_for_report
+    bills = Model.get_bills_for_images
     bills.each do |bill|
       if bill[:image_data]
         imginzip = format('%s/tosite-%04d-%s%s',

@@ -287,7 +287,7 @@ module Model
     [bills, all_tags]
   end
 
-  def self.get_bills_for_report
+  def self.get_bills_for_images
     DB[:bill].left_outer_join(:image, image_id: :image_id)
              .select(:bill_id, :description, :tags,
                      Sequel.qualify(:image, :image_id),
