@@ -295,6 +295,17 @@ module Model
              .order(:bill_id).all
   end
 
+  def self.get_bills_for_journal
+    DB[:bill].select do
+      [bill_id, paid_date, description,
+       (unit_count * unit_cost_cents).as(:cents)]
+    end.order(:paid_date).all.map do |bill|
+      bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
+      bill[:amount] = Util.amount_from_cents(bill[:cents])
+      bill
+    end
+  end
+
   def self.update_bill!(bill_id, r, current_user)
     # TODO: don't allow updating a closed bill
     bill = {}

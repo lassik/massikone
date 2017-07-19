@@ -11,6 +11,33 @@ require_relative 'model'
 require_relative 'util'
 
 module Reports
+  def self.general_journal_pdf
+    bills = Model.get_bills_for_journal
+    prefs = Model.get_preferences
+    org_full_name = prefs['org_full_name']
+    filename = generate_filename('paivakirja')+'.pdf'
+    pdf_data = Prawn::Document.new do
+      font 'Helvetica'
+      text org_full_name, size: 18
+      text "Päiväkirja", size: 14
+      move_down 10
+      text "Nro Päivämäärä"
+      text "Tili Debet Kredit Selite"
+      stroke_horizontal_rule
+      move_down 10
+      rows = bills.map do |bill|
+        [[bill[:bill_id], bill[:paid_date_fi]],
+         [bill[:account_id], bill[:title], bill[:amount], bill[:description]]]
+      end.flatten(1)
+      Prawn::Table.new(rows, self).draw
+      number_pages 'Sivu <page>/<total>',
+                   at: [bounds.right - 150, 0],
+                   width: 150,
+                   align: :right
+    end.render
+    [pdf_data, filename]
+  end
+
   def self.chart_of_accounts_pdf
     # TODO: Exclude accounts (and headings) that haven't been used this period.
     accounts = Model::Accounts
@@ -88,6 +115,10 @@ module Reports
   def self.full_statement_zip
     generate_zipfile('tilinpaatos') do |zipfile|
       subdir = File.basename(zipfile.name, '.zip')
+      pdf_data, filename = general_journal_pdf
+      zipfile.get_output_stream(File.join(subdir, filename)) do |output|
+        output.write pdf_data
+      end
       pdf_data, filename = chart_of_accounts_pdf
       zipfile.get_output_stream(File.join(subdir, filename)) do |output|
         output.write pdf_data

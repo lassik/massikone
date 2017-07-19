@@ -208,6 +208,13 @@ class Massikone < Roda
     end
 
     r.on 'report' do
+      r.get 'general-journal' do
+        pdf_data, filename = Reports.general_journal_pdf
+        response['Content-Type'] = 'application/pdf'
+        response['Content-Disposition'] = "inline; filename=\"#{filename}\""
+        pdf_data
+      end
+
       r.get 'chart-of-accounts' do
         pdf_data, filename = Reports.chart_of_accounts_pdf
         response['Content-Type'] = 'application/pdf'
