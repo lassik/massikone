@@ -24,43 +24,44 @@ module Model
 
   DB.create_table? :user do
     primary_key :user_id
-    String  :email
-    String  :full_name
-    Boolean :is_admin
-    String  :user_id_google_oauth2
+    String  :email, null: false
+    String  :full_name, null: false
+    Boolean :is_admin, null: false, default: false
+    String  :user_id_google_oauth2, null: true
   end
 
   DB.create_table? :bill do
     primary_key :bill_id
-    String  :image_id
-    String  :description
-    Integer :credit_account_id
-    Integer :debit_account_id
-    Integer :unit_count
-    Integer :unit_cost_cents
-    String  :paid_date
-    Integer :paid_user_id
-    String  :reimbursed_date
-    Integer :reimbursed_user_id
-    String  :closed_date
-    Integer :closed_user_id
-    String  :created_date
-    String  :paid_type
-    String  :closed_type
+    String  :image_id, null: true
+    String  :description, null: false, default: ''
+    Integer :credit_account_id, null: true
+    Integer :debit_account_id, null: true
+    Integer :unit_count, null: false, default: 1
+    Integer :unit_cost_cents, null: true
+    String  :paid_date, null: true
+    foreign_key :paid_user_id, :user, null: true
+    String :reimbursed_date, null: true
+    foreign_key :reimbursed_user_id, :user, null: true
+    String :closed_date, null: true
+    foreign_key :closed_user_id, :user, null: true
+    String  :created_date, null: false
+    String  :paid_type, null: true
+    String  :closed_type, null: true
   end
 
   DB.create_table? :tag do
-    String :tag
+    String :tag, primary_key: true
   end
 
   DB.create_table? :bill_tag do
-    Integer :bill_id
-    String :tag
+    foreign_key :bill_id, :bill, null: false
+    foreign_key :tag, :tag, null: false
+    primary_key %i[bill_id tag]
   end
 
   DB.create_table? :image do
-    String :image_id
-    File :image_data
+    String :image_id, primary_key: true
+    File :image_data, null: false
   end
   Accounts = Util.load_account_tree
 
@@ -135,16 +136,15 @@ module Model
     unless missing.empty?
       raise "Seuraavia tietoja ei saatu: #{missing.join(', ')}"
     end
+    columns = {
+      :email => email, :full_name => full_name, uid_field.to_sym => uid
+    }
+    if DB[:user].where(uid_field.to_sym => uid).update(columns) != 1
+      puts "Creating new user since existing one not found: #{[uid_field, uid].inspect}"
+      DB[:user].insert(columns)
+    end
     users = DB[:user].select(:user_id, :email, :full_name, :is_admin).where(uid_field.to_sym => uid)
     user = users.first
-    if user
-      puts "Found existing user: #{[uid_field, uid].inspect}"
-    else
-      puts "Creating new user since existing one not found: #{[uid_field, uid].inspect}"
-      DB[:user].insert(uid_field.to_sym => uid)
-      user = users.first
-    end
-    DB[:user].update(:email => email, :full_name => full_name, uid_field.to_sym => uid)
     puts("USER IS #{user.inspect}")
     user
   end
