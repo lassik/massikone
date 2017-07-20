@@ -90,7 +90,7 @@ module Reports
       if bill[:image_data]
         imginzip = format('%s/tosite-%04d-%s%s',
                           subdir, bill[:bill_id],
-                          Util.slug(bill[:description] || bill[:tags]),
+                          Util.slug(bill[:description]),
                           File.extname(bill[:image_id]))
         zipfile.get_output_stream(imginzip) do |output|
           output.write bill[:image_data]

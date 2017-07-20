@@ -33,7 +33,6 @@ module Model
   DB.create_table? :bill do
     primary_key :bill_id
     String  :image_id
-    String  :tags
     String  :description
     Integer :credit_account_id
     Integer :debit_account_id
@@ -237,6 +236,11 @@ module Model
     store_image_data(new_image_data, image_format)
   end
 
+  def self.get_bill_tags(bill_id)
+    DB[:bill_tag].select(:tag).order(:tag).distinct
+                 .where(bill_id: bill_id).map { |x| { tag: x[:tag] } }
+  end
+
   def self.get_bill(bill_id)
     bill = DB[:bill].where(bill_id: bill_id).first
     return nil unless bill
@@ -249,17 +253,16 @@ module Model
     bill[:closed_user] = DB[:user].where(user_id: bill[:closed_user_id]).first
     bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
     bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
-    bill[:tags] = (bill[:tags] ? bill[:tags].split.sort.uniq : [])
+    bill[:tags] = get_bill_tags(bill_id)
     bill[:amount] = Util.amount_from_cents(bill[:unit_cost_cents])
     bill
   end
 
   def self.get_bills_and_all_tags(current_user)
     puts("current user is #{current_user.inspect}")
-    all_tags = []
     bills = DB[:bill].left_outer_join(:user, user_id: :paid_user_id)
                      .select do
-      [bill_id, paid_date, tags, description, image_id,
+      [bill_id, paid_date, description, image_id,
        (unit_count * unit_cost_cents).as(:cents),
        full_name.as(:paid_user_full_name)]
     end
@@ -275,23 +278,15 @@ module Model
       bill[:paid_user_full_name], = \
         Util.full_and_short_name(bill[:paid_user_full_name])
       bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
-      bill[:tags] = []
-      DB[:bill_tag].select(:tag).order(:tag).distinct.where(bill_id: bill[:bill_id]).each do |relation|
-        tag = { tag: relation[:tag] }
-        bill[:tags].push(tag)
-        all_tags.push(tag)
-      end
-      bill[:tags].sort! { |a, b| a[:tag] <=> b[:tag] }
-      # bill[:tags].uniq! {|a,b| a[:tag] <=> b[:tag]}
+      bill[:tags] = get_bill_tags(bill[:bill_id])
     end
-    all_tags.sort! { |a, b| a[:tag] <=> b[:tag] }
-    # all_tags.uniq! {|a,b| a[:tag] <=> b[:tag]}
+    all_tags = bills.flat_map { |bill| bill[:tags] } .sort.uniq
     [bills, all_tags]
   end
 
   def self.get_bills_for_images
     DB[:bill].left_outer_join(:image, image_id: :image_id)
-             .select(:bill_id, :description, :tags,
+             .select(:bill_id, :description,
                      Sequel.qualify(:image, :image_id),
                      :image_data)
              .order(:bill_id).all
@@ -327,7 +322,7 @@ module Model
     bill[:unit_count] = 1
     bill[:unit_cost_cents] = Util.cents_from_amount(r[:amount])
     bill[:image_id] = valid_image_id(r[:image_id])
-    bill[:tags] = valid_tags(r[:tags])
+    # bill[:tags] = valid_tags(r[:tags])
     bill[:description] = r[:description]
     bill[:bill_id] = bill_id
     DB[:bill].where(bill_id: bill_id).update(bill)
