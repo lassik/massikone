@@ -178,7 +178,10 @@ module Model
   def self.store_image_data(image_data, image_format)
     hash = Digest::SHA1.hexdigest(image_data)
     image_id = "#{hash}.#{image_format}"
-    DB[:image].insert(image_id: image_id, image_data: Sequel.blob(image_data))
+    blob = Sequel.blob(image_data)
+    if DB[:image].where(image_id: image_id).update(image_data: blob) != 1
+      DB[:image].insert(image_id: image_id, image_data: blob)
+    end
     image_id
   end
 
