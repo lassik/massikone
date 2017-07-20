@@ -312,6 +312,8 @@ module Model
       bill[:closed_type] = valid_closed_type(r[:closed_type])
       bill[:closed_user_id] = valid_user_id(r[:closed_user_id])
       bill[:closed_date] = Util.iso_from_fi_date(r[:closed_date_fi])
+      bill[:credit_account_id] = valid_nonneg_integer(r[:credit_account_id])
+      bill[:debit_account_id] = valid_nonneg_integer(r[:debit_account_id])
     else
       # TODO: proper errors
       bill[:paid_user_id] ||= current_user[:user_id]
