@@ -35,6 +35,8 @@ module Model
     String  :image_id
     String  :tags
     String  :description
+    Integer :credit_account_id
+    Integer :debit_account_id
     Integer :unit_count
     Integer :unit_cost_cents
     String  :paid_date

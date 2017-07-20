@@ -87,13 +87,32 @@
             </td>
           </tr>
           <tr>
-            <th>Tili kirjanpidossa:</th>
+            <th>Tilit kirjanpidossa:</th>
             <td>
-              <select name="account">
-                {{#accounts}}
-                <option value="{{account_id}}">{{prefix}} {{title}}</option>
-                {{/accounts}}
-              </select>
+              <table class="table">
+                <tr>
+                  <th>Credit (tililtä):</th>
+                  <td>
+                    <select name="credit_account_id">
+                      <option value=""></option>
+                      {{#credit_accounts}}
+                      <option value="{{account_id}}" {{#selected}}selected{{/selected}}>{{prefix}} {{title}}</option>
+                      {{/credit_accounts}}
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>Debet (tilille):</th>
+                  <td>
+                    <select name="debit_account_id">
+                      <option value=""></option>
+                      {{#debit_accounts}}
+                      <option value="{{account_id}}" {{#selected}}selected{{/selected}}>{{prefix}} {{title}}</option>
+                      {{/debit_accounts}}
+                    </select>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           {{/admin}}

@@ -168,11 +168,21 @@ class Massikone < Roda
           u = users.find { |u| u[:user_id] == bill[:closed_user_id] }
           u[:is_closed_user] = true if u
           r.halt(404, 'No such bill') unless bill
-          mustache :bill,
+          mustache(:bill,
                    admin: admin_data,
                    current_user: current_user,
                    tags: [{ tag: 'ruoka', active: false }],
-                   bill: bill
+                   bill: bill,
+                   credit_accounts: Model::Accounts.map do |acct|
+                     acct = acct.dup
+                     acct[:selected] = (acct[:account_id] && (acct[:account_id] == bill[:credit_account_id]))
+                     acct
+                   end,
+                   debit_accounts: Model::Accounts.map do |acct|
+                     acct = acct.dup
+                     acct[:selected] = (acct[:account_id] && (acct[:account_id] == bill[:debit_account_id]))
+                     acct
+                   end)
         end
 
         r.post do
@@ -185,8 +195,7 @@ class Massikone < Roda
         r.get do
           mustache :bill,
                    current_user: current_user,
-                   admin: admin_data,
-                   accounts: Model::Accounts
+                   admin: admin_data
         end
 
         r.post do
