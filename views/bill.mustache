@@ -140,7 +140,7 @@
           </tr>
         </table>
         <input type="hidden" id="image-id" name="image_id"
-               value="{{#bill}}{{image_id}}{{/bill}}">
+               value="{{#bill}}{{#images}}{{image_id}}{{/images}}{{/bill}}">
       </form>
       <form id="image-upload-form" enctype="multipart/form-data"
             style="display: none">
@@ -148,11 +148,9 @@
                accept=".jpeg,.jpg,.png,image/jpeg,image/png">
       </form>
       <div id="bill-image-container">
-        {{#bill}}
-        {{#image_id}}
+        {{#bill}}{{#images}}{{#image_id}}
         <img src="/api/userimage/{{image_id}}">
-        {{/image_id}}
-        {{/bill}}
+        {{/image_id}}{{/images}}{{/bill}}
       </div>
       <div id="bill-image-placeholder" class="well">
         <ul>

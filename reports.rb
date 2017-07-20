@@ -85,18 +85,20 @@ module Reports
   private_class_method def self.add_bill_images_to_zip(zipfile, subdir)
     subdir = File.join(File.basename(zipfile.name, '.zip'), subdir)
     missing = []
-    bills = Model.get_bills_for_images
-    bills.each do |bill|
-      if bill[:image_data]
-        imginzip = format('%s/tosite-%04d-%s%s',
-                          subdir, bill[:bill_id],
-                          Util.slug(bill[:description]),
-                          File.extname(bill[:image_id]))
-        zipfile.get_output_stream(imginzip) do |output|
-          output.write bill[:image_data]
+    things = Model.get_bills_for_images
+    things.each do |thing|
+      if thing[:image_id]
+        image_in_zip = format('%s/tosite-%04d-%d-%s%s',
+                              subdir,
+                              thing[:bill_id],
+                              thing[:bill_image_num],
+                              Util.slug(thing[:description]),
+                              File.extname(thing[:image_id]))
+        zipfile.get_output_stream(image_in_zip) do |output|
+          output.write thing[:image_data]
         end
       else
-        missing.push("##{bill[:bill_id]}")
+        missing.push("##{thing[:bill_id]}")
       end
     end
     unless missing.empty?

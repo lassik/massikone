@@ -32,7 +32,6 @@ module Model
 
   DB.create_table? :bill do
     primary_key :bill_id
-    String  :image_id, null: true
     String  :description, null: false, default: ''
     Integer :credit_account_id, null: true
     Integer :debit_account_id, null: true
@@ -62,6 +61,13 @@ module Model
   DB.create_table? :image do
     String :image_id, primary_key: true
     File :image_data, null: false
+  end
+
+  DB.create_table? :bill_image do
+    foreign_key :bill_id, :bill, null: false
+    Integer :bill_image_num, null: false
+    foreign_key :image_id, :image, type: String, null: false
+    primary_key %i[bill_id bill_image_num]
   end
   Accounts = Util.load_account_tree
 
@@ -244,6 +250,23 @@ module Model
                  .where(bill_id: bill_id).map { |x| { tag: x[:tag] } }
   end
 
+  def self.get_bill_images(bill_id)
+    DB[:bill_image].select(:image_id).where(bill_id: bill_id)
+                   .order(:bill_image_num).all
+  end
+
+  def self.get_bills_for_images
+    DB[:bill]
+      .left_outer_join(:bill_image, bill_id: :bill_id)
+      .left_outer_join(:image, image_id: :image_id)
+      .select(Sequel.qualify(:bill, :bill_id),
+              :bill_image_num,
+              Sequel.qualify(:image, :image_id),
+              :description,
+              :image_data)
+      .order(Sequel.qualify(:bill, :bill_id), :bill_image_num).all
+  end
+
   def self.get_bill(bill_id)
     bill = DB[:bill].where(bill_id: bill_id).first
     return nil unless bill
@@ -257,6 +280,7 @@ module Model
     bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
     bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
     bill[:tags] = get_bill_tags(bill_id)
+    bill[:images] = get_bill_images(bill_id)
     bill[:amount] = Util.amount_from_cents(bill[:unit_cost_cents])
     bill
   end
@@ -265,7 +289,7 @@ module Model
     puts("current user is #{current_user.inspect}")
     bills = DB[:bill].left_outer_join(:user, user_id: :paid_user_id)
                      .select do
-      [bill_id, paid_date, description, image_id,
+      [bill_id, paid_date, description,
        (unit_count * unit_cost_cents).as(:cents),
        full_name.as(:paid_user_full_name)]
     end
@@ -282,17 +306,10 @@ module Model
         Util.full_and_short_name(bill[:paid_user_full_name])
       bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
       bill[:tags] = get_bill_tags(bill[:bill_id])
+      bill[:images] = get_bill_images(bill[:bill_id])
     end
     all_tags = bills.flat_map { |bill| bill[:tags] } .sort.uniq
     [bills, all_tags]
-  end
-
-  def self.get_bills_for_images
-    DB[:bill].left_outer_join(:image, image_id: :image_id)
-             .select(:bill_id, :description,
-                     Sequel.qualify(:image, :image_id),
-                     :image_data)
-             .order(:bill_id).all
   end
 
   def self.get_bills_for_journal
@@ -326,10 +343,15 @@ module Model
     bill[:paid_type] = valid_paid_type(r[:paid_type])
     bill[:unit_count] = 1
     bill[:unit_cost_cents] = Util.cents_from_amount(r[:amount])
-    bill[:image_id] = valid_image_id(r[:image_id])
     # bill[:tags] = valid_tags(r[:tags])
     bill[:description] = r[:description]
     bill[:bill_id] = bill_id
+    DB[:bill_image].where(bill_id: bill_id).delete
+    image_id = valid_image_id(r[:image_id])
+    if image_id
+      DB[:bill_image].insert(bill_id: bill_id, bill_image_num: 1,
+                             image_id: image_id)
+    end
     DB[:bill].where(bill_id: bill_id).update(bill)
     bill
   end
