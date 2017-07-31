@@ -255,6 +255,10 @@ module Model
                    .order(:bill_image_num).all
   end
 
+  def self.bill_image_missing?(bill_id)
+    DB[:bill_image].where(bill_id: bill_id).count == 0
+  end
+
   def self.get_bills_for_images
     DB[:bill]
       .left_outer_join(:bill_image, bill_id: :bill_id)
@@ -301,12 +305,11 @@ module Model
     bills.each do |bill|
       bill[:amount] = Util.amount_from_cents(bill[:cents])
       bill[:description] = Util.shorten(bill[:description])
-      bill[:image_missing] = (bill[:image_id].nil? || bill[:image_id].empty?)
       bill[:paid_user_full_name], = \
         Util.full_and_short_name(bill[:paid_user_full_name])
       bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
       bill[:tags] = get_bill_tags(bill[:bill_id])
-      bill[:images] = get_bill_images(bill[:bill_id])
+      bill[:image_missing] = bill_image_missing?(bill[:bill_id])
     end
     all_tags = bills.flat_map { |bill| bill[:tags] } .sort.uniq
     [bills, all_tags]
