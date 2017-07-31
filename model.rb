@@ -150,7 +150,7 @@ module Model
       DB[:user].insert(columns)
     end
     users = DB[:user].select(:user_id, :email, :full_name, :is_admin).where(uid_field.to_sym => uid)
-    user = users.first
+    user = users.first!
     puts("USER IS #{user.inspect}")
     user
   end
@@ -176,8 +176,7 @@ module Model
 
   def self.get_image_data(image_id)
     raise unless valid_image_id?(image_id)
-    image = DB[:image].select(:image_data).where(image_id: image_id).first
-    # TODO: what if not found
+    image = DB[:image].select(:image_data).where(image_id: image_id).first! # TODO: what if not found
     image[:image_data]
   end
 
@@ -279,8 +278,8 @@ module Model
       bill["paid_type_#{pt}_checked".to_sym] =
         (bill[:paid_type] == pt ? 'checked' : '')
     end
-    bill[:paid_user] = DB[:user].where(user_id: bill[:paid_user_id]).first
-    bill[:closed_user] = DB[:user].where(user_id: bill[:closed_user_id]).first
+    bill[:paid_user] = DB[:user].where(user_id: bill[:paid_user_id]).first!
+    bill[:closed_user] = DB[:user].where(user_id: bill[:closed_user_id]).first!
     bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
     bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
     bill[:tags] = get_bill_tags(bill_id)
