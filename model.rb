@@ -251,8 +251,8 @@ module Model
 
   def self.get_bills_for_images
     DB[:bill]
-      .left_outer_join(:bill_image, bill_id: :bill_id)
-      .left_outer_join(:image, image_id: :image_id)
+      .left_join(:bill_image, bill_id: :bill_id)
+      .left_join(:image, image_id: :image_id)
       .select(Sequel.qualify(:bill, :bill_id),
               :bill_image_num,
               Sequel.qualify(:image, :image_id),
