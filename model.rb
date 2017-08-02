@@ -273,16 +273,14 @@ module Model
   end
 
   private_class_method def self.with_paid_user(bill)
-    bill.select_append(:paid_user_id)
-        .left_join(Sequel[:user].as(:paid_user),
+    bill.left_join(Sequel[:user].as(:paid_user),
                    user_id: Sequel[:bill][:paid_user_id]).select_append do
       [paid_user_id, paid_user[:full_name].as(:paid_user_full_name)]
     end
   end
 
   private_class_method def self.with_closed_user(bill)
-    bill.select_append(:closed_user_id)
-        .left_join(Sequel[:user].as(:closed_user),
+    bill.left_join(Sequel[:user].as(:closed_user),
                    user_id: Sequel[:bill][:closed_user_id]).select_append do
       [closed_user_id, closed_user[:full_name].as(:closed_user_full_name)]
     end
