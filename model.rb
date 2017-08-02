@@ -44,7 +44,6 @@ module Model
     String :closed_date, null: true
     foreign_key :closed_user_id, :user, null: true
     String  :created_date, null: false
-    String  :paid_type, null: true
     String  :closed_type, null: true
   end
 
@@ -70,14 +69,6 @@ module Model
     primary_key %i[bill_id bill_image_num]
   end
   Accounts = Util.load_account_tree
-
-  VALID_PAID_TYPES = %w[car card ebank self].freeze
-
-  def self.valid_paid_type(x)
-    return nil unless x
-    raise unless VALID_PAID_TYPES.include?(x)
-    x
-  end
 
   def self.valid_closed_type(x)
     return nil unless x
@@ -311,11 +302,6 @@ module Model
     bill = with_closed_user(bill)
     bill = bill.where(bill_id: bill_id).first
     return nil unless bill
-    bill[:paid_type] = valid_paid_type(bill[:paid_type])
-    VALID_PAID_TYPES.each do |pt|
-      bill["paid_type_#{pt}_checked".to_sym] =
-        (bill[:paid_type] == pt ? 'checked' : '')
-    end
     bill[:paid_user] = resolve_user(bill[:paid_user_id])
     bill[:closed_user] = resolve_user(bill[:closed_user_id])
     bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
@@ -382,7 +368,6 @@ module Model
       raise unless bill[:paid_user_id] == current_user[:user_id]
     end
     bill[:paid_date] = Util.iso_from_fi_date(r[:paid_date_fi])
-    bill[:paid_type] = valid_paid_type(r[:paid_type])
     bill[:unit_count] = 1
     bill[:unit_cost_cents] = Util.cents_from_amount(r[:amount])
     # bill[:tags] = valid_tags(r[:tags])
