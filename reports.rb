@@ -40,7 +40,7 @@ module Reports
 
   def self.chart_of_accounts_pdf
     # TODO: Exclude accounts (and headings) that haven't been used this period.
-    accounts = Model::Accounts
+    accounts = Model.get_accounts
     prefs = Model.get_preferences
     org_full_name = prefs['org_full_name']
     filename = generate_filename('tilikartta') + '.pdf'

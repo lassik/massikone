@@ -66,8 +66,9 @@ module Util
       sort_level = { 'H' => last_field, 'A' => 9 }[row_type]
       sort_key = 10 * account_id + sort_level
       prefix = row_type == 'H' ? ('=' * dash_level) : account_id.to_s
-      account_id = nil unless row_type == 'A'
-      list.push(account_id: account_id, title: title,
+      list.push(raw_account_id: account_id,
+                account_id: (row_type == 'A' ? account_id : nil),
+                title: title,
                 prefix: prefix, htag_level: htag_level, sort_key: sort_key)
     end
     list.sort! { |a, b| a[:sort_key] <=> b[:sort_key] }

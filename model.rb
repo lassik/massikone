@@ -8,6 +8,7 @@ require 'sequel'
 require_relative 'util'
 
 LOG_SQL_SELECTS = false
+ACCOUNT_NESTING_LEVEL = 9
 
 module Model
   DB = Sequel.connect(ENV.fetch('DATABASE_URL'))
@@ -33,6 +34,20 @@ module Model
     String  :full_name, null: false
     Boolean :is_admin, null: false, default: false
     String  :user_id_google_oauth2, null: true
+
+  DB.create_table? :period do
+    primary_key :period_id
+    String :start_date, null: true
+    String :end_date, null: true
+  end
+
+  DB.create_table? :period_account do
+    foreign_key :period_id, :period, null: false
+    Integer :account_id, null: false
+    String :title, null: false
+    Integer :starting_balance_cents, null: false, default: 0
+    Integer :nesting_level, null: false, default: 0
+    primary_key %i[period_id account_id nesting_level]
   end
 
   DB.create_table? :bill do
@@ -81,7 +96,6 @@ module Model
     foreign_key :image_id, :image, type: String, null: false
     primary_key %i[bill_id bill_image_num]
   end
-  Accounts = Util.load_account_tree
 
   def self.valid_closed_type(x)
     return nil unless x
@@ -431,6 +445,33 @@ module Model
       created_date: DateTime.now.strftime('%Y-%m-%d')
     )
     update_bill! bill_id, params, current_user
+  end
+
+  def self.get_accounts
+    if DB[:period].where(period_id: 1).update(period_id: 1) != 1
+      DB[:period].insert(period_id: 1)
+    end
+    if DB[:period_account].count == 0
+      Util.load_account_tree.each do |a|
+        DB[:period_account].insert(
+          period_id: 1,
+          account_id: a[:raw_account_id],
+          title: a[:title],
+          nesting_level: (a[:htag_level] ? a[:htag_level] - 1 : ACCOUNT_NESTING_LEVEL)
+        )
+      end
+    end
+    DB[:period_account].order(:account_id, :nesting_level)
+                       .select(:account_id, :title, :nesting_level).map do |a|
+      is_account = (a[:nesting_level] == ACCOUNT_NESTING_LEVEL)
+      dash_level = is_account ? nil : 1 + a[:nesting_level]
+      htag_level = is_account ? nil : 2 + a[:nesting_level]
+      { raw_account_id: a[:account_id],
+        account_id: (is_account ? a[:account_id] : nil),
+        title: a[:title],
+        prefix: (is_account ? a[:account_id].to_s : '=' * dash_level),
+        htag_level: htag_level }
+    end
   end
 
   DEFAULT_PREFERENCES = {
