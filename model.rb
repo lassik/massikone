@@ -308,13 +308,7 @@ module Model
 
   def self.get_bills_and_all_tags(current_user)
     puts("current user is #{current_user.inspect}")
-    bills = DB[:bill].left_outer_join(:user, user_id: :paid_user_id)
-                     .select do
-      [bill_id,
-       paid_date,
-       full_name.as(:paid_user_full_name),
-       description]
-    end
+    bills = bill_base
     bills = with_cents(bills)
     bills = bills.order(:bill_id)
     unless current_user[:is_admin]
