@@ -270,12 +270,18 @@ module Model
       .order(Sequel.qualify(:bill, :bill_id), :bill_image_num).all
   end
 
+  private_class_method def self.with_cents(bills)
+    bills.select_append{(unit_count * unit_cost_cents).as(:cents)}
+  end
+
   private_class_method def self.resolve_user(user_id)
     if user_id.nil? then nil else DB[:user].where(user_id: user_id).first! end
   end
 
   def self.get_bill(bill_id)
-    bill = DB[:bill].where(bill_id: bill_id).first
+    bill = DB[:bill].where(bill_id: bill_id)
+    bill = with_cents(bill)
+    bill = bill.first
     return nil unless bill
     bill[:paid_type] = valid_paid_type(bill[:paid_type])
     VALID_PAID_TYPES.each do |pt|
@@ -288,7 +294,7 @@ module Model
     bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
     bill[:tags] = get_bill_tags(bill_id)
     bill[:images] = get_bill_images(bill_id)
-    bill[:amount] = Util.amount_from_cents(bill[:unit_cost_cents])
+    bill[:amount] = Util.amount_from_cents(bill[:cents])
     bill
   end
 
@@ -298,11 +304,11 @@ module Model
                      .select do
       [bill_id,
        paid_date,
-       (unit_count * unit_cost_cents).as(:cents),
        full_name.as(:paid_user_full_name),
        description]
     end
-                     .order(:bill_id)
+    bills = with_cents(bills)
+    bills = bills.order(:bill_id)
     unless current_user[:is_admin]
       bills = bills.where(paid_user_id: current_user[:user_id])
     end
