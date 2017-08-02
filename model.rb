@@ -292,9 +292,11 @@ module Model
     puts("current user is #{current_user.inspect}")
     bills = DB[:bill].left_outer_join(:user, user_id: :paid_user_id)
                      .select do
-      [bill_id, paid_date, description,
+      [bill_id,
+       paid_date,
        (unit_count * unit_cost_cents).as(:cents),
-       full_name.as(:paid_user_full_name)]
+       full_name.as(:paid_user_full_name),
+       description]
     end
                      .order(:bill_id)
     unless current_user[:is_admin]
