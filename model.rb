@@ -292,18 +292,12 @@ module Model
     bills.select_append { (unit_count * unit_cost_cents).as(:cents) }
   end
 
-  private_class_method def self.resolve_user(user_id)
-    user_id.nil? ? nil : DB[:user].where(user_id: user_id).first!
-  end
-
   def self.get_bill(bill_id)
     bill = bill_base
     bill = with_cents(bill)
     bill = with_closed_user(bill)
     bill = bill.where(bill_id: bill_id).first
     return nil unless bill
-    bill[:paid_user] = resolve_user(bill[:paid_user_id])
-    bill[:closed_user] = resolve_user(bill[:closed_user_id])
     bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
     bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
     bill[:tags] = get_bill_tags(bill_id)
