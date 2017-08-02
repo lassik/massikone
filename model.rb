@@ -30,10 +30,11 @@ module Model
 
   DB.create_table? :user do
     primary_key :user_id
-    String  :email, null: false
-    String  :full_name, null: false
+    String :email, null: false
+    String :full_name, null: false
     Boolean :is_admin, null: false, default: false
-    String  :user_id_google_oauth2, null: true
+    String :user_id_google_oauth2, null: true
+  end
 
   DB.create_table? :period do
     primary_key :period_id
