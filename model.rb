@@ -332,6 +332,9 @@ module Model
     bill[:tags] = get_bill_tags(bill_id)
     bill[:images] = get_bill_images(bill_id)
     bill[:amount] = Util.amount_from_cents(bill[:cents])
+    entries = DB[:bill_entry].where(bill_id: bill_id).limit(1)
+    bill[:credit_account_id] = entries.exclude(:debit).select_map(:account_id).first
+    bill[:debit_account_id] = entries.where(:debit).select_map(:account_id).first
     bill
   end
 
