@@ -270,6 +270,10 @@ module Model
       .order(Sequel.qualify(:bill, :bill_id), :bill_image_num).all
   end
 
+  private_class_method def self.resolve_user(user_id)
+    if user_id.nil? then nil else DB[:user].where(user_id: user_id).first! end
+  end
+
   def self.get_bill(bill_id)
     bill = DB[:bill].where(bill_id: bill_id).first
     return nil unless bill
@@ -278,8 +282,8 @@ module Model
       bill["paid_type_#{pt}_checked".to_sym] =
         (bill[:paid_type] == pt ? 'checked' : '')
     end
-    bill[:paid_user] = DB[:user].where(user_id: bill[:paid_user_id]).first!
-    bill[:closed_user] = DB[:user].where(user_id: bill[:closed_user_id]).first!
+    bill[:paid_user] = resolve_user(bill[:paid_user_id])
+    bill[:closed_user] = resolve_user(bill[:closed_user_id])
     bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
     bill[:closed_date_fi] = Util.fi_from_iso_date(bill[:closed_date])
     bill[:tags] = get_bill_tags(bill_id)
