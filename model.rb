@@ -270,6 +270,33 @@ module Model
       .order(Sequel.qualify(:bill, :bill_id), :bill_image_num).all
   end
 
+  private_class_method def self.bill_base
+    base = DB[:bill].order(:bill_id).select do
+      [bill_id,
+       paid_date,
+       closed_date,
+       description,
+       (unit_count * unit_cost_cents).as(:cents)]
+    end
+    with_paid_user base
+  end
+
+  private_class_method def self.with_paid_user(bill)
+    bill.select_append(:paid_user_id)
+        .left_join(Sequel[:user].as(:paid_user),
+                   user_id: Sequel[:bill][:paid_user_id]).select_append do
+      [paid_user_id, paid_user[:full_name].as(:paid_user_full_name)]
+    end
+  end
+
+  private_class_method def self.with_closed_user(bill)
+    bill.select_append(:closed_user_id)
+        .left_join(Sequel[:user].as(:closed_user),
+                   user_id: Sequel[:bill][:closed_user_id]).select_append do
+      [closed_user_id, closed_user[:full_name].as(:closed_user_full_name)]
+    end
+  end
+
   private_class_method def self.with_cents(bills)
     bills.select_append{(unit_count * unit_cost_cents).as(:cents)}
   end
@@ -279,9 +306,10 @@ module Model
   end
 
   def self.get_bill(bill_id)
-    bill = DB[:bill].where(bill_id: bill_id)
+    bill = bill_base
     bill = with_cents(bill)
-    bill = bill.first
+    bill = with_closed_user(bill)
+    bill = bill.where(bill_id: bill_id).first
     return nil unless bill
     bill[:paid_type] = valid_paid_type(bill[:paid_type])
     VALID_PAID_TYPES.each do |pt|
