@@ -149,18 +149,17 @@ module Model
     columns = {
       :email => email, :full_name => full_name, uid_field.to_sym => uid
     }
-    is_first_user = DB[:user].count == 0
-    if is_first_user
-      puts "Creating first user and making them an admin"
+    if DB[:user].count == 0
+      puts 'Creating first user and making them an admin'
       columns[:is_admin] = true
       DB[:user].insert(columns)
     elsif DB[:user].where(uid_field.to_sym => uid).update(columns) != 1
-      puts "Creating new user since existing one not found: #{[uid_field, uid].inspect}"
+      puts 'Creating new user since existing one not found'
       DB[:user].insert(columns)
     end
-    users = DB[:user].select(:user_id, :email, :full_name, :is_admin).where(uid_field.to_sym => uid)
-    user = users.first!
-    puts("USER IS #{user.inspect}")
+    user = DB[:user].where(uid_field.to_sym => uid)
+                    .select(:user_id, :email, :full_name, :is_admin).first!
+    puts("User is #{user.inspect}")
     user
   end
 
