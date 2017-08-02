@@ -33,10 +33,6 @@ module Model
   DB.create_table? :bill do
     primary_key :bill_id
     String  :description, null: false, default: ''
-    Integer :credit_account_id, null: true
-    Integer :debit_account_id, null: true
-    Integer :unit_count, null: false, default: 1
-    Integer :unit_cost_cents, null: true
     String  :paid_date, null: true
     foreign_key :paid_user_id, :user, null: true
     String :reimbursed_date, null: true
@@ -45,6 +41,18 @@ module Model
     foreign_key :closed_user_id, :user, null: true
     String  :created_date, null: false
     String  :closed_type, null: true
+  end
+
+  DB.create_table? :bill_entry do
+    foreign_key :bill_id, :bill, null: false
+    Integer :row_number, null: false
+    Integer :account_id, null: false
+    # foreign_key :account_id, :account, null: false
+    Boolean :debit, null: false
+    Integer :unit_count, null: false, default: 1
+    Integer :unit_cost_cents, null: false
+    String :description, null: false
+    primary_key %i[bill_id row_number]
   end
 
   DB.create_table? :tag do
@@ -263,11 +271,7 @@ module Model
 
   private_class_method def self.bill_base
     base = DB[:bill].order(:bill_id).select do
-      [bill_id,
-       paid_date,
-       closed_date,
-       description,
-       (unit_count * unit_cost_cents).as(:cents)]
+      [bill_id, paid_date, closed_date, description]
     end
     with_paid_user base
   end
@@ -286,8 +290,35 @@ module Model
     end
   end
 
-  private_class_method def self.with_cents(bills)
-    bills.select_append { (unit_count * unit_cost_cents).as(:cents) }
+  private_class_method def self.with_cents(bill)
+    bill.select_append do
+      sums = DB[:bill_entry].where(bill_id: Sequel[:bill][:bill_id]).select do
+        sum(unit_count * unit_cost_cents)
+      end
+      max(sums.where(:debit), sums.exclude(:debit)).as(:cents)
+    end
+  end
+
+  private_class_method def self.bill_entries(bill_id)
+    DB[:bill_entry].where(bill_id: bill_id).order(:row_number).select do
+      [row_number, account_id, debit, description,
+       (unit_count * unit_cost_cents).as(:cents)]
+    end
+  end
+
+  private_class_method def self.bill_entries!(bill_id, entries)
+    DB[:bill_entry].where(bill_id: bill_id).delete
+    entries.each_with_index do |e, row_number|
+      DB[:bill_entry].insert(
+        bill_id: bill_id,
+        row_number: row_number,
+        account_id: e[:account_id],
+        debit: e[:debit],
+        unit_count: 1,
+        unit_cost_cents: e[:unit_cost_cents],
+        description: e[:description]
+      )
+    end
   end
 
   def self.get_bill(bill_id)
@@ -327,10 +358,7 @@ module Model
   end
 
   def self.get_bills_for_journal
-    DB[:bill].select do
-      [bill_id, paid_date, description,
-       (unit_count * unit_cost_cents).as(:cents)]
-    end.order(:paid_date).all.map do |bill|
+    with_cents(bill_base).order(:paid_date).all.map do |bill|
       bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
       bill[:amount] = Util.amount_from_cents(bill[:cents])
       bill
@@ -340,25 +368,36 @@ module Model
   def self.update_bill!(bill_id, r, current_user)
     # TODO: don't allow updating a closed bill
     bill = {}
+    credit_account_id = nil
+    debit_account_id = nil
     if current_user[:is_admin]
       # TODO: more admin-only fields
       bill[:paid_user_id] = valid_user_id(r[:paid_user_id])
       bill[:closed_type] = valid_closed_type(r[:closed_type])
       bill[:closed_user_id] = valid_user_id(r[:closed_user_id])
       bill[:closed_date] = Util.iso_from_fi_date(r[:closed_date_fi])
-      bill[:credit_account_id] = valid_nonneg_integer(r[:credit_account_id])
-      bill[:debit_account_id] = valid_nonneg_integer(r[:debit_account_id])
+      credit_account_id = valid_nonneg_integer(r[:credit_account_id])
+      debit_account_id = valid_nonneg_integer(r[:debit_account_id])
     else
       # TODO: proper errors
       bill[:paid_user_id] ||= current_user[:user_id]
       raise unless bill[:paid_user_id] == current_user[:user_id]
     end
     bill[:paid_date] = Util.iso_from_fi_date(r[:paid_date_fi])
-    bill[:unit_count] = 1
-    bill[:unit_cost_cents] = Util.cents_from_amount(r[:amount])
     # bill[:tags] = valid_tags(r[:tags])
     bill[:description] = r[:description]
     bill[:bill_id] = bill_id
+    unit_cost_cents = Util.cents_from_amount(r[:amount])
+    entries = []
+    if credit_account_id
+      entries.push(debit: false, account_id: credit_account_id,
+                   unit_cost_cents: unit_cost_cents, description: 'Credit')
+    end
+    if debit_account_id
+      entries.push(debit: true,  account_id: debit_account_id,
+                   unit_cost_cents: unit_cost_cents, description: 'Debit')
+    end
+    bill_entries!(bill_id, entries)
     DB[:bill_image].where(bill_id: bill_id).delete
     image_id = valid_image_id(r[:image_id])
     if image_id
