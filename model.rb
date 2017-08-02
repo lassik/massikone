@@ -7,13 +7,18 @@ require 'sequel'
 
 require_relative 'util'
 
+LOG_SQL_SELECTS = false
+
 module Model
   DB = Sequel.connect(ENV.fetch('DATABASE_URL'))
 
   sql_logger = Logger.new($stdout)
   sql_logger.formatter = proc do |_serverity, time, _progname, msg|
-    # Log all SQL statements except SELECT statements.
-    /[^a-z]+ select /i.match(msg) ? '' : "#{time}: SQL: #{msg}\n"
+    if !LOG_SQL_SELECTS && /[^a-z]+ select /i.match(msg)
+      ''
+    else
+      "#{time}: SQL: #{msg}\n"
+    end
   end
   DB.loggers << sql_logger
 
