@@ -298,11 +298,11 @@ module Model
   end
 
   private_class_method def self.with_cents(bills)
-    bills.select_append{(unit_count * unit_cost_cents).as(:cents)}
+    bills.select_append { (unit_count * unit_cost_cents).as(:cents) }
   end
 
   private_class_method def self.resolve_user(user_id)
-    if user_id.nil? then nil else DB[:user].where(user_id: user_id).first! end
+    user_id.nil? ? nil : DB[:user].where(user_id: user_id).first!
   end
 
   def self.get_bill(bill_id)
