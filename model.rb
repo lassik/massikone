@@ -401,11 +401,11 @@ module Model
     bill[:bill_id] = bill_id
     unit_cost_cents = Util.cents_from_amount(r[:amount])
     entries = []
-    if credit_account_id
+    if credit_account_id && unit_cost_cents
       entries.push(debit: false, account_id: credit_account_id,
                    unit_cost_cents: unit_cost_cents, description: 'Credit')
     end
-    if debit_account_id
+    if debit_account_id && unit_cost_cents
       entries.push(debit: true,  account_id: debit_account_id,
                    unit_cost_cents: unit_cost_cents, description: 'Debit')
     end
