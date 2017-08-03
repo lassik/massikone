@@ -56,8 +56,6 @@ module Model
     String  :description, null: false, default: ''
     String  :paid_date, null: true
     foreign_key :paid_user_id, :user, null: true
-    String :reimbursed_date, null: true
-    foreign_key :reimbursed_user_id, :user, null: true
     String :closed_date, null: true
     foreign_key :closed_user_id, :user, null: true
     String  :created_date, null: false
