@@ -344,6 +344,7 @@ module Model
   end
 
   def self.get_bill(bill_id)
+    this_bill_id = bill_id
     bill = bill_base
     bill = with_cents(bill)
     bill = with_closed_user(bill)
@@ -357,6 +358,8 @@ module Model
     entries = DB[:bill_entry].where(bill_id: bill_id).limit(1)
     bill[:credit_account_id] = entries.exclude(:debit).select_map(:account_id).first
     bill[:debit_account_id] = entries.where(:debit).select_map(:account_id).first
+    bill[:prev_bill_id] = DB[:bill].where{Sequel[:bill][:bill_id] < this_bill_id}.max(:bill_id)
+    bill[:next_bill_id] = DB[:bill].where{Sequel[:bill][:bill_id] > this_bill_id}.min(:bill_id)
     bill
   end
 

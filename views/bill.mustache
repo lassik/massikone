@@ -23,6 +23,28 @@
           <input type="submit" class="btn btn-lg btn-success" value="Tallenna">
           <a class="btn btn-lg btn-warning" href="/{{#bill}}bill/{{bill_id}}{{/bill}}">Peruuta</a>
           <a class="btn btn-lg btn-info" href="/">Takaisin</a>
+          {{#bill}}
+          {{#prev_bill_id}}
+          <a class="btn btn-lg btn-primary" href="/bill/{{prev_bill_id}}">
+            <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
+          </a>
+          {{/prev_bill_id}}
+          {{^prev_bill_id}}
+          <button class="btn btn-lg btn-primary disabled">
+            <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
+          </button>
+          {{/prev_bill_id}}
+          {{#next_bill_id}}
+          <a class="btn btn-lg btn-primary" href="/bill/{{next_bill_id}}">
+            <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
+          </a>
+          {{/next_bill_id}}
+          {{^next_bill_id}}
+          <button class="btn btn-lg btn-primary disabled">
+            <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
+          </button>
+          {{/next_bill_id}}
+          {{/bill}}
         </div>
         <table class="table table-striped">
           <tr>
