@@ -17,17 +17,32 @@ module Reports
     org_full_name = prefs['org_full_name']
     filename = generate_filename('paivakirja') + '.pdf'
     pdf_data = Prawn::Document.new do
+      accounts = Model.get_accounts
+      account_lookup = accounts.map { |a| [a[:account_id], a[:title]] }.to_h
       font 'Helvetica'
       text org_full_name, size: 18
       text 'Päiväkirja', size: 14
       move_down 10
-      text 'Nro Päivämäärä'
-      text 'Tili Debet Kredit Selite'
       stroke_horizontal_rule
       move_down 10
-      rows = bills.flat_map do |bill|
-        [[bill[:bill_id], bill[:paid_date_fi]],
-         [bill[:account_id], bill[:title], bill[:amount], bill[:description]]]
+      rows = [['Nro', 'Päivämäärä', '', '', '', ''],
+              ['', 'Tili', '', 'Debet', 'Kredit', 'Selite']]
+      rows += bills.flat_map do |bill|
+        [[bill[:bill_id], bill[:paid_date], '', '', '', '']] +
+          (bill[:entries].map do |e|
+             debit = (if e[:debit]
+                        Util.amount_from_cents(e[:cents])
+                      else '' end)
+             credit = (if !e[:debit]
+                         Util.amount_from_cents(e[:cents])
+                       else '' end)
+             ['',
+              e[:account_id],
+              account_lookup[e[:account_id]],
+              debit,
+              credit,
+              bill[:description]]
+           end)
       end
       Prawn::Table.new(rows, self).draw
       number_pages 'Sivu <page>/<total>',

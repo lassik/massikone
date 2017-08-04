@@ -386,9 +386,8 @@ module Model
   end
 
   def self.get_bills_for_journal
-    with_cents(bill_base).order(:paid_date).all.map do |bill|
-      bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
-      bill[:amount] = Util.amount_from_cents(bill[:cents])
+    bill_base.order(:bill_id).map do |bill|
+      bill[:entries] = bill_entries(bill[:bill_id])
       bill
     end
   end
