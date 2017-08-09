@@ -138,19 +138,13 @@
               </table>
             </td>
           </tr>
-          {{/admin}}
           <tr>
-            <th>Korvattu maksajalle:</th>
+            <th>Tila:</th>
             <td>
-              <input type="text" class="datepicker"
-                     data-provide="datepicker" data-date-language="fi"
-                     name="closed_date_fi"
-                     value="{{#bill}}{{closed_date_fi}}{{/bill}}">
-              {{#admin}}
               <button type="button" class="btn btn-danger">Poista</button>
-              {{/admin}}
             </td>
           </tr>
+          {{/admin}}
         </table>
         <input type="hidden" id="image-id" name="image_id"
                value="{{#bill}}{{#images}}{{image_id}}{{/images}}{{/bill}}">
