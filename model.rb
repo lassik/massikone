@@ -80,7 +80,7 @@ module Model
 
   DB.create_table? :bill_tag do
     foreign_key :bill_id, :bill, null: false
-    foreign_key :tag, :tag, null: false
+    foreign_key :tag, :tag, type: String, null: false
     primary_key %i[bill_id tag]
   end
 
