@@ -1,7 +1,7 @@
 FROM ruby:2.2.7-alpine
 
 VOLUME /massikone/data
-EXPOSE 5000
+EXPOSE 3000
 
 ENV RACK_ENV=deployment
 
@@ -27,4 +27,4 @@ RUN apk update \
 RUN adduser -D massikone
 RUN chown -R massikone:massikone .
 USER massikone
-CMD puma -p 5000
+CMD puma -p 3000
