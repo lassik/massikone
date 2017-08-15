@@ -3,8 +3,6 @@ FROM ruby:2.2.7-alpine
 VOLUME /massikone/data
 EXPOSE 3000
 
-ENV RACK_ENV=deployment
-
 COPY . /massikone
 WORKDIR /massikone
 RUN apk update \
