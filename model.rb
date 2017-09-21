@@ -7,10 +7,10 @@ require 'sequel'
 
 require_relative 'util'
 
-LOG_SQL_SELECTS = false
-ACCOUNT_NESTING_LEVEL = 9
-
 module Model
+  LOG_SQL_SELECTS = false
+  ACCOUNT_NESTING_LEVEL = 9
+
   DB = Sequel.connect(ENV.fetch('DATABASE_URL'))
 
   sql_logger = Logger.new($stdout)
