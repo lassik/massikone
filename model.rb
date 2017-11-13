@@ -23,78 +23,81 @@ module Model
   end
   DB.loggers << sql_logger
 
-  DB.create_table? :preference do
-    String :name, primary_key: true
-    String :value, null: false
-  end
+  def self.migrate!
+    DB.create_table? :preference do
+      String :name, primary_key: true
+      String :value, null: false
+    end
 
-  DB.create_table? :user do
-    primary_key :user_id
-    String :email, null: false
-    String :full_name, null: false
-    Boolean :is_admin, null: false, default: false
-    String :user_id_google_oauth2, null: true
-  end
+    DB.create_table? :user do
+      primary_key :user_id
+      String :email, null: false
+      String :full_name, null: false
+      Boolean :is_admin, null: false, default: false
+      String :user_id_google_oauth2, null: true
+    end
 
-  DB.create_table? :period do
-    primary_key :period_id
-    String :start_date, null: true
-    String :end_date, null: true
-  end
+    DB.create_table? :period do
+      primary_key :period_id
+      String :start_date, null: true
+      String :end_date, null: true
+    end
 
-  DB.create_table? :period_account do
-    foreign_key :period_id, :period, null: false
-    Integer :account_id, null: false
-    String :title, null: false
-    Integer :starting_balance_cents, null: false, default: 0
-    Integer :nesting_level, null: false, default: 0
-    primary_key %i[period_id account_id nesting_level]
-  end
+    DB.create_table? :period_account do
+      foreign_key :period_id, :period, null: false
+      Integer :account_id, null: false
+      String :title, null: false
+      Integer :starting_balance_cents, null: false, default: 0
+      Integer :nesting_level, null: false, default: 0
+      primary_key %i[period_id account_id nesting_level]
+    end
 
-  DB.create_table? :bill do
-    primary_key :bill_id
-    String  :description, null: false, default: ''
-    String  :paid_date, null: true
-    foreign_key :paid_user_id, :user, null: true
-    String :closed_date, null: true
-    foreign_key :closed_user_id, :user, null: true
-    String  :created_date, null: false
-    String  :closed_type, null: true
-  end
+    DB.create_table? :bill do
+      primary_key :bill_id
+      String  :description, null: false, default: ''
+      String  :paid_date, null: true
+      foreign_key :paid_user_id, :user, null: true
+      String :closed_date, null: true
+      foreign_key :closed_user_id, :user, null: true
+      String  :created_date, null: false
+      String  :closed_type, null: true
+    end
 
-  DB.create_table? :bill_entry do
-    foreign_key :bill_id, :bill, null: false
-    Integer :row_number, null: false
-    Integer :account_id, null: false
-    # foreign_key :account_id, :account, null: false
-    Boolean :debit, null: false
-    Integer :unit_count, null: false, default: 1
-    Integer :unit_cost_cents, null: false
-    String :description, null: false
-    primary_key %i[bill_id row_number]
-  end
+    DB.create_table? :bill_entry do
+      foreign_key :bill_id, :bill, null: false
+      Integer :row_number, null: false
+      Integer :account_id, null: false
+      # foreign_key :account_id, :account, null: false
+      Boolean :debit, null: false
+      Integer :unit_count, null: false, default: 1
+      Integer :unit_cost_cents, null: false
+      String :description, null: false
+      primary_key %i[bill_id row_number]
+    end
 
-  DB.create_table? :tag do
-    String :tag, primary_key: true
-  end
+    DB.create_table? :tag do
+      String :tag, primary_key: true
+    end
 
-  DB.create_table? :bill_tag do
-    foreign_key :bill_id, :bill, null: false
-    foreign_key :tag, :tag, type: String, null: false
-    primary_key %i[bill_id tag]
-  end
+    DB.create_table? :bill_tag do
+      foreign_key :bill_id, :bill, null: false
+      foreign_key :tag, :tag, type: String, null: false
+      primary_key %i[bill_id tag]
+    end
 
-  DB.create_table? :image do
-    String :image_id, primary_key: true
-    File :image_data, null: false
-  end
+    DB.create_table? :image do
+      String :image_id, primary_key: true
+      File :image_data, null: false
+    end
 
-  DB.create_table? :bill_image do
-    foreign_key :bill_id, :bill, null: false
-    Integer :bill_image_num, null: false
-    foreign_key :image_id, :image, type: String, null: false
-    primary_key %i[bill_id bill_image_num]
+    DB.create_table? :bill_image do
+      foreign_key :bill_id, :bill, null: false
+      Integer :bill_image_num, null: false
+      foreign_key :image_id, :image, type: String, null: false
+      primary_key %i[bill_id bill_image_num]
+    end
   end
+  migrate!
 
   def self.valid_closed_type(x)
     return nil unless x
