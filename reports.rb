@@ -44,7 +44,7 @@ module Reports
               bill[:description]]
            end)
       end
-      Prawn::Table.new(rows, self, cell_style: {size: 9}).draw
+      Prawn::Table.new(rows, self, cell_style: { size: 9 }).draw
       number_pages 'Sivu <page>/<total>',
                    at: [bounds.right - 150, 0],
                    width: 150,
