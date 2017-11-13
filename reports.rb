@@ -11,13 +11,13 @@ require_relative 'model'
 require_relative 'util'
 
 module Reports
-  def self.general_journal_pdf
-    bills = Model.get_bills_for_journal
-    prefs = Model.get_preferences
+  def self.general_journal_pdf(model)
+    bills = model.get_bills_for_journal
+    prefs = model.get_preferences
     org_full_name = prefs['org_full_name']
-    filename = generate_filename('paivakirja') + '.pdf'
+    filename = generate_filename(model, 'paivakirja') + '.pdf'
     pdf_data = Prawn::Document.new do
-      accounts = Model.get_accounts
+      accounts = model.get_accounts
       account_lookup = accounts.map { |a| [a[:account_id], a[:title]] }.to_h
       font 'Helvetica'
       text org_full_name, size: 18
@@ -53,12 +53,12 @@ module Reports
     [pdf_data, filename]
   end
 
-  def self.chart_of_accounts_pdf
+  def self.chart_of_accounts_pdf(model)
     # TODO: Exclude accounts (and headings) that haven't been used this period.
-    accounts = Model.get_accounts
-    prefs = Model.get_preferences
+    accounts = model.get_accounts
+    prefs = model.get_preferences
     org_full_name = prefs['org_full_name']
-    filename = generate_filename('tilikartta') + '.pdf'
+    filename = generate_filename(model, 'tilikartta') + '.pdf'
     pdf_data = Prawn::Document.new do
       font 'Helvetica'
       text org_full_name, size: 18
@@ -88,19 +88,20 @@ module Reports
     [pdf_data, filename]
   end
 
-  private_class_method def self.generate_zipfile(document, &block)
-    prefs = Model.get_preferences
+  private_class_method def self.generate_zipfile(model, document, &block)
+    prefs = model.get_preferences
     org_short_name = prefs['org_short_name']
-    zipfilepath = '/tmp/' + generate_filename(document) + '.zip' # TODO: use mktemp
+    zipfilepath = '/tmp/' + generate_filename(model, document) + '.zip'
+    # TODO: use mktemp
     FileUtils.rm_f(zipfilepath)
     Zip::File.open(zipfilepath, Zip::File::CREATE, &block)
     zipfilepath
   end
 
-  private_class_method def self.add_bill_images_to_zip(zipfile, subdir)
+  private_class_method def self.add_bill_images_to_zip(model, zipfile, subdir)
     subdir = File.join(File.basename(zipfile.name, '.zip'), subdir)
     missing = []
-    things = Model.get_bills_for_images
+    things = model.get_bills_for_images
     things.each do |thing|
       if thing[:image_id]
         image_in_zip = format('%s/tosite-%04d-%d-%s%s',
@@ -123,14 +124,14 @@ module Reports
     end
   end
 
-  def self.bill_images_zip
-    generate_zipfile('tositteet') do |zipfile|
-      add_bill_images_to_zip(zipfile, '')
+  def self.bill_images_zip(model)
+    generate_zipfile(model, 'tositteet') do |zipfile|
+      add_bill_images_to_zip(model, zipfile, '')
     end
   end
 
-  def self.full_statement_zip
-    generate_zipfile('tilinpaatos') do |zipfile|
+  def self.full_statement_zip(model)
+    generate_zipfile(model, 'tilinpaatos') do |zipfile|
       subdir = File.basename(zipfile.name, '.zip')
       pdf_data, filename = general_journal_pdf
       zipfile.get_output_stream(File.join(subdir, filename)) do |output|
@@ -144,9 +145,9 @@ module Reports
     end
   end
 
-  private_class_method def self.generate_filename(document)
+  private_class_method def self.generate_filename(model, document)
     year = 2017 # TODO
-    org_short_name = Model.get_preferences['org_short_name']
+    org_short_name = model.get_preferences['org_short_name']
     Util.slug("#{org_short_name}-#{year}-#{document}")
   end
 end

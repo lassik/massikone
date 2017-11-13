@@ -10,17 +10,6 @@ require_relative 'model'
 require_relative 'reports'
 require_relative 'util'
 
-# We don't need the compexity of tilt.
-def mustache(template, opts = {})
-  view = Mustache.new
-  view.template_file = "views/#{template}.mustache"
-  opts.each_pair { |k, v| view[k.to_sym] = v }
-  prefs = Model.get_preferences
-  view[:organization] = prefs['org_short_name']
-  view[:app_title] = "#{view[:organization]} Massikone"
-  view.render
-end
-
 class Massikone < Roda
   plugin :all_verbs
   plugin :halt
@@ -51,6 +40,17 @@ class Massikone < Roda
     [:google_oauth2]
   end
 
+  # We don't need the compexity of tilt.
+  def mustache(template, opts = {})
+    view = Mustache.new
+    view.template_file = "views/#{template}.mustache"
+    opts.each_pair { |k, v| view[k.to_sym] = v }
+    prefs = @model.get_preferences
+    view[:organization] = prefs['org_short_name']
+    view[:app_title] = "#{view[:organization]} Massikone"
+    view.render
+  end
+
   route do |r|
     r.public
 
@@ -59,11 +59,13 @@ class Massikone < Roda
         r.is ['callback', { method: %w[get post] }] do
           auth = request.env['omniauth.auth']
           r.halt(403, 'Forbidden') unless auth && auth['provider'] == provider
-          user = Model.put_user provider: provider,
-                                uid: auth['uid'],
-                                email: auth['info']['email'],
-                                full_name: auth['info']['name']
-          session[:user_id] = user[:user_id]
+          Model.new(nil) do |model|
+            user = model.put_user provider: provider,
+                                  uid: auth['uid'],
+                                  email: auth['info']['email'],
+                                  full_name: auth['info']['name']
+            session[:user_id] = user[:user_id]
+          end
           r.redirect '/'
         end
       end
@@ -79,175 +81,176 @@ class Massikone < Roda
       r.redirect '/'
     end
 
-    current_user = nil
-    current_user = Model.get_user(session[:user_id]) if session[:user_id]
+    Model.new(session[:user_id]) do |model|
+      users = model.get_users
 
-    users = Model.get_users
+      admin_data = if model.user && model.user[:is_admin]
+                     {
+                       users: users
+                     }
+                   end
 
-    admin_data = if current_user && current_user[:is_admin]
-                   {
-                     users: users
-                   }
-                 end
+      @model = model
 
-    r.on 'api' do
-      r.halt(403, 'Forbidden') unless current_user
+      r.on 'api' do
+        r.halt(403, 'Forbidden') unless model.user
 
-      r.on 'userimage' do
-        # SECURITY NOTE: Users can view each other's images if they somehow
-        # know the filehash.
+        r.on 'userimage' do
+          # SECURITY NOTE: Users can view each other's images if they somehow
+          # know the filehash.
 
-        r.on 'rotated/:image_id' do |image_id|
+          r.on 'rotated/:image_id' do |image_id|
+            r.is do
+              r.get do
+                response['Content-Type'] = 'text/plain'
+                model.rotate_image(image_id)
+              end
+            end
+          end
+
+          r.get :image_id do |image_id|
+            # TODO: http header, esp. caching
+            r.pass unless model.valid_image_id?(image_id)
+            model.get_image_data(image_id)
+          end
+
           r.is do
-            r.get do
+            r.post do
               response['Content-Type'] = 'text/plain'
-              Model.rotate_image(image_id)
+              model.store_image_file(r[:file][:tempfile])
             end
           end
         end
 
-        r.get :image_id do |image_id|
-          # TODO: http header, esp. caching
-          r.pass unless Model.valid_image_id?(image_id)
-          Model.get_image_data(image_id)
+        r.on 'preferences' do
+          r.put do
+            model.put_preferences(r.body)
+            ''
+          end
+        end
+
+        r.on 'tags' do
+          r.get do
+            model.get_available_tags
+          end
+
+          r.put do
+            model.put_available_tags(r.body)
+          end
+        end
+      end
+
+      r.root do
+        r.pass if model.user
+        mustache :login
+      end
+
+      r.root do
+        bills, all_tags = model.get_bills_and_all_tags
+        if bills
+          mustache 'bills',
+                   current_user: model.user,
+                   admin: admin_data,
+                   tags: all_tags,
+                   bills: { bills: bills }
+        end
+      end
+
+      unless model.user
+        r.redirect('/') if r.get?
+        r.halt(403, 'Forbidden')
+      end
+
+      r.on 'bill' do
+        r.is ':bill_id' do |bill_id|
+          r.get do
+            bill = model.get_bill(bill_id)
+            u = users.find { |u| u[:user_id] == bill[:paid_user_id] }
+            u[:is_paid_user] = true if u
+            u = users.find { |u| u[:user_id] == bill[:closed_user_id] }
+            u[:is_closed_user] = true if u
+            r.halt(404, 'No such bill') unless bill
+            accts = model.get_accounts
+            credit_accounts = accts.map do |acct|
+              acct = acct.dup
+              acct[:selected] = (acct[:account_id] && (acct[:account_id] == bill[:credit_account_id]))
+              acct
+            end
+            debit_accounts = accts.map do |acct|
+              acct = acct.dup
+              acct[:selected] = (acct[:account_id] && (acct[:account_id] == bill[:debit_account_id]))
+              acct
+            end
+            mustache(:bill,
+                     admin: admin_data,
+                     current_user: model.user,
+                     tags: [{ tag: 'ruoka', active: false }],
+                     bill: bill,
+                     credit_accounts: credit_accounts,
+                     debit_accounts: debit_accounts)
+          end
+
+          r.post do
+            model.put_bill(bill_id, r)
+            r.redirect "/bill/#{bill_id}"
+          end
         end
 
         r.is do
+          r.get do
+            accounts = model.get_accounts
+            mustache :bill,
+                     current_user: model.user,
+                     admin: admin_data,
+                     credit_accounts: accounts,
+                     debit_accounts: accounts
+          end
+
           r.post do
-            response['Content-Type'] = 'text/plain'
-            Model.store_image_file(r[:file][:tempfile])
+            bill = model.post_bill(r)
+            r.redirect "/bill/#{bill[:bill_id]}"
           end
         end
       end
+
+      r.halt(403, 'Forbidden') unless admin_data
 
       r.on 'preferences' do
-        r.put do
-          Model.put_preferences(r.body)
-          ''
-        end
-      end
-
-      r.on 'tags' do
         r.get do
-          Model.get_available_tags
-        end
-
-        r.put do
-          Model.put_available_tags(r.body)
-        end
-      end
-    end
-
-    r.root do
-      r.pass if current_user
-      mustache :login
-    end
-
-    r.root do
-      bills, all_tags = Model.get_bills_and_all_tags current_user
-      if bills
-        mustache 'bills',
-                 current_user: current_user,
-                 admin: admin_data,
-                 tags: all_tags,
-                 bills: { bills: bills }
-      end
-    end
-
-    unless current_user
-      r.redirect('/') if r.get?
-      r.halt(403, 'Forbidden')
-    end
-
-    r.on 'bill' do
-      r.is ':bill_id' do |bill_id|
-        r.get do
-          bill = Model.get_bill(bill_id)
-          u = users.find { |u| u[:user_id] == bill[:paid_user_id] }
-          u[:is_paid_user] = true if u
-          u = users.find { |u| u[:user_id] == bill[:closed_user_id] }
-          u[:is_closed_user] = true if u
-          r.halt(404, 'No such bill') unless bill
-          accts = Model.get_accounts
-          credit_accounts = accts.map do |acct|
-            acct = acct.dup
-            acct[:selected] = (acct[:account_id] && (acct[:account_id] == bill[:credit_account_id]))
-            acct
-          end
-          debit_accounts = accts.map do |acct|
-            acct = acct.dup
-            acct[:selected] = (acct[:account_id] && (acct[:account_id] == bill[:debit_account_id]))
-            acct
-          end
-          mustache(:bill,
+          mustache :preferences,
+                   current_user: model.user,
                    admin: admin_data,
-                   current_user: current_user,
-                   tags: [{ tag: 'ruoka', active: false }],
-                   bill: bill,
-                   credit_accounts: credit_accounts,
-                   debit_accounts: debit_accounts)
-        end
-
-        r.post do
-          Model.put_bill(bill_id, r, current_user)
-          r.redirect "/bill/#{bill_id}"
+                   preferences: model.get_preferences
         end
       end
 
-      r.is do
-        r.get do
-          accounts = Model.get_accounts
-          mustache :bill,
-                   current_user: current_user,
-                   admin: admin_data,
-                   credit_accounts: accounts,
-                   debit_accounts: accounts
+      r.on 'report' do
+        r.get 'general-journal' do
+          pdf_data, filename = Reports.general_journal_pdf(model)
+          response['Content-Type'] = 'application/pdf'
+          response['Content-Disposition'] = "inline; filename=\"#{filename}\""
+          pdf_data
         end
 
-        r.post do
-          bill = Model.post_bill(r, current_user)
-          r.redirect "/bill/#{bill[:bill_id]}"
+        r.get 'chart-of-accounts' do
+          pdf_data, filename = Reports.chart_of_accounts_pdf(model)
+          response['Content-Type'] = 'application/pdf'
+          response['Content-Disposition'] = "inline; filename=\"#{filename}\""
+          pdf_data
         end
-      end
-    end
 
-    r.halt(403, 'Forbidden') unless admin_data
+        r.get 'massikone.ofx' do
+          bills, all_tags = model.get_bills_and_all_tags
+          response['Content-Type'] = 'text/xml'
+          mustache 'report/massikone.ofx',
+                   bills: bills
+        end
 
-    r.on 'preferences' do
-      r.get do
-        mustache :preferences,
-                 current_user: current_user,
-                 admin: admin_data,
-                 preferences: Model.get_preferences
-      end
-    end
-
-    r.on 'report' do
-      r.get 'general-journal' do
-        pdf_data, filename = Reports.general_journal_pdf
-        response['Content-Type'] = 'application/pdf'
-        response['Content-Disposition'] = "inline; filename=\"#{filename}\""
-        pdf_data
-      end
-
-      r.get 'chart-of-accounts' do
-        pdf_data, filename = Reports.chart_of_accounts_pdf
-        response['Content-Type'] = 'application/pdf'
-        response['Content-Disposition'] = "inline; filename=\"#{filename}\""
-        pdf_data
-      end
-
-      r.get 'massikone.ofx' do
-        bills, all_tags = Model.get_bills_and_all_tags current_user
-        response['Content-Type'] = 'text/xml'
-        mustache 'report/massikone.ofx',
-                 bills: bills
-      end
-
-      r.get 'massikone.zip' do
-        filename = Reports.full_statement_zip
-        response['Content-Disposition'] = "attachment; filename=\"#{File.basename(filename)}\""
-        r.send_file filename
+        r.get 'massikone.zip' do
+          filename = Reports.full_statement_zip(model)
+          response['Content-Disposition'] = "attachment; filename=\"#{File.basename(filename)}\""
+          r.send_file filename
+        end
       end
     end
   end

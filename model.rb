@@ -7,29 +7,41 @@ require 'sequel'
 
 require_relative 'util'
 
-module Model
+class Model
   LOG_SQL_SELECTS = false
   ACCOUNT_NESTING_LEVEL = 9
 
-  DB = Sequel.connect(ENV.fetch('DATABASE_URL'))
-
-  sql_logger = Logger.new($stdout)
-  sql_logger.formatter = proc do |_serverity, time, _progname, msg|
+  @@sql_logger = Logger.new($stdout)
+  @@sql_logger.formatter = proc do |_serverity, time, _progname, msg|
     if !LOG_SQL_SELECTS && /[^a-z]+ select /i.match(msg)
       ''
     else
       "#{time}: SQL: #{msg}\n"
     end
   end
-  DB.loggers << sql_logger
 
-  def self.migrate!
-    DB.create_table? :preference do
+  def initialize(user_id)
+    Sequel.connect(ENV.fetch('DATABASE_URL')) do |db|
+      db.loggers << @@sql_logger
+      @db = db
+      db.transaction do
+        migrate!
+        @user = nil
+        @user = get_user(user_id) if user_id
+        yield(self)
+      end
+    end
+  end
+
+  attr_reader :user
+
+  private def migrate!
+    @db.create_table? :preference do
       String :name, primary_key: true
       String :value, null: false
     end
 
-    DB.create_table? :user do
+    @db.create_table? :user do
       primary_key :user_id
       String :email, null: false
       String :full_name, null: false
@@ -37,13 +49,13 @@ module Model
       String :user_id_google_oauth2, null: true
     end
 
-    DB.create_table? :period do
+    @db.create_table? :period do
       primary_key :period_id
       String :start_date, null: true
       String :end_date, null: true
     end
 
-    DB.create_table? :period_account do
+    @db.create_table? :period_account do
       foreign_key :period_id, :period, null: false
       Integer :account_id, null: false
       String :title, null: false
@@ -52,7 +64,7 @@ module Model
       primary_key %i[period_id account_id nesting_level]
     end
 
-    DB.create_table? :bill do
+    @db.create_table? :bill do
       primary_key :bill_id
       String  :description, null: false, default: ''
       String  :paid_date, null: true
@@ -63,7 +75,7 @@ module Model
       String  :closed_type, null: true
     end
 
-    DB.create_table? :bill_entry do
+    @db.create_table? :bill_entry do
       foreign_key :bill_id, :bill, null: false
       Integer :row_number, null: false
       Integer :account_id, null: false
@@ -75,57 +87,56 @@ module Model
       primary_key %i[bill_id row_number]
     end
 
-    DB.create_table? :tag do
+    @db.create_table? :tag do
       String :tag, primary_key: true
     end
 
-    DB.create_table? :bill_tag do
+    @db.create_table? :bill_tag do
       foreign_key :bill_id, :bill, null: false
       foreign_key :tag, :tag, type: String, null: false
       primary_key %i[bill_id tag]
     end
 
-    DB.create_table? :image do
+    @db.create_table? :image do
       String :image_id, primary_key: true
       File :image_data, null: false
     end
 
-    DB.create_table? :bill_image do
+    @db.create_table? :bill_image do
       foreign_key :bill_id, :bill, null: false
       Integer :bill_image_num, null: false
       foreign_key :image_id, :image, type: String, null: false
       primary_key %i[bill_id bill_image_num]
     end
   end
-  migrate!
 
-  def self.valid_closed_type(x)
+  def valid_closed_type(x)
     return nil unless x
     raise unless %w[reimbursed denied].include?(x)
     x
   end
 
-  def self.valid_user_id(x)
+  def valid_user_id(x)
     return nil unless x && !x.empty?
     x = x.to_i
     raise unless x >= 1
     x
   end
 
-  def self.valid_nonneg_integer(x)
+  def valid_nonneg_integer(x)
     return 0 if x.nil?
     x = x.to_i
     raise unless x >= 0
     x
   end
 
-  def self.valid_image_id(x)
+  def valid_image_id(x)
     return nil unless x && !x.empty?
     raise unless valid_image_id?(x)
     x
   end
 
-  def self.valid_tags(x)
+  def valid_tags(x)
     return nil unless x
     x = x.split(' ') unless x.is_a?(Array)
     x.each do |tag|
@@ -134,25 +145,25 @@ module Model
     x.sort.uniq.join(' ')
   end
 
-  def self.valid_image_id?(image_id)
+  def valid_image_id?(image_id)
     !!/^[0-9a-f]{40}\.(jpeg|png)$/.match(image_id)
   end
 
-  def self.whack_user(user)
+  def whack_user(user)
     user = user.clone
     user[:full_name], user[:short_name] = \
       Util.full_and_short_name(user[:full_name])
     user
   end
 
-  def self.get_users
-    users = DB[:user].select(:user_id, :full_name).all
+  def get_users
+    users = @db[:user].select(:user_id, :full_name).all
     users.map! { |u| whack_user u }
     users.sort! { |a, b| a[:full_name] <=> b[:full_name] }
     users
   end
 
-  def self.put_user(provider:, uid:, email:, full_name:)
+  def put_user(provider:, uid:, email:, full_name:)
     puts "Login #{[provider, uid, email, full_name].inspect}"
     uid_field = "user_id_#{provider}"
     missing = []
@@ -165,56 +176,56 @@ module Model
     columns = {
       :email => email, :full_name => full_name, uid_field.to_sym => uid
     }
-    if DB[:user].count == 0
+    if @db[:user].count == 0
       puts 'Creating first user and making them an admin'
       columns[:is_admin] = true
-      DB[:user].insert(columns)
-    elsif DB[:user].where(uid_field.to_sym => uid).update(columns) != 1
+      @db[:user].insert(columns)
+    elsif @db[:user].where(uid_field.to_sym => uid).update(columns) != 1
       puts 'Creating new user since existing one not found'
-      DB[:user].insert(columns)
+      @db[:user].insert(columns)
     end
-    user = DB[:user].where(uid_field.to_sym => uid)
-                    .select(:user_id, :email, :full_name, :is_admin).first!
+    user = @db[:user].where(uid_field.to_sym => uid)
+                     .select(:user_id, :email, :full_name, :is_admin).first!
     puts("User is #{user.inspect}")
     user
   end
 
-  def self.get_user(user_id)
-    DB[:user].where(user_id: user_id).first
+  private def get_user(user_id)
+    @db[:user].where(user_id: user_id).first
   end
 
   # NOTE: The available tags are merely the ones that users can choose from
   # when *adding new tags* to bills. A bill can have *old* tags that are no
   # longer in the available tags list. This is intentional.
 
-  def self.get_available_tags
-    DB[:tags].select(:tag).order(:tag).distinct.all
+  def get_available_tags
+    @db[:tags].select(:tag).order(:tag).distinct.all
   end
 
-  def self.put_available_tags(tags)
-    DB[:tag].delete
+  def put_available_tags(tags)
+    @db[:tag].delete
     tags.each do |tag|
-      DB[:tag].insert(tag: tag)
+      @db[:tag].insert(tag: tag)
     end
   end
 
-  def self.get_image_data(image_id)
+  def get_image_data(image_id)
     raise unless valid_image_id?(image_id)
-    image = DB[:image].select(:image_data).where(image_id: image_id).first! # TODO: what if not found
+    image = @db[:image].select(:image_data).where(image_id: image_id).first! # TODO: what if not found
     image[:image_data]
   end
 
-  def self.store_image_data(image_data, image_format)
+  def store_image_data(image_data, image_format)
     hash = Digest::SHA1.hexdigest(image_data)
     image_id = "#{hash}.#{image_format}"
     blob = Sequel.blob(image_data)
-    if DB[:image].where(image_id: image_id).update(image_data: blob) != 1
-      DB[:image].insert(image_id: image_id, image_data: blob)
+    if @db[:image].where(image_id: image_id).update(image_data: blob) != 1
+      @db[:image].insert(image_id: image_id, image_data: blob)
     end
     image_id
   end
 
-  def self.store_image_file(tmpfilename)
+  def store_image_file(tmpfilename)
     # We don't need the complexity of minimagick et.al.
     #
     # Don't trust filename extension given by user. It is sometimes wrong even
@@ -253,7 +264,7 @@ module Model
     store_image_data(new_image_data, new_image_format)
   end
 
-  def self.rotate_image(old_image_id)
+  def rotate_image(old_image_id)
     raise unless valid_image_id?(old_image_id)
     old_image_data = get_image_data(old_image_id)
     image_format = File.extname(old_image_id)[1..-1]
@@ -268,22 +279,22 @@ module Model
     store_image_data(new_image_data, image_format)
   end
 
-  def self.get_bill_tags(bill_id)
-    DB[:bill_tag].select(:tag).order(:tag).distinct
-                 .where(bill_id: bill_id).map { |x| { tag: x[:tag] } }
+  def get_bill_tags(bill_id)
+    @db[:bill_tag].select(:tag).order(:tag).distinct
+                  .where(bill_id: bill_id).map { |x| { tag: x[:tag] } }
   end
 
-  def self.get_bill_images(bill_id)
-    DB[:bill_image].select(:image_id).where(bill_id: bill_id)
-                   .order(:bill_image_num).all
+  def get_bill_images(bill_id)
+    @db[:bill_image].select(:image_id).where(bill_id: bill_id)
+                    .order(:bill_image_num).all
   end
 
-  def self.bill_image_missing?(bill_id)
-    DB[:bill_image].where(bill_id: bill_id).count == 0
+  def bill_image_missing?(bill_id)
+    @db[:bill_image].where(bill_id: bill_id).count == 0
   end
 
-  def self.get_bills_for_images
-    DB[:bill]
+  def get_bills_for_images
+    @db[:bill]
       .left_join(:bill_image, bill_id: :bill_id)
       .left_join(:image, image_id: :image_id)
       .select(Sequel.qualify(:bill, :bill_id),
@@ -294,47 +305,48 @@ module Model
       .order(Sequel.qualify(:bill, :bill_id), :bill_image_num).all
   end
 
-  private_class_method def self.bill_base
-    base = DB[:bill].order(:bill_id).select do
+  private def bill_base
+    base = @db[:bill].order(:bill_id).select do
       [bill_id, paid_date, closed_date, description]
     end
     with_paid_user base
   end
 
-  private_class_method def self.with_paid_user(bill)
+  private def with_paid_user(bill)
     bill.left_join(Sequel[:user].as(:paid_user),
                    user_id: Sequel[:bill][:paid_user_id]).select_append do
       [paid_user_id, paid_user[:full_name].as(:paid_user_full_name)]
     end
   end
 
-  private_class_method def self.with_closed_user(bill)
+  private def with_closed_user(bill)
     bill.left_join(Sequel[:user].as(:closed_user),
                    user_id: Sequel[:bill][:closed_user_id]).select_append do
       [closed_user_id, closed_user[:full_name].as(:closed_user_full_name)]
     end
   end
 
-  private_class_method def self.with_cents(bill)
+  private def with_cents(bill)
+    db = @db
     bill.select_append do
-      sums = DB[:bill_entry].where(bill_id: Sequel[:bill][:bill_id]).select do
+      sums = db[:bill_entry].where(bill_id: Sequel[:bill][:bill_id]).select do
         sum(unit_count * unit_cost_cents)
       end
       max(sums.where(:debit), sums.exclude(:debit)).as(:cents)
     end
   end
 
-  private_class_method def self.bill_entries(bill_id)
-    DB[:bill_entry].where(bill_id: bill_id).order(:row_number).select do
+  private def bill_entries(bill_id)
+    @db[:bill_entry].where(bill_id: bill_id).order(:row_number).select do
       [row_number, account_id, debit, description,
        (unit_count * unit_cost_cents).as(:cents)]
     end
   end
 
-  private_class_method def self.bill_entries!(bill_id, entries)
-    DB[:bill_entry].where(bill_id: bill_id).delete
+  private def bill_entries!(bill_id, entries)
+    @db[:bill_entry].where(bill_id: bill_id).delete
     entries.each_with_index do |e, row_number|
-      DB[:bill_entry].insert(
+      @db[:bill_entry].insert(
         bill_id: bill_id,
         row_number: row_number,
         account_id: e[:account_id],
@@ -346,7 +358,7 @@ module Model
     end
   end
 
-  def self.get_bill(bill_id)
+  def get_bill(bill_id)
     this_bill_id = bill_id
     bill = bill_base
     bill = with_cents(bill)
@@ -358,22 +370,20 @@ module Model
     bill[:tags] = get_bill_tags(bill_id)
     bill[:images] = get_bill_images(bill_id)
     bill[:amount] = Util.amount_from_cents(bill[:cents])
-    entries = DB[:bill_entry].where(bill_id: bill_id).limit(1)
+    entries = @db[:bill_entry].where(bill_id: bill_id).limit(1)
     bill[:credit_account_id] = entries.exclude(:debit).select_map(:account_id).first
     bill[:debit_account_id] = entries.where(:debit).select_map(:account_id).first
-    bill[:prev_bill_id] = DB[:bill].where { Sequel[:bill][:bill_id] < this_bill_id }.max(:bill_id)
-    bill[:next_bill_id] = DB[:bill].where { Sequel[:bill][:bill_id] > this_bill_id }.min(:bill_id)
+    bill[:prev_bill_id] = @db[:bill].where { Sequel[:bill][:bill_id] < this_bill_id }.max(:bill_id)
+    bill[:next_bill_id] = @db[:bill].where { Sequel[:bill][:bill_id] > this_bill_id }.min(:bill_id)
     bill
   end
 
-  def self.get_bills_and_all_tags(current_user)
-    puts("current user is #{current_user.inspect}")
+  def get_bills_and_all_tags
+    puts("current user is #{@user.inspect}")
     bills = bill_base
     bills = with_cents(bills)
     bills = bills.order(:bill_id)
-    unless current_user[:is_admin]
-      bills = bills.where(paid_user_id: current_user[:user_id])
-    end
+    bills = bills.where(paid_user_id: @user[:user_id]) unless @user[:is_admin]
     bills = bills.all
     bills.each do |bill|
       bill[:amount] = Util.amount_from_cents(bill[:cents])
@@ -388,19 +398,19 @@ module Model
     [bills, all_tags]
   end
 
-  def self.get_bills_for_journal
+  def get_bills_for_journal
     bill_base.order(:bill_id).map do |bill|
       bill[:entries] = bill_entries(bill[:bill_id])
       bill
     end
   end
 
-  def self.update_bill!(bill_id, r, current_user)
+  def update_bill!(bill_id, r)
     # TODO: don't allow updating a closed bill
     bill = {}
     credit_account_id = nil
     debit_account_id = nil
-    if current_user[:is_admin]
+    if @user[:is_admin]
       # TODO: more admin-only fields
       bill[:paid_user_id] = valid_user_id(r[:paid_user_id])
       bill[:closed_type] = valid_closed_type(r[:closed_type])
@@ -410,8 +420,8 @@ module Model
       debit_account_id = valid_nonneg_integer(r[:debit_account_id])
     else
       # TODO: proper errors
-      bill[:paid_user_id] ||= current_user[:user_id]
-      raise unless bill[:paid_user_id] == current_user[:user_id]
+      bill[:paid_user_id] ||= @user[:user_id]
+      raise unless bill[:paid_user_id] == @user[:user_id]
     end
     bill[:paid_date] = Util.iso_from_fi_date(r[:paid_date_fi])
     # bill[:tags] = valid_tags(r[:tags])
@@ -428,36 +438,36 @@ module Model
                    unit_cost_cents: unit_cost_cents, description: 'Debit')
     end
     bill_entries!(bill_id, entries)
-    DB[:bill_image].where(bill_id: bill_id).delete
+    @db[:bill_image].where(bill_id: bill_id).delete
     image_id = valid_image_id(r[:image_id])
     if image_id
-      DB[:bill_image].insert(bill_id: bill_id, bill_image_num: 1,
-                             image_id: image_id)
+      @db[:bill_image].insert(bill_id: bill_id, bill_image_num: 1,
+                              image_id: image_id)
     end
-    DB[:bill].where(bill_id: bill_id).update(bill)
+    @db[:bill].where(bill_id: bill_id).update(bill)
     bill
   end
 
-  def self.put_bill(bill_id, params, current_user)
-    bill = DB[:bill].where(bill_id: bill_id).first
+  def put_bill(bill_id, params)
+    bill = @db[:bill].where(bill_id: bill_id).first
     raise 'No such bill' unless bill
-    update_bill! bill_id, params, current_user
+    update_bill! bill_id, params
   end
 
-  def self.post_bill(params, current_user)
-    bill_id = DB[:bill].insert(
+  def post_bill(params)
+    bill_id = @db[:bill].insert(
       created_date: DateTime.now.strftime('%Y-%m-%d')
     )
-    update_bill! bill_id, params, current_user
+    update_bill! bill_id, params
   end
 
-  def self.get_accounts
-    if DB[:period].where(period_id: 1).update(period_id: 1) != 1
-      DB[:period].insert(period_id: 1)
+  def get_accounts
+    if @db[:period].where(period_id: 1).update(period_id: 1) != 1
+      @db[:period].insert(period_id: 1)
     end
-    if DB[:period_account].count == 0
+    if @db[:period_account].count == 0
       Util.load_account_tree.each do |a|
-        DB[:period_account].insert(
+        @db[:period_account].insert(
           period_id: 1,
           account_id: a[:raw_account_id],
           title: a[:title],
@@ -465,8 +475,8 @@ module Model
         )
       end
     end
-    DB[:period_account].order(:account_id, :nesting_level)
-                       .select(:account_id, :title, :nesting_level).map do |a|
+    @db[:period_account].order(:account_id, :nesting_level)
+                        .select(:account_id, :title, :nesting_level).map do |a|
       is_account = (a[:nesting_level] == ACCOUNT_NESTING_LEVEL)
       dash_level = is_account ? nil : 1 + a[:nesting_level]
       htag_level = is_account ? nil : 2 + a[:nesting_level]
@@ -483,19 +493,19 @@ module Model
     'org_short_name' => ''
   }.freeze
 
-  def self.get_preferences
+  def get_preferences
     prefs = DEFAULT_PREFERENCES.dup
-    DB[:preference].select(:name, :value).each do |pref|
+    @db[:preference].select(:name, :value).each do |pref|
       prefs[pref[:name]] = pref[:value]
     end
     prefs
   end
 
-  def self.put_preferences(prefs)
+  def put_preferences(prefs)
     raise unless prefs.keys.all? { |name| DEFAULT_PREFERENCES.keys.include?(name) }
     prefs.each_pair do |name, value|
-      if DB[:preference].where(name: name).update(value: value) != 1
-        DB[:preference].insert(name: name, value: value)
+      if @db[:preference].where(name: name).update(value: value) != 1
+        @db[:preference].insert(name: name, value: value)
       end
     end
     nil
