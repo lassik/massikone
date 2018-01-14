@@ -133,15 +133,15 @@ module Reports
   def self.full_statement_zip(model)
     generate_zipfile(model, 'tilinpaatos') do |zipfile|
       subdir = File.basename(zipfile.name, '.zip')
-      pdf_data, filename = general_journal_pdf
+      pdf_data, filename = general_journal_pdf(model)
       zipfile.get_output_stream(File.join(subdir, filename)) do |output|
         output.write pdf_data
       end
-      pdf_data, filename = chart_of_accounts_pdf
+      pdf_data, filename = chart_of_accounts_pdf(model)
       zipfile.get_output_stream(File.join(subdir, filename)) do |output|
         output.write pdf_data
       end
-      add_bill_images_to_zip(zipfile, 'tositteet')
+      add_bill_images_to_zip(model, zipfile, 'tositteet')
     end
   end
 
