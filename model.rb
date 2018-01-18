@@ -382,7 +382,6 @@ class Model
     puts("current user is #{@user.inspect}")
     bills = bill_base
     bills = with_cents(bills)
-    bills = bills.order(:bill_id)
     bills = bills.where(paid_user_id: @user[:user_id]) unless @user[:is_admin]
     bills = bills.all
     bills.each do |bill|
@@ -399,7 +398,7 @@ class Model
   end
 
   def get_bills_for_journal
-    bill_base.order(:bill_id).map do |bill|
+    bill_base.map do |bill|
       bill[:entries] = bill_entries(bill[:bill_id])
       bill
     end
