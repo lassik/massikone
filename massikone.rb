@@ -254,13 +254,6 @@ class Massikone < Roda
           pdf_data
         end
 
-        r.get 'massikone.ofx' do
-          bills, all_tags = model.get_bills_and_all_tags
-          response['Content-Type'] = 'text/xml'
-          mustache 'report/massikone.ofx',
-                   bills: bills
-        end
-
         r.get 'massikone.zip' do
           filename = Reports.full_statement_zip(model)
           response['Content-Disposition'] = "attachment; filename=\"#{File.basename(filename)}\""
