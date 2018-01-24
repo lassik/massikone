@@ -138,6 +138,12 @@ class Massikone < Roda
             model.put_available_tags(r.body)
           end
         end
+
+        r.on 'compare' do
+          r.get do
+            model.get_bills_for_compare
+          end
+        end
       end
 
       r.root do
@@ -214,6 +220,15 @@ class Massikone < Roda
       end
 
       r.halt(403, 'Forbidden') unless admin_data
+
+      r.on 'compare' do
+        r.get do
+          mustache :compare,
+                   current_user: model.user,
+                   admin: admin_data,
+                   preferences: model.get_preferences
+        end
+      end
 
       r.on 'preferences' do
         r.get do

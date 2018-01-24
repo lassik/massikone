@@ -404,6 +404,18 @@ class Model
     end
   end
 
+  def get_bills_for_compare
+    raise unless @user[:is_admin]
+    with_cents(bill_base).all.map do |bill|
+      {
+        'bill_id' => bill[:bill_id],
+        'date' => bill[:paid_date],
+        'cents' => bill[:cents],
+        'description' => Util.shorten(bill[:description])
+      }
+    end
+  end
+
   def update_bill!(bill_id, r)
     # TODO: don't allow updating a closed bill
     bill = {}
