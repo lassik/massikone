@@ -55,7 +55,7 @@ module Util
     # Sort by ID. Multiple headings (and one account) can share the same ID.
     # Sort those by level (assume all accounts are deeper than any heading).
     list = []
-    File.foreach('chart-of-accounts.txt').drop(1).each do |line|
+    File.foreach('accounts/chart-of-accounts.txt').drop(1).each do |line|
       fields = line.chomp.split(';')
       raise unless fields.length == 4
       row_type, account_id, title, last_field = fields
