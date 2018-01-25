@@ -1,0 +1,69 @@
+HB0;1000;2000;VASTAAVAA
+HB1;1000;1500;PYSYVÄT VASTAAVAT
+GP2;1000;1100;Aineettomat hyödykkeet
+TP3;1020;1040;Kehittämismenot
+TP3;1040;1050;Aineettomat oikeudet
+TP3;1050;1070;Liikearvo
+TP3;1070;1090;Muut pitkävaikutteiset menot
+TP3;1090;1100;Ennakkomaksut
+TB2;1000;1100;Aineettomat hyödykkeet yhteensä
+GP2;1100;1400;Aineelliset hyödykkeet
+TP3;1100;1120;Maa- ja vesialueet
+TP3;1120;1200;Rakennukset ja rakennelmat
+TP3;1200;1300;Koneet ja kalusto
+TP3;1300;1350;Muut aineelliset hyödykkeet
+TP3;1350;1400;Ennakkomaksut ja keskeneräiset hankinnat
+TB2;1100;1400;Aineelliset hyödykkeet yhteensä
+GP2;1400;1500;Sijoitukset
+TP3;1400;1470;Muut osakkeet ja osuudet
+TP3;1470;1500;Muut saamiset
+TB2;1400;1500;Sijoitukset yhteensä
+TB1;1000;1500;Pysyvät vastaavat yhteensä
+HB1;1500;2000;VAIHTUVAT VASTAAVAT
+GP2;1500;1600;Vaihto-omaisuus
+TP3;1500;1520;Aineet ja tarvikkeet
+TP3;1520;1530;Keskeneräiset tuotteet
+TP3;1530;1550;Valmiit tuotteet/tavarat
+TP3;1550;1560;Muu vaihto-omaisuus
+TP3;1560;1570;Ennakkomaksut
+TB2;1500;1600;Vaihto-omaisuus yhteensä
+GP2;1600;1860;Saamiset
+TP3;1600;1640;1700;1730;Myyntisaamiset
+TP3;1640;1650;1750;1770;Lainasaamiset
+TP3;1650;1660;1770;1780;Muut saamiset
+TP3;1660;1670;1780;1800;Maksamattomat osakkeet/osuudet
+TP3;1670;1690;1800;1850;Siirtosaamiset
+TB2;1600;1860;Saamiset yhteensä
+GP2;1860;1900;Rahoitusarvopaperit
+TP3;1860;1880;Muut osakkeet ja osuudet
+TP3;1880;1900;Muut arvopaperit
+TB2;1860;1900;Rahoitusarvopaperit yhteensä
+TP2;1900;2000;Rahat ja pankkisaamiset
+TB1;1500;2000;Vaihtuvat vastaavat yhteensä
+SB0;1000;2000;Vastaavaa yhteensä
+--
+HB0;2000;9999;VASTATTAVAA
+HB1;2000;2400;OMA PÄÄOMA
+TP2;2000;2020;Peruspääoma
+TP2;2250;2260;Edellisten tilikausien ylijäämä (alijäämä)
+TP2;3000;9999;Tilikauden ylijäämä (alijäämä)
+TB1;2000;2400;3000;9999;Oma pääoma yhteensä
+GB1;2400;2500;TILINPÄÄTÖSSIIRTOJEN KERTYMÄ
+TP2;2400;2450;Poistoero
+TP2;2450;2500;Vapaaehtoiset varaukset
+TB1;2400;2500;Tilinpäätössiirtojen kertymä yhteensä
+GB1;2500;2600;PAKOLLISET VARAUKSET
+TP2;2500;2520;Eläkevaraukset
+TP2;2520;2530;Verovaraukset
+TP2;2530;2590;Muut pakolliset varaukset
+TB1;2500;2600;Pakolliset varaukset yhteensä
+HB1;2600;3000;VIERAS PÄÄOMA
+TP2;2620;2650;2820;2850;Lainat rahoituslaitoksilta
+TP2;2650;2660;2850;2860;Eläkelainat
+TP2;2660;2670;2860;2870;Saadut ennakot
+TP2;2670;2680;2870;2890;Ostovelat
+TP2;2680;2700;2890;2900;Rahoitusvekselit
+TP2;2720;2750;2920;2960;Muut velat
+TP2;2750;2800;2960;3000;Siirtovelat
+TB1;2600;3000;Vieras pääoma yhteensä
+SB0;2000;9999;Vastattavaa yhteensä

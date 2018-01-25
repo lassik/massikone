@@ -1,0 +1,104 @@
+HB0;3000;5000;8000;9000;Varsinainen toiminta
+HB1;3000;4000;Varsinainen toiminnan tuotot
+DP2;3000;4000;Varsinainen toiminnan tuotot
+SB1;3000;4000;Varsinainen toiminnan tuotot yhteensä
+
+HB1;4000;5000;Varsinainen toiminnan kulut
+
+GB2;4000;4200;Henkilöstökulut
+DP3;4000;4200;Henkilöstökulut
+TB2;4000;4200;Henkilöstökulut yhteensä
+
+GB2;8000;9000;Poistot
+DP3;8000;9000;Poistot
+TB2;8000;9000;Poistot yhteensä
+
+GB2;4200;5000;Muut kulut
+
+GB3;4200;4300;Toiminnan kulut
+DP4;4200;4300;Toiminnan kulut
+TB3;4200;4300;Toiminnan kulut yhteensä
+
+GB3;4300;4400;Henkilökunnan kulut
+DP4;4300;4400;Henkilökunnan kulut
+TB3;4300;4400;Henkilökunnan kulut yhteensä
+
+GB3;4400;4500;Toimitilakulut
+DP4;4400;4500;Toimitilakulut
+TB3;4400;4500;Toimitilakulut yhteensä
+
+GB3;4500;4600;Ajoneuvokulut
+DP4;4500;4600;Ajoneuvokulut
+TB3;4500;4600;Ajoneuvokulut yhteensä
+
+GB3;4600;4700;Kone- ja kalustokulut
+DP4;4600;4700;Kone- ja kalustokulut
+TB3;4600;4700;Kone- ja kalustokulut yhteensä
+
+GB3;4700;4800;Matkakulut
+DP4;4700;4800;Matkakulut
+TB3;4700;4800;Matkakulut yhteensä
+
+GB3;4800;4850;Markkinointikulut
+DP4;4800;4850;Markkinointikulut
+TB3;4800;4850;Markkinointikulut yhteensä
+
+GB3;4850;4900;Hallintopalvelut
+DP4;4850;4900;Hallintopalvelut
+TB3;4850;4900;Hallintopalvelut yhteensä
+
+GB3;4900;5000;Muut hallintokulut
+DP4;4900;5000;Muut hallintokulut
+TB3;4900;5000;Muut hallintokulut yhteensä
+
+TB2;4200;5000;Muut kulut yhteensä
+
+SB1;4000;5000;8000;9000;Varsinainen toiminnan kulut yhteensä
+
+SB0;3000;5000;8000;9000;Varsinainen toiminta yhteensä
+-
+SB0;3000;5000;8000;9000;Tuotto-/kulujäämä
+-
+HB0;5000;6000;Varainhankinta
+
+HB1;5000;5050;Varainhankinnan tuotot
+DP2;5000;5050;Varainhankinnan tuotot
+SB1;5000;5050;Varainhankinnan tuotot yhteensä
+
+HB1;5050;6000;Varainhankinnan kulut
+DP2;5050;6000;Varainhankinnan kulut
+SB1;5050;6000;Varainhankinnan kulut yhteensä
+
+SB0;5000;6000;Varainhankinta yhteensä
+-
+SB0;3000;6000;8000;9000;Tuotto-/kulujäämä
+-
+HB0;6000;7000;Sijoitus- ja rahoitustoiminta
+DP1;6000;7000;Sijoitus- ja rahoitustoiminta
+SB0;6000;7000;Sijoitus- ja rahoitustoiminta yhteensä
+-
+SB0;3000;7000;8000;9000;Tuotto-/kulujäämä
+-
+HB0;7000;7500;Satunnaiset erät
+DP1;7000;7500;Satunnaiset erät
+SB0;7000;7500;Satunnaiset erät yhteensä
+-
+HB0;7500;8000;Yleisavustukset
+DP1;7500;8000;Yleisavustukset
+SB0;7500;8000;Yleisavustukset yhteensä
+-
+SB0;3000;9000;Tilikauden tulos
+-
+HB0;9000;9500;Tilinpäätössiirrot
+
+GB1;9000;9010;Poistoeron muutos
+DP2;9000;9010;Poistoeron muutos
+TB1;9000;9010;Poistoeron muutos yhteensä
+
+GB1;9010;9500;Vapaaehtoisten varausten muutos
+DP2;9010;9500;Vapaaehtoisten varausten muutos
+TB1;9010;9500;Vapaaehtoisten varausten muutos
+
+SB0;9000;9500;Tilinpäätössiirrot yhteensä
+-
+SB0;3000;9999;Tilikauden ylijäämä (alijäämä)

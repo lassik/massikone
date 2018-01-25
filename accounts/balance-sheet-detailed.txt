@@ -1,0 +1,194 @@
+HB0;1000;2000;VASTAAVAA
+HB1;1000;1500;PYSYVÄT VASTAAVAT
+GB2;1000;1100;Aineettomat hyödykkeet
+
+GB3;1020;1040;Kehittämismenot
+DP4;1020;1040;Kehittämismenot
+TB3;1020;1040;Kehittämismenot yhteensä
+
+GB3;1040;1050;Aineettomat oikeudet
+DP4;1040;1050;Aineettomat oikeudet
+TB3;1040;1050;Aineettomat oikeudet yhteensä
+
+GB3;1070;1090;Muut pitkävaikutteiset menot
+DP4;1070;1090;Muut pitkävaikutteiset menot
+TB3;1070;1090;Muut pitkävaikutteiset menot yhteensä
+
+GB3;1090;1100;Ennakkomaksut
+DP4;1090;1100;Ennakkomaksut
+TB3;1090;1100;Ennakkomaksut yhteensä
+
+TB2;1000;1100;Aineettomat hyödykkeet yhteensä
+GB2;1100;1400;Aineelliset hyödykkeet
+
+GB3;1100;1120;Maa- ja vesialueet
+DP4;1100;1120;Maa- ja vesialueet
+TB3;1100;1120;Maa- ja vesialueet yhteensä
+
+GB3;1120;1200;Rakennukset ja rakennelmat
+DP4;1120;1200;Rakennukset ja rakennelmat
+TB3;1120;1200;Rakennukset ja rakennelmat yhteensä
+
+GB3;1200;1300;Koneet ja kalusto
+DP4;1200;1300;Koneet ja kalusto
+TB3;1200;1300;Koneet ja kalusto yhteensä
+
+GB3;1300;1350;Muut aineelliset hyödykkeet
+DP4;1300;1350;Muut aineelliset hyödykkeet
+TB3;1300;1350;Muut aineelliset hyödykkeet yhteensä
+
+GB3;1350;1400;Ennakkomaksut ja keskeneräiset hankinnat
+DP4;1350;1400;Ennakkomaksut ja keskeneräiset hankinnat
+TB3;1350;1400;Ennakkomaksut ja keskeneräiset hankinnat yhteensä
+
+TB2;1100;1400;Aineelliset hyödykkeet yhteensä
+GB2;1400;1500;Sijoitukset
+
+GB3;1400;1470;Muut osakkeet ja osuudet
+DP4;1400;1470;Muut osakkeet ja osuudet
+TB3;1400;1470;Muut osakkeet ja osuudet yhteensä
+
+GB3;1470;1500;Muut saamiset
+DP4;1470;1500;Muut saamiset
+TB3;1470;1500;Muut saamiset yhteensä
+
+TB2;1400;1500;Sijoitukset yhteensä
+SB1;1000;1500;Pysyvät vastaavat yhteensä
+-
+HB1;1500;2000;VAIHTUVAT VASTAAVAT
+GB2;1500;1600;Vaihto-omaisuus
+
+GB3;1500;1520;Aineet ja tarvikkeet
+DP4;1500;1520;Aineet ja tarvikkeet
+TB3;1500;1520;Aineet ja tarvikkeet yhteensä
+
+GB3;1520;1530;Keskeneräiset tuotteet
+DP4;1520;1530;Keskeneräiset tuotteet
+TB3;1520;1530;Keskeneräiset tuotteet yhteensä
+
+GB3;1530;1550;Valmiit tuotteet/tavarat
+DP4;1530;1550;Valmiit tuotteet/tavarat
+TB3;1530;1550;Valmiit tuotteet/tavarat yhteensä
+
+GB3;1550;1560;Muu vaihto-omaisuus
+DP4;1550;1560;Muu vaihto-omaisuus
+TB3;1550;1560;Muu vaihto-omaisuus yhteensä
+
+GB3;1560;1570;Ennakkomaksut
+DP4;1560;1570;Ennakkomaksut
+TB3;1560;1570;Ennakkomaksut yhteensä
+
+TB2;1500;1600;Vaihto-omaisuus yhteensä
+GB2;1600;1860;Saamiset
+
+GB3;1600;1640;1700;1730;Myyntisaamiset
+DP4;1600;1640;1700;1730;Myyntisaamiset
+TB3;1600;1640;1700;1730;Myyntisaamiset
+
+GB3;1640;1650;1750;1770;Lainasaamiset
+DP4;1640;1650;1750;1770;Lainasaamiset
+TB3;1640;1650;1750;1770;Lainasaamiset yhteensä
+
+GB3;1650;1660;1770;1780;Muut saamiset
+DP4;1650;1660;1770;1780;Muut saamiset
+TB3;1650;1660;1770;1780;Muut saamiset yhteensä
+
+GB3;1660;1670;1780;1800;Maksamattomat osakkeet/osuudet
+DP4;1660;1670;1780;1800;Maksamattomat osakkeet/osuudet
+TB3;1660;1670;1780;1800;Maksamattomat osakkeet/osuudet yhteensä
+
+GB3;1670;1690;1800;1850;Siirtosaamiset
+DP4;1670;1690;1800;1850;Siirtosaamiset
+TB3;1670;1690;1800;1850;Siirtosaamiset yhteensä
+
+TB2;1600;1860;Saamiset yhteensä
+GB2;1860;1900;Rahoitusarvopaperit
+
+GB3;1860;1880;Muut osakkeet ja osuudet
+DP4;1860;1880;Muut osakkeet ja osuudet
+TB3;1860;1880;Muut osakkeet ja osuudet yhteensä
+
+GB3;1880;1900;Muut arvopaperit
+DP4;1880;1900;Muut arvopaperit
+TB3;1880;1900;Muut arvopaperit yhteensä
+
+TB2;1860;1900;Rahoitusarvopaperit yhteensä
+
+GB2;1900;2000;Rahat ja pankkisaamiset
+DP3;1900;2000;Rahat ja pankkisaamiset
+TB2;1900;2000;Rahat ja pankkisaamiset yhteensä
+
+SB1;1500;2000;Vaihtuvat vastaavat yhteensä
+SB0;1000;2000;Vastaavaa yhteensä
+--
+HB0;2000;9999;VASTATTAVAA
+HB1;2000;2400;OMA PÄÄOMA
+
+GB2;2000;2020;Osake-, osuus- tai muu vastaava pääoma
+DP3;2000;2020;Osake-, osuus- tai muu vastaava pääoma
+TB2;2000;2020;Osake-, osuus- tai muu vastaava pääoma yhteensä
+
+TB2;2250;2260;Edellisten tilikausien ylijäämä (alijäämä)
+SB2;3000;9999;Tilikauden ylijäämä (alijäämä)
+SB1;2000;2400;3000;9999;Oma pääoma yhteensä
+-
+GB1;2400;2500;TILINPÄÄTÖSSIIRTOJEN KERTYMÄ
+
+GB2;2400;2450;Poistoero
+DP3;2400;2450;Poistoero
+TB2;2400;2450;Poistoero yhteensä
+
+GB2;2450;2500;Vapaaehtoiset varaukset
+DP3;2450;2500;Vapaaehtoiset varaukset
+TB2;2450;2500;Vapaaehtoiset varaukset yhteensä
+
+TB1;2400;2500;Tilinpäätössiirtojen kertymä yhteensä
+-
+GB1;2500;2600;PAKOLLISET VARAUKSET
+
+GB2;2500;2520;Eläkevaraukset
+DP3;2500;2520;Eläkevaraukset
+TB2;2500;2520;Eläkevaraukset yhteensä
+
+GB2;2520;2530;Verovaraukset
+DP3;2520;2530;Verovaraukset
+TB2;2520;2530;Verovaraukset yhteensä
+
+GB2;2530;2590;Muut pakolliset varaukset
+DP3;2530;2590;Muut pakolliset varaukset
+TB2;2530;2590;Muut pakolliset varaukset yhteensä
+
+TB1;2500;2600;Pakolliset varaukset yhteensä
+-
+HB1;2600;3000;VIERAS PÄÄOMA
+
+GB2;2620;2650;2820;2850;Lainat rahoituslaitoksilta
+DP3;2620;2650;2820;2850;Lainat rahoituslaitoksilta
+TB2;2620;2650;2820;2850;Lainat rahoituslaitoksilta yhteensä
+
+GB2;2650;2660;2850;2860;Eläkelainat
+DP3;2650;2660;2850;2860;Eläkelainat
+TB2;2650;2660;2850;2860;Eläkelainat yhteensä
+
+GB2;2660;2670;2860;2870;Saadut ennakot
+DP3;2660;2670;2860;2870;Saadut ennakot
+TB2;2660;2670;2860;2870;Saadut ennakot yhteensä
+
+GB2;2670;2680;2870;2890;Ostovelat
+DP3;2670;2680;2870;2890;Ostovelat
+TB2;2670;2680;2870;2890;Ostovelat yhteensä
+
+GB2;2680;2700;2890;2900;Rahoitusvekselit
+DP3;2680;2700;2890;2900;Rahoitusvekselit
+TB2;2680;2700;2890;2900;Rahoitusvekselit yhteensä
+
+GB2;2720;2750;2920;2960;Muut velat
+DP3;2720;2750;2920;2960;Muut velat
+TB2;2720;2750;2920;2960;Muut velat yhteensä
+
+GB2;2750;2800;2960;3000;Siirtovelat
+DP3;2750;2800;2960;3000;Siirtovelat
+TB2;2750;2800;2960;3000;Siirtovelat yhteensä
+
+SB1;2600;3000;Vieras pääoma yhteensä
+SB0;2000;9999;Vastattavaa yhteensä
