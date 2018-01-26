@@ -472,7 +472,7 @@ class Model
     update_bill! bill_id, params
   end
 
-  def get_accounts
+  private def populate_accounts
     if @db[:period].where(period_id: 1).update(period_id: 1) != 1
       @db[:period].insert(period_id: 1)
     end
@@ -486,6 +486,10 @@ class Model
         )
       end
     end
+  end
+
+  def get_accounts
+    populate_accounts
     @db[:period_account].order(:account_id, :nesting_level)
                         .select(:account_id, :title, :nesting_level).map do |a|
       is_account = (a[:nesting_level] == ACCOUNT_NESTING_LEVEL)
