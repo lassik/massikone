@@ -12,6 +12,6 @@ gem 'roda'
 gem 'rubyzip'
 gem 'sequel'
 
-gem 'mysql', group: :mysql
+gem 'mysql2', group: :mysql
 gem 'pg', group: :pg
 gem 'sqlite3', group: :sqlite3
