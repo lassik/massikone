@@ -1,4 +1,4 @@
-FROM ruby:2.2.7-alpine
+FROM ruby:2.4.3-alpine
 
 VOLUME /massikone/data
 EXPOSE 3000
