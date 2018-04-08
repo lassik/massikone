@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+    <title>{{app_title}}</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>{{app_title}}</h1>
+      <h2>{{current_user.full_name}}</h2>
+      <h2>Vertaa tiliotteeseen</h2>
+      <p>Lataa verkkopankista saamasi tiliotteet tälle sivulle. Näet, mille
+        tilitapahtumille ei ole vastaavaa merkintää Massikoneessa.</p>
+      <form>
+        <div class="btn-group">
+          <button class="btn btn-lg btn-success" id="fileUploadButton">Valitse OFX-tiedosto&hellip;</button>
+          <a class="btn btn-lg btn-warning" href="/">Takaisin</a>
+        </div>
+        <input type="file" id="hiddenFileInput" accept=".ofx,text/xml" style="display:none">
+      </form>
+      <table id="entries" class="table"></table>
+      <div class="alert alert-warning">
+        <strong>Tietoturva:</strong> Tiliotteen
+        käsittely tapahtuu kokonaan selaimessasi - tilitietoja ei ladata
+        palvelimelle.
+      </div>
+    </div>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/compare.js"></script>
+  </body>
+</html>

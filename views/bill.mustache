@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-datepicker.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-select.min.css">
+    <title>{{app_title}}</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>{{app_title}}</h1>
+      <h2>{{current_user.full_name}}</h2>
+      {{#bill}}<h2>Lasku #{{bill_id}}</h2>{{/bill}}
+      {{^bill}}<h2>Uusi lasku</h2>{{/bill}}
+      <form id="bill-form" enctype="multipart/form-data"
+            {{#bill}}method="POST" action="/bill/{{bill_id}}"{{/bill}}
+            {{^bill}}method="POST" action="/bill"{{/bill}}>
+        <div class="btn-group">
+          <input type="submit" class="btn btn-lg btn-success" value="Tallenna">
+          <a class="btn btn-lg btn-warning" href="/{{#bill}}bill/{{bill_id}}{{/bill}}">Peruuta</a>
+          <a class="btn btn-lg btn-info" href="/">Takaisin</a>
+          {{#bill}}
+          {{#prev_bill_id}}
+          <a class="btn btn-lg btn-primary" href="/bill/{{prev_bill_id}}">
+            <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
+          </a>
+          {{/prev_bill_id}}
+          {{^prev_bill_id}}
+          <button class="btn btn-lg btn-primary disabled">
+            <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
+          </button>
+          {{/prev_bill_id}}
+          {{#next_bill_id}}
+          <a class="btn btn-lg btn-primary" href="/bill/{{next_bill_id}}">
+            <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
+          </a>
+          {{/next_bill_id}}
+          {{^next_bill_id}}
+          <button class="btn btn-lg btn-primary disabled">
+            <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
+          </button>
+          {{/next_bill_id}}
+          {{/bill}}
+        </div>
+        <table class="table table-striped">
+          <tr>
+            <th>Maksaja:</th>
+            <td>
+              {{#admin}}
+              <select class="form-control" name="paid_user_id" value="{{#bill}}{{paid_user_id}}{{/bill}}">
+                <option value=""></option>
+                {{#users}}
+                <option value="{{user_id}}" {{#is_paid_user}}selected{{/is_paid_user}}>{{full_name}}</option>
+                {{/users}}
+              </select>
+              {{/admin}}
+              {{^admin}}
+              {{#bill}}{{paid_user_full_name}}{{/bill}}
+              {{^bill}}{{current_user.full_name}}{{/bill}}
+              {{/admin}}
+            </td>
+          </tr>
+          {{#admin}}
+          <tr>
+            <th>Maksupäivä:</th>
+            <td>
+              <input type="text" class="datepicker"
+                     data-provide="datepicker" data-date-language="fi"
+                     name="paid_date_fi"
+                     value="{{#bill}}{{paid_date_fi}}{{/bill}}">
+            </td>
+          </tr>
+          {{/admin}}
+          <tr>
+            <th>Kuva:</th>
+            <td>
+              <button type="button" class="btn" id="image-select-button">Valitse kuva...</button>
+              <button type="button" class="btn" id="image-remove-button">Poista kuva</button>
+              <button type="button" class="btn" id="image-rotate-button">Kierrä 90&deg;</button>
+              <div class="progress" id="image-upload-progress" style="display: none">
+                <div id="image-upload-progress-bar" class="progress-bar"
+                     role="progressbar" aria-valuenow="0"
+                     aria-valuemin="0" aria-valuemax="100"
+                     style="width: 0%;"></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Kulun selvennys:</th>
+            <td><textarea name="description" cols="80" rows="4">{{#bill}}{{description}}{{/bill}}</textarea></td>
+          </tr>
+          {{#admin}}
+          <tr>
+            <th>Summa:</th>
+            <td>
+              <input type="text" name="amount"
+                     value="{{#bill}}{{amount}}{{/bill}}"> &euro;
+            </td>
+          </tr>
+          <tr>
+            <th>Tilit kirjanpidossa:</th>
+            <td>
+              <table class="table">
+                <tr>
+                  <th>Credit (tililtä):</th>
+                  <td>
+                    <select class="selectpicker" data-width="auto" data-live-search="true" name="credit_account_id">
+                      <option value=""></option>
+                      {{#credit_accounts}}
+                      <option value="{{account_id}}" {{#selected}}selected{{/selected}}>{{prefix}} {{title}}</option>
+                      {{/credit_accounts}}
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>Debet (tilille):</th>
+                  <td>
+                    <select class="selectpicker" data-width="auto" data-live-search="true" name="debit_account_id">
+                      <option value=""></option>
+                      {{#debit_accounts}}
+                      <option value="{{account_id}}" {{#selected}}selected{{/selected}}>{{prefix}} {{title}}</option>
+                      {{/debit_accounts}}
+                    </select>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Tila:</th>
+            <td>
+              <button type="button" class="btn btn-success">Merkkaa maksetuksi</button>
+              <button type="button" class="btn btn-danger">Poista</button>
+            </td>
+          </tr>
+          {{/admin}}
+        </table>
+        <input type="hidden" id="image-id" name="image_id"
+               value="{{#bill}}{{#images}}{{image_id}}{{/images}}{{/bill}}">
+      </form>
+      <form id="image-upload-form" enctype="multipart/form-data"
+            style="display: none">
+        <input type="file" name="file" id="image-upload-file"
+               accept=".jpeg,.jpg,.png,image/jpeg,image/png">
+      </form>
+      <div id="bill-image-container">
+        {{#bill}}{{#images}}{{#image_id}}
+        <img src="/api/userimage/{{image_id}}">
+        {{/image_id}}{{/images}}{{/bill}}
+      </div>
+      <div id="bill-image-placeholder" class="well">
+        <ul>
+          <li>Valitse kameralla, skannerilla tai <a target="_blank"
+                                                    href="https://www.take-a-screenshot.org/">ruudunkaappauksella</a>
+            otettu kuva laskusta tai kuitista. Tuetut tiedostomuodot ovat JPEG ja
+            PNG.</li>
+          <li>Kuvasta täytyy näkyä <b>päivämäärä</b> ja <b>summa</b>. Kuittia saa täydentää käsin kirjoittamalla.</li>
+          <li>
+            Tapahtuma dokumentoidaan sellaisella tarkkuudella, että lukija,
+            joka ei tapahtumasta etukäteen tiedä mitään, saa tositetta
+            lukemalla selville olennaiset asiat: milloin tapahtuma sattui,
+            ketkä olivat osallisia, mitä myytiin tai ostettiin tms, ja miten
+            tapahtuma liittyi yhdistyksen toimintaan. Tositteeseen pitää
+            dokumentoida myös tapahtuman
+            raha-arvo. <a href="http://antti-juhani.kaijanaho.fi/newblog/archives/791">[Lähde]</a>.
+          </li>
+          <li>Valokuvaamiseen suositellaan salamaa.</li>
+          <li>Useampi kuva täytyy yhdistää yhdeksi. Androidille
+            suositellaan <a target="_blank"
+                            href="https://play.google.com/store/apps/details?id=com.zombodroid.imagecombinerfree">Image
+              Combiner -sovellusta</a>.</li>
+        </ul>
+      </div>
+      <script src="/static/js/jquery.min.js"></script>
+      <script src="/static/js/bootstrap.min.js"></script>
+      <script src="/static/js/bootstrap-datepicker.min.js"></script>
+      <script src="/static/js/bootstrap-datepicker.fi.min.js"></script>
+      <script src="/static/js/bootstrap-select.min.js"></script>
+      <script src="/static/js/bootstrap-select.fi.min.js"></script>
+      <script src="/static/js/jq-ajax-progress.min.js"></script>
+      <script src="/static/js/bill.js"></script>
+    </div>
+  </body>
+</html>

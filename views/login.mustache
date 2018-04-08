@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+    <title>{{app_title}}</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>{{app_title}}</h1>
+      {{#message}}
+      <div>{{message}}</div>
+      {{/message}}
+      <a class="btn btn-info" href="/auth/google_oauth2">Sisään Google-tunnuksella</a>
+      <script src="/static/js/jquery.min.js"></script>
+      <script src="/static/js/bootstrap.min.js"></script>
+    </div>
+  </body>
+</html>
