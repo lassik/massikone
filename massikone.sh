@@ -5,5 +5,5 @@ export GOPATH=$PWD
 export PATH=$PWD/bin:$PATH
 set -x
 packr
-go build image.go massikone.go model.go reports.go util.go
+go build
 packr clean

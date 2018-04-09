@@ -1,4 +1,4 @@
-package main
+package reports
 
 import (
 	"archive/zip"
@@ -8,9 +8,17 @@ import (
 	"path"
 
 	"github.com/jung-kurt/gofpdf"
+
+	"../model"
 )
 
 type GetWriter func(mimeType, filename string) (io.Writer, error)
+
+func check(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func generateFilename(document string) string {
 	year := "2018" // TODO
@@ -31,36 +39,36 @@ func blankPdf(getWriter GetWriter, filename string) {
 	check(err)
 }
 
-func ReportIncomeStatementPdf(getWriter GetWriter) {
+func IncomeStatementPdf(getWriter GetWriter) {
 	blankPdf(getWriter, "tuloslaskelma")
 }
 
-func ReportIncomeStatementDetailedPdf(getWriter GetWriter) {
+func IncomeStatementDetailedPdf(getWriter GetWriter) {
 	blankPdf(getWriter, "tuloslaskelma erittelyin")
 }
 
-func ReportBalanceSheetPdf(getWriter GetWriter) {
+func BalanceSheetPdf(getWriter GetWriter) {
 	blankPdf(getWriter, "tase")
 }
 
-func ReportBalanceSheetDetailedPdf(getWriter GetWriter) {
+func BalanceSheetDetailedPdf(getWriter GetWriter) {
 	blankPdf(getWriter, "tase erittelyin")
 }
 
-func ReportGeneralJournalPdf(getWriter GetWriter) {
+func GeneralJournalPdf(getWriter GetWriter) {
 	blankPdf(getWriter, "päiväkirja")
 }
 
-func ReportGeneralLedgerPdf(getWriter GetWriter) {
+func GeneralLedgerPdf(getWriter GetWriter) {
 	blankPdf(getWriter, "pääkirja")
 }
 
-func ReportChartOfAccountsPdf(getWriter GetWriter) {
+func ChartOfAccountsPdf(getWriter GetWriter) {
 	blankPdf(getWriter, "tilikartta")
 }
 
 func addBillImagesToZip(getWriter GetWriter) {
-	images, missing := modelGetBillsForImages()
+	images, missing := model.GetBillsForImages()
 	for _, image := range images {
 		if image["image_id"] != nil {
 			w, err := getWriter(
@@ -88,7 +96,7 @@ func addBillImagesToZip(getWriter GetWriter) {
 	}
 }
 
-func ReportFullStatementZip(getWriter GetWriter) {
+func FullStatementZip(getWriter GetWriter) {
 	zipFilename := generateFilename("tilinpaatos")
 	zipBasename := path.Base(zipFilename)
 	outerWriter, err := getWriter("application/zip", zipFilename)
@@ -100,8 +108,8 @@ func ReportFullStatementZip(getWriter GetWriter) {
 	writeToZip := func(_, filename string) (io.Writer, error) {
 		return zipWriter.Create(zipBasename + "/" + filename)
 	}
-	ReportGeneralJournalPdf(writeToZip)
-	ReportChartOfAccountsPdf(writeToZip)
+	GeneralJournalPdf(writeToZip)
+	ChartOfAccountsPdf(writeToZip)
 	addBillImagesToZip(writeToZip)
 	err = zipWriter.Close()
 	if err != nil {

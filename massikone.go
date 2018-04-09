@@ -14,6 +14,9 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/gplus"
+
+	"./model"
+	"./reports"
 )
 
 const sessionCurrentUser = "current_user"
@@ -62,7 +65,7 @@ func getAppTitle() string {
 	return organization + " Massikone"
 }
 
-func setCurrentUser(w http.ResponseWriter, r *http.Request, id string) {
+func setCurrentUserId(w http.ResponseWriter, r *http.Request, id string) {
 	session, _ := store.Get(r, sessionName)
 	if id == "" {
 		delete(session.Values, sessionCurrentUser)
@@ -72,7 +75,7 @@ func setCurrentUser(w http.ResponseWriter, r *http.Request, id string) {
 	session.Save(r, w)
 }
 
-func getCurrentUser(r *http.Request) string {
+func getCurrentUserId(r *http.Request) string {
 	session, _ := store.Get(r, sessionName)
 	if id, ok := session.Values[sessionCurrentUser]; ok {
 		if sid, ok := id.(string); ok {
@@ -89,23 +92,23 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, err)
 		return
 	}
-	setCurrentUser(w, r, user.Name)
+	setCurrentUserId(w, r, user.Name)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func postLogout(w http.ResponseWriter, r *http.Request) {
-	setCurrentUser(w, r, "")
+	setCurrentUserId(w, r, "")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
-	user := getCurrentUser(r)
+	user := getCurrentUserId(r)
 	if user == "" {
 		w.Write([]byte(loginTemplate.Render(
 			map[string]string{"app_title": getAppTitle()})))
 		return
 	}
-	bills := ModelGetBills()
+	bills := model.GetBills()
 	w.Write([]byte(billsTemplate.Render(
 		map[string]interface{}{
 			"app_title": getAppTitle(),
@@ -119,9 +122,9 @@ func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillId(w http.ResponseWriter, r *http.Request) {
-	//accounts := ModelGetAccounts(false)
+	//accounts := model.GetAccounts(false)
 	billId := r.URL.Query().Get(":billId")
-	bill, err := ModelGetBillId(billId)
+	bill, err := model.GetBillId(billId)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -135,7 +138,7 @@ func getBillId(w http.ResponseWriter, r *http.Request) {
 
 func putBillId(w http.ResponseWriter, r *http.Request) {
 	billId := r.URL.Query().Get(":billId")
-	err := ModelPutBillId(billId, r)
+	err := model.PutBillId(billId, r)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -156,7 +159,7 @@ func getBill(w http.ResponseWriter, r *http.Request) {
 }
 
 func postBill(w http.ResponseWriter, r *http.Request) {
-	billId, err := ModelPostBill(r)
+	billId, err := model.PostBill(r)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -169,9 +172,9 @@ func getCompare(w http.ResponseWriter, r *http.Request) {
 		map[string]string{"app_title": getAppTitle()})))
 }
 
-func getUserImageRotated(w http.ResponseWriter, r *http.Request) {
+func getImageRotated(w http.ResponseWriter, r *http.Request) {
 	imageId := r.URL.Query().Get(":imageId")
-	rotatedImageId, err := ModelGetUserImageRotated(imageId)
+	rotatedImageId, err := model.GetImageRotated(imageId)
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -181,9 +184,9 @@ func getUserImageRotated(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO: http header, esp. caching
-func getUserImage(w http.ResponseWriter, r *http.Request) {
+func getImage(w http.ResponseWriter, r *http.Request) {
 	imageId := r.URL.Query().Get(":imageId")
-	imageData, imageMimeType, err := ModelGetUserImage(imageId)
+	imageData, imageMimeType, err := model.GetImage(imageId)
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -192,14 +195,14 @@ func getUserImage(w http.ResponseWriter, r *http.Request) {
 	w.Write(imageData)
 }
 
-func postUserImage(w http.ResponseWriter, r *http.Request) {
+func postImage(w http.ResponseWriter, r *http.Request) {
 	file, _, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
-	imageId, err := ModelPostUserImage(file)
+	imageId, err := model.PostImage(file)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -208,49 +211,86 @@ func postUserImage(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(imageId))
 }
 
-func wGetter(generate func(GetWriter)) func(w http.ResponseWriter, r *http.Request) {
+func report(generate func(reports.GetWriter)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		generate(func(mimeType, filename string) (io.Writer, error) {
 			w.Header().Set("Content-Type", mimeType)
 			w.Header().Set("Content-Disposition",
-				fmt.Sprintf("attachment; filename=\"%s.zip\"",
-					filename))
+				fmt.Sprintf("attachment; filename=%q", filename))
 			return w, nil
 		})
 	}
 }
 
+func allUsers(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId := getCurrentUserId(r)
+		if userId != "" {
+			handler(w, r)
+			return
+		}
+		http.Error(w, http.StatusText(http.StatusUnauthorized),
+			http.StatusUnauthorized)
+	}
+}
+
+func adminOnly(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		isAdmin := true
+		if isAdmin {
+			handler(w, r)
+			return
+		}
+		http.Error(w, http.StatusText(http.StatusUnauthorized),
+			http.StatusUnauthorized)
+	}
+}
+
 func main() {
 	p := pat.New()
+
 	p.Get(`/api/userimage/rotated/{imageId:[0-9a-f]{40}\.(?:jpeg|png)}`,
-		getUserImageRotated)
-	p.Get(`/api/userimage/{imageId:[0-9a-f]{40}\.(?:jpeg|png)}`, getUserImage)
-	p.Post("/api/userimage", postUserImage)
-	p.Get("/auth/{provider}/callback", authCallbackHandler)
-	p.Get("/auth/{provider}", gothic.BeginAuthHandler)
-	p.Post("/logout", postLogout)
-	p.Get("/compare", getCompare)
-	p.Get("/bill/{billId:[0-9]+}", getBillId)
-	p.Put("/bill/{billId:[0-9]+}", putBillId)
-	p.Get("/bill", getBill)
-	p.Post("/bill", postBill)
-	p.Get("/report/income-statement",
-		wGetter(ReportIncomeStatementPdf))
-	p.Get("/report/income-statement-detailed",
-		wGetter(ReportIncomeStatementDetailedPdf))
-	p.Get("/report/balance-sheet",
-		wGetter(ReportBalanceSheetPdf))
-	p.Get("/report/balance-sheet-detailed",
-		wGetter(ReportBalanceSheetDetailedPdf))
-	p.Get("/report/general-journal",
-		wGetter(ReportGeneralJournalPdf))
-	p.Get("/report/general-ledger",
-		wGetter(ReportGeneralLedgerPdf))
-	p.Get("/report/chart-of-accounts",
-		wGetter(ReportChartOfAccountsPdf))
-	p.Get("/report/full-statement",
-		wGetter(ReportFullStatementZip))
-	p.Get("/", getBillsOrLogin)
+		allUsers(getImageRotated))
+	p.Get(`/api/userimage/{imageId:[0-9a-f]{40}\.(?:jpeg|png)}`,
+		allUsers(getImage))
+	p.Post(`/api/userimage`,
+		allUsers(postImage))
+	p.Get(`/bill/{billId:[0-9]+}`,
+		allUsers(getBillId))
+	p.Put(`/bill/{billId:[0-9]+}`,
+		allUsers(putBillId))
+	p.Get(`/bill`,
+		allUsers(getBill))
+	p.Post(`/bill`,
+		allUsers(postBill))
+
+	//p.Put(`/api/preferences`,
+	//	adminOnly(model.PutPreferences))
+	//p.Get(`/api/compare`,
+	//	adminOnly(model.GetBillsForCompare))
+	p.Get(`/compare`,
+		adminOnly(getCompare))
+	p.Get(`/report/income-statement`,
+		adminOnly(report(reports.IncomeStatementPdf)))
+	p.Get(`/report/income-statement-detailed`,
+		adminOnly(report(reports.IncomeStatementDetailedPdf)))
+	p.Get(`/report/balance-sheet`,
+		adminOnly(report(reports.BalanceSheetPdf)))
+	p.Get(`/report/balance-sheet-detailed`,
+		adminOnly(report(reports.BalanceSheetDetailedPdf)))
+	p.Get(`/report/general-journal`,
+		adminOnly(report(reports.GeneralJournalPdf)))
+	p.Get(`/report/general-ledger`,
+		adminOnly(report(reports.GeneralLedgerPdf)))
+	p.Get(`/report/chart-of-accounts`,
+		adminOnly(report(reports.ChartOfAccountsPdf)))
+	p.Get(`/report/full-statement`,
+		adminOnly(report(reports.FullStatementZip)))
+
+	p.Get(`/auth/{provider}/callback`, authCallbackHandler)
+	p.Get(`/auth/{provider}`, gothic.BeginAuthHandler)
+	p.Post(`/logout`, postLogout)
+	p.Get(`/`, getBillsOrLogin)
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/",
