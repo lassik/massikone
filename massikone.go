@@ -117,38 +117,110 @@ func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
 		})))
 }
 
-func getBill(w http.ResponseWriter, r *http.Request) {
-	//user := getCurrentUser(r)
+func getBillId(w http.ResponseWriter, r *http.Request) {
+	billId := r.URL.Query().Get(":billId")
+	bill, err := ModelGetBillId(billId)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
 	w.Write([]byte(billTemplate.Render(
-		map[string]string{"app_title": getAppTitle()})))
+		map[string]interface{}{
+			"app_title": getAppTitle(),
+			"bill":      bill,
+		})))
+}
+
+func putBillId(w http.ResponseWriter, r *http.Request) {
+	billId := r.URL.Query().Get(":billId")
+	err := ModelPutBillId(billId, r)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	http.Redirect(w, r, "/bill/"+billId, http.StatusSeeOther)
+}
+
+func getBill(w http.ResponseWriter, r *http.Request) {
+	// accounts = model.get_accounts
+	w.Write([]byte(billTemplate.Render(
+		map[string]string{
+			"app_title": getAppTitle(),
+			// current_user: model.user,
+			// admin: admin_data,
+			// credit_accounts: accounts,
+			// debit_accounts: accounts
+		})))
+}
+
+func postBill(w http.ResponseWriter, r *http.Request) {
+	billId, err := ModelPostBill(r)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	http.Redirect(w, r, "/bill/"+billId, http.StatusSeeOther)
 }
 
 func getCompare(w http.ResponseWriter, r *http.Request) {
-	//user := getCurrentUser(r)
 	w.Write([]byte(compareTemplate.Render(
 		map[string]string{"app_title": getAppTitle()})))
 }
 
-func getUserImage(w http.ResponseWriter, r *http.Request) {
-	// TODO: http header, esp. caching
+func getUserImageRotated(w http.ResponseWriter, r *http.Request) {
 	imageId := r.URL.Query().Get(":imageId")
-	imageData, err := ModelGetImageData(imageId)
+	rotatedImageId, err := ModelGetUserImageRotated(imageId)
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
-	w.Header().Set("Content-Type", "image/jpeg") //TODO
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte(rotatedImageId))
+}
+
+// TODO: http header, esp. caching
+func getUserImage(w http.ResponseWriter, r *http.Request) {
+	imageId := r.URL.Query().Get(":imageId")
+	imageData, imageMimeType, err := ModelGetUserImage(imageId)
+	if err != nil {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", imageMimeType)
 	w.Write(imageData)
+}
+
+func postUserImage(w http.ResponseWriter, r *http.Request) {
+	//r.ParseMultipartForm(32 << 20)
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+	imageId, err := ModelPostUserImage(file)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte(imageId))
 }
 
 func main() {
 	p := pat.New()
+	p.Get(`/api/userimage/rotated/{imageId:[0-9a-f]{40}\.(?:jpeg|png)}`,
+		getUserImageRotated)
 	p.Get(`/api/userimage/{imageId:[0-9a-f]{40}\.(?:jpeg|png)}`, getUserImage)
+	p.Post("/api/userimage", postUserImage)
 	p.Get("/auth/{provider}/callback", authCallbackHandler)
 	p.Get("/auth/{provider}", gothic.BeginAuthHandler)
 	p.Post("/logout", postLogout)
 	p.Get("/compare", getCompare)
+	p.Get("/bill/{billId:[0-9]+}", getBillId)
+	p.Put("/bill/{billId:[0-9]+}", putBillId)
 	p.Get("/bill", getBill)
+	p.Post("/bill", postBill)
 	p.Get("/", getBillsOrLogin)
 
 	mux := http.NewServeMux()
