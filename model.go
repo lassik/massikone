@@ -10,11 +10,15 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/xo/dburl"
 )
+
+const AccountNestingLevel = 9
 
 var databaseUrl = os.Getenv("DATABASE_URL")
 var db *sql.DB
@@ -25,14 +29,6 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func createGreetings() {
-	_, err := db.Exec(
-		"create table if not exists greetings (greeting text)",
-		nil,
-	)
-	check(err)
 }
 
 func ModelGetUserImageRotated(imageId string) (string, error) {
@@ -51,18 +47,10 @@ func ModelGetUserImageRotated(imageId string) (string, error) {
 }
 
 func ModelGetUserImage(imageId string) ([]byte, string, error) {
-	rows, err := sq.Select("image_data").From("image").
-		Where(sq.Eq{"image_id": imageId}).RunWith(db).Limit(1).Query()
-	if err != nil {
-		log.Print(err)
-		return []byte{}, "", err
-	}
-	defer rows.Close()
 	var imageData []byte
-	for rows.Next() {
-		check(rows.Scan(&imageData))
-	}
-	check(rows.Err())
+	check(sq.Select("image_data").From("image").
+		Where(sq.Eq{"image_id": imageId}).
+		RunWith(db).Limit(1).QueryRow().Scan(&imageData))
 	imageMimeType := mime.TypeByExtension(path.Ext(imageId))
 	return imageData, imageMimeType, nil
 }
@@ -119,6 +107,48 @@ func ModelPostUserImage(reader io.Reader) (string, error) {
 	return modelStoreUserImage(imageId, imageData)
 }
 
+func ModelGetAccounts(usedOnly bool) []map[string]interface{} {
+	//populateAccounts()
+	rows, err := sq.Select("account_id, title, nesting_level").
+		From("period_account").OrderBy("account_id, nesting_level").
+		RunWith(db).Query()
+	check(err)
+	defer rows.Close()
+	var accounts []map[string]interface{}
+	for rows.Next() {
+		var account_id string
+		var title string
+		var nesting_level int
+		check(rows.Scan(&account_id, &title, &nesting_level))
+		is_account := (nesting_level == AccountNestingLevel)
+		dash_level, htag_level := 0, ""
+		if !is_account {
+			dash_level = 1 + nesting_level
+			htag_level = strconv.Itoa(2 + nesting_level)
+		}
+		prefix := account_id
+		if !is_account {
+			prefix = strings.Repeat("=", dash_level)
+		}
+		account_id_or_nil := ""
+		if is_account {
+			account_id_or_nil = account_id
+		}
+		accounts = append(accounts,
+			map[string]interface{}{
+				"raw_account_id": account_id,
+				"account_id":     account_id_or_nil,
+				"title":          title,
+				"prefix":         prefix,
+				"htag_level":     htag_level,
+			})
+	}
+	if usedOnly {
+		//accounts = reject_unused_accounts(accounts, @db[:bill_entry].select(:account_id).order(:account_id).distinct.map(:account_id))
+	}
+	return accounts
+}
+
 func withPaidUser(bill sq.SelectBuilder) sq.SelectBuilder {
 	return bill.LeftJoin("user as paid_user on (paid_user.user_id = bill.paid_user_id)").
 		Columns("paid_user_id", "paid_user.full_name as paid_user_full_name")
@@ -154,8 +184,8 @@ func ModelGetBills() interface{} {
 		var paid_user_full_name string
 		check(rows.Scan(&bill_id, &paid_date, &closed_date,
 			&description, &paid_user_id, &paid_user_full_name))
-		paid_date_fi := fi_from_iso_date(paid_date.String)
-		closed_date_fi := fi_from_iso_date(closed_date.String)
+		paid_date_fi := FiFromIsoDate(paid_date.String)
+		closed_date_fi := FiFromIsoDate(closed_date.String)
 		bills = append(bills, map[string]interface{}{
 			"bill_id":             bill_id,
 			"paid_date":           paid_date,
@@ -171,8 +201,78 @@ func ModelGetBills() interface{} {
 	return bills
 }
 
+func modelGetBillsForImages() ([]map[string]interface{}, []int) {
+	rows, err := sq.Select("bill.bill_id, bill_image_num, image.image_id, description, image_data").
+		From("bill").
+		LeftJoin("bill_image on bill_id = bill_id").
+		LeftJoin("image on image_id = image_id").
+		OrderBy("bill.bill_id, bill_image_num").
+		RunWith(db).Query()
+	check(err)
+	defer rows.Close()
+	var images []map[string]interface{}
+	var missing []int
+	for rows.Next() {
+		var bill_id string
+		var bill_image_num int
+		var image_id string
+		var description string
+		var image_data []byte
+		check(rows.Scan(&bill_id, &bill_image_num, &image_id,
+			&description, &image_data))
+		images = append(images, map[string]interface{}{
+			"bill_id":        bill_id,
+			"bill_image_num": bill_image_num,
+			"image_id":       image_id,
+			"description":    description,
+			"image_data":     image_data,
+		})
+	}
+	return images, missing
+}
+
+func modelGetBillImages(billId string) []map[string]string {
+	rows, err := sq.Select("image_id").From("bill_image").
+		Where(sq.Eq{"bill_id": billId}).
+		OrderBy("bill_image_num").RunWith(db).Query()
+	check(err)
+	defer rows.Close()
+	var images []map[string]string
+	for rows.Next() {
+		var image_id string
+		check(rows.Scan(&image_id))
+		images = append(images, map[string]string{"image_id": image_id})
+	}
+	return images
+}
+
 func ModelGetBillId(billId string) (map[string]interface{}, error) {
-	return map[string]interface{}{}, errors.New("foo")
+	var bill_id int
+	var paid_date sql.NullString
+	var closed_date sql.NullString
+	var description string
+	var paid_user_id int
+	var paid_user_full_name string
+	q := sq.Select("bill_id, paid_date, closed_date, description").
+		From("bill").Where(sq.Eq{"bill_id": billId})
+	q = withPaidUser(q)
+	q = withCents(q)
+	check(q.RunWith(db).Limit(1).QueryRow().Scan(
+		&bill_id, &paid_date, &closed_date,
+		&description, &paid_user_id, &paid_user_full_name))
+	paid_date_fi := FiFromIsoDate(paid_date.String)
+	closed_date_fi := FiFromIsoDate(closed_date.String)
+	return map[string]interface{}{
+		"bill_id":             bill_id,
+		"paid_date":           paid_date,
+		"paid_date_fi":        paid_date_fi,
+		"closed_date":         closed_date,
+		"closed_date_fi":      closed_date_fi,
+		"description":         description,
+		"paid_user_id":        paid_user_id,
+		"paid_user_full_name": paid_user_full_name,
+		"images":              modelGetBillImages(billId),
+	}, nil
 }
 
 func ModelPutBillId(billId string, r *http.Request) error {

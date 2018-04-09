@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -118,6 +119,7 @@ func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillId(w http.ResponseWriter, r *http.Request) {
+	//accounts := ModelGetAccounts(false)
 	billId := r.URL.Query().Get(":billId")
 	bill, err := ModelGetBillId(billId)
 	if err != nil {
@@ -191,7 +193,6 @@ func getUserImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func postUserImage(w http.ResponseWriter, r *http.Request) {
-	//r.ParseMultipartForm(32 << 20)
 	file, _, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -205,6 +206,18 @@ func postUserImage(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte(imageId))
+}
+
+func wGetter(generate func(GetWriter)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		generate(func(mimeType, filename string) (io.Writer, error) {
+			w.Header().Set("Content-Type", mimeType)
+			w.Header().Set("Content-Disposition",
+				fmt.Sprintf("attachment; filename=\"%s.zip\"",
+					filename))
+			return w, nil
+		})
+	}
 }
 
 func main() {
@@ -221,6 +234,22 @@ func main() {
 	p.Put("/bill/{billId:[0-9]+}", putBillId)
 	p.Get("/bill", getBill)
 	p.Post("/bill", postBill)
+	p.Get("/report/income-statement",
+		wGetter(ReportIncomeStatementPdf))
+	p.Get("/report/income-statement-detailed",
+		wGetter(ReportIncomeStatementDetailedPdf))
+	p.Get("/report/balance-sheet",
+		wGetter(ReportBalanceSheetPdf))
+	p.Get("/report/balance-sheet-detailed",
+		wGetter(ReportBalanceSheetDetailedPdf))
+	p.Get("/report/general-journal",
+		wGetter(ReportGeneralJournalPdf))
+	p.Get("/report/general-ledger",
+		wGetter(ReportGeneralLedgerPdf))
+	p.Get("/report/chart-of-accounts",
+		wGetter(ReportChartOfAccountsPdf))
+	p.Get("/report/full-statement",
+		wGetter(ReportFullStatementZip))
 	p.Get("/", getBillsOrLogin)
 
 	mux := http.NewServeMux()

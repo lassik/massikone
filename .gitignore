@@ -1,2 +1,6 @@
 /*-packr.go
+/bin/
+/data/
 /massikone
+/pkg/
+/src/
