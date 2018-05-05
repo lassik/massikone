@@ -5,5 +5,5 @@ export GOPATH=$PWD
 export PATH=$PWD/bin:$PATH
 set -x
 packr
-go build
+go build -o massikone
 packr clean

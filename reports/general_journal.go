@@ -1,7 +1,9 @@
 package reports
 
-import ()
+import (
+	"../model"
+)
 
-func GeneralJournalPdf(getWriter GetWriter) {
+func GeneralJournalPdf(m *model.Model, getWriter GetWriter) {
 	blankPdf(getWriter, "päiväkirja")
 }

@@ -1,11 +1,13 @@
 package reports
 
-import ()
+import (
+        "../model"
+)
 
-func BalanceSheetPdf(getWriter GetWriter) {
+func BalanceSheetPdf(m *model.Model, getWriter GetWriter) {
 	blankPdf(getWriter, "tase")
 }
 
-func BalanceSheetDetailedPdf(getWriter GetWriter) {
+func BalanceSheetDetailedPdf(m *model.Model, getWriter GetWriter) {
 	blankPdf(getWriter, "tase erittelyin")
 }

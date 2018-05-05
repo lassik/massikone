@@ -32,7 +32,7 @@ func withCents(bill sq.SelectBuilder) sq.SelectBuilder {
 	// }
 }
 
-func GetBills() interface{} {
+func (m *Model) GetBills() interface{} {
 	q := sq.Select("bill_id, paid_date, closed_date, description").
 		From("bill").OrderBy("bill_id, description")
 	q = withPaidUser(q)
@@ -67,7 +67,7 @@ func GetBills() interface{} {
 	return bills
 }
 
-func GetBillsForImages() ([]map[string]interface{}, []int) {
+func (m *Model) GetBillsForImages() ([]map[string]interface{}, []int) {
 	rows, err := sq.Select("bill.bill_id, bill_image_num, image.image_id, description, image_data").
 		From("bill").
 		LeftJoin("bill_image on bill_id = bill_id").
@@ -97,9 +97,9 @@ func GetBillsForImages() ([]map[string]interface{}, []int) {
 	return images, missing
 }
 
-func GetBillImages(billId string) []map[string]string {
+func (m *Model) getBillImages(billID int) []map[string]string {
 	rows, err := sq.Select("image_id").From("bill_image").
-		Where(sq.Eq{"bill_id": billId}).
+		Where(sq.Eq{"bill_id": billID}).
 		OrderBy("bill_image_num").RunWith(db).Query()
 	check(err)
 	defer rows.Close()
@@ -112,7 +112,8 @@ func GetBillImages(billId string) []map[string]string {
 	return images
 }
 
-func GetBillId(billId string) (map[string]interface{}, error) {
+func (m *Model) GetBillID(billIDString string) (map[string]interface{}, error) {
+	billID := parsePositiveInt("bill ID", billIDString)
 	var bill_id int
 	var paid_date sql.NullString
 	var closed_date sql.NullString
@@ -120,12 +121,16 @@ func GetBillId(billId string) (map[string]interface{}, error) {
 	var paid_user_id int
 	var paid_user_full_name string
 	q := sq.Select("bill_id, paid_date, closed_date, description").
-		From("bill").Where(sq.Eq{"bill_id": billId})
+		From("bill").Where(sq.Eq{"bill_id": billID})
 	q = withPaidUser(q)
 	q = withCents(q)
-	check(q.RunWith(db).Limit(1).QueryRow().Scan(
+	err := q.RunWith(db).Limit(1).QueryRow().Scan(
 		&bill_id, &paid_date, &closed_date,
-		&description, &paid_user_id, &paid_user_full_name))
+		&description, &paid_user_id, &paid_user_full_name)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	check(err)
 	paid_date_fi := FiFromIsoDate(paid_date.String)
 	closed_date_fi := FiFromIsoDate(closed_date.String)
 	return map[string]interface{}{
@@ -137,14 +142,14 @@ func GetBillId(billId string) (map[string]interface{}, error) {
 		"description":         description,
 		"paid_user_id":        paid_user_id,
 		"paid_user_full_name": paid_user_full_name,
-		"images":              GetBillImages(billId),
+		"images":              m.getBillImages(billID),
 	}, nil
 }
 
-func PutBillId(billId string, r *http.Request) error {
+func (m *Model) PutBillID(billID string, r *http.Request) error {
 	return errors.New("foo")
 }
 
-func PostBill(r *http.Request) (string, error) {
+func (m *Model) PostBill(r *http.Request) (string, error) {
 	return "", errors.New("foo")
 }

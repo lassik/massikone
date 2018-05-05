@@ -1,7 +1,9 @@
 package reports
 
-import ()
+import (
+	"../model"
+)
 
-func ChartOfAccountsPdf(getWriter GetWriter) {
+func ChartOfAccountsPdf(m *model.Model, getWriter GetWriter) {
 	blankPdf(getWriter, "tilikartta")
 }

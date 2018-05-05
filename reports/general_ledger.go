@@ -1,7 +1,9 @@
 package reports
 
-import ()
+import (
+	"../model"
+)
 
-func GeneralLedgerPdf(getWriter GetWriter) {
+func GeneralLedgerPdf(m *model.Model, getWriter GetWriter) {
 	blankPdf(getWriter, "pääkirja")
 }

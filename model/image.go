@@ -18,6 +18,8 @@ import (
 	"github.com/disintegration/imaging"
 )
 
+// :[0-9a-f]{40}\.(?:jpeg|png)
+
 func imageTransform(reader io.Reader,
 	transform func(img image.Image) image.Image) (string, []byte, error) {
 	img, oldFormat, err := image.Decode(reader)

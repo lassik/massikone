@@ -1,11 +1,13 @@
 package reports
 
-import ()
+import (
+	"../model"
+)
 
-func IncomeStatementPdf(getWriter GetWriter) {
+func IncomeStatementPdf(m *model.Model, getWriter GetWriter) {
 	blankPdf(getWriter, "tuloslaskelma")
 }
 
-func IncomeStatementDetailedPdf(getWriter GetWriter) {
+func IncomeStatementDetailedPdf(m *model.Model, getWriter GetWriter) {
 	blankPdf(getWriter, "tuloslaskelma erittelyin")
 }

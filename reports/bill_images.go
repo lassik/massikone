@@ -8,8 +8,8 @@ import (
 	"../model"
 )
 
-func addBillImagesToZip(getWriter GetWriter) {
-	images, missing := model.GetBillsForImages()
+func addBillImagesToZip(m *model.Model, getWriter GetWriter) {
+	images, missing := m.GetBillsForImages()
 	for _, image := range images {
 		if image["image_id"] != nil {
 			w, err := getWriter(
@@ -17,7 +17,7 @@ func addBillImagesToZip(getWriter GetWriter) {
 				fmt.Sprintf("tositteet/tosite-%03d-%d-%s%s",
 					image["bill_id"].(string),
 					image["bill_image_num"].(string),
-					Slug(image["description"].(string)),
+					slug(image["description"].(string)),
 					path.Ext(image["image_id"].(string))))
 			if err != nil {
 				log.Fatal(err)

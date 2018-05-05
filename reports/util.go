@@ -16,18 +16,18 @@ func check(err error) {
 	}
 }
 
-func Shorten(str string) string {
+func shorten(str string) string {
 	str = strings.SplitN(str, "\n", 2)[0]
 	//.gsub(`\s+`, ' ').strip.slice(0:50)
 	return str
 }
 
-func Slug(str string) string {
+func slug(str string) string {
 	str = strings.SplitN(str, "\n", 2)[0]
 	str = strings.ToLower(str)
 	//str = str.gsub(`\s+`, '-').gsub(`[^\w-]`, "")
 	//str = str.gsub(`--+`, '-').gsub(`^-`, "")
-	str = Shorten(str)
+	str = shorten(str)
 	//str = str.gsub(`-$`, "")
 	return str
 }
@@ -37,7 +37,7 @@ func generateFilename(document string) string {
 	//prefs := modelGetPreferences()
 	//orgShortName := prefs["org_short_name"]
 	orgShortName := "Testi"
-	return Slug(orgShortName + "-" + year + "-" + document)
+	return slug(orgShortName + "-" + year + "-" + document)
 }
 
 func blankPdf(getWriter GetWriter, filename string) {
