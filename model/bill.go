@@ -97,7 +97,7 @@ func (m *Model) GetBillsForImages() ([]map[string]interface{}, []int) {
 	return images, missing
 }
 
-func (m *Model) getBillImages(billID int) []map[string]string {
+func (m *Model) getBillImages(billID string) []map[string]string {
 	rows, err := sq.Select("image_id").From("bill_image").
 		Where(sq.Eq{"bill_id": billID}).
 		OrderBy("bill_image_num").RunWith(db).Query()
@@ -112,8 +112,7 @@ func (m *Model) getBillImages(billID int) []map[string]string {
 	return images
 }
 
-func (m *Model) GetBillID(billIDString string) (map[string]interface{}, error) {
-	billID := parsePositiveInt("bill ID", billIDString)
+func (m *Model) GetBillID(billID string) (map[string]interface{}, error) {
 	var bill_id int
 	var paid_date sql.NullString
 	var closed_date sql.NullString

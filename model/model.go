@@ -41,8 +41,16 @@ func MakeModel(userID string, adminOnly bool) Model {
 	return model
 }
 
-func (m *Model) Free() {
-	m.Err = m.tx.Commit()
+func (m *Model) Close() {
+	if m.Err != nil {
+		log.Print(m.Err)
+		m.Err = m.tx.Rollback()
+	} else {
+		m.Err = m.tx.Commit()
+	}
+	if m.Err != nil {
+		log.Print(m.Err)
+	}
 }
 
 func (m *Model) User() User {

@@ -65,7 +65,7 @@ func getAppTitle() string {
 	return organization + " Massikone"
 }
 
-func setCurrentUserID(w http.ResponseWriter, r *http.Request, id string) {
+func setSessionUserID(w http.ResponseWriter, r *http.Request, id string) {
 	session, _ := store.Get(r, sessionName)
 	if id == "" {
 		delete(session.Values, sessionCurrentUser)
@@ -75,7 +75,7 @@ func setCurrentUserID(w http.ResponseWriter, r *http.Request, id string) {
 	session.Save(r, w)
 }
 
-func getCurrentUserID(r *http.Request) string {
+func getSessionUserID(r *http.Request) string {
 	session, _ := store.Get(r, sessionName)
 	if id, ok := session.Values[sessionCurrentUser]; ok {
 		if sid, ok := id.(string); ok {
@@ -89,7 +89,8 @@ type ModelHandlerFunc func(*model.Model, http.ResponseWriter, *http.Request)
 
 func withModel(h ModelHandlerFunc, adminOnly bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := model.MakeModel(getCurrentUserID(r), adminOnly)
+		m := model.MakeModel(getSessionUserID(r), adminOnly)
+                defer m.Close()
 		if m.Err != nil {
 			log.Print(m.Err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized),
@@ -125,12 +126,12 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
-	setCurrentUserID(w, r, userID)
+	setSessionUserID(w, r, userID)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func postLogout(w http.ResponseWriter, r *http.Request) {
-	setCurrentUserID(w, r, "")
+	setSessionUserID(w, r, "")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -149,7 +150,7 @@ func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
-	userID := getCurrentUserID(r)
+	userID := getSessionUserID(r)
 	if userID == "" {
 		w.Write([]byte(loginTemplate.Render(
 			map[string]string{"app_title": getAppTitle()})))
@@ -178,7 +179,7 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func putBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	billID := r.URL.Query().Get(":billID")
+	billID := mux.Vars(r)["billID"]
 	err := m.PutBillID(billID, r)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -187,8 +188,7 @@ func putBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/bill/"+billID, http.StatusSeeOther)
 }
 
-func getBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	// accounts = model.get_accounts
+func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(billTemplate.Render(
 		map[string]string{
 			"app_title": getAppTitle(),
@@ -214,8 +214,8 @@ func getCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getImageRotated(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	imageID := r.URL.Query().Get(":imageID")
-	rotatedImageID, err := model.GetImageRotated(imageID)
+	imageID := mux.Vars(r)["imageID"]
+	rotatedImageID, err := model.GetImageRotated(m, imageID)
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -226,8 +226,8 @@ func getImageRotated(m *model.Model, w http.ResponseWriter, r *http.Request) {
 
 // TODO: http header, esp. caching
 func getImage(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	imageID := r.URL.Query().Get(":imageID")
-	imageData, imageMimeType, err := model.GetImage(imageID)
+	imageID := mux.Vars(r)["imageID"]
+	imageData, imageMimeType, err := model.GetImage(m, imageID)
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -243,7 +243,7 @@ func postImage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	imageID, err := model.PostImage(file)
+	imageID, err := model.PostImage(m, file)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -287,7 +287,7 @@ func main() {
 	put(`/bill/{billID}`,
 		anyUser(putBillID))
 	get(`/bill`,
-		anyUser(getBill))
+		anyUser(getNewBillPage))
 	post(`/bill`,
 		anyUser(postBill))
 
