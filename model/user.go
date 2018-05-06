@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql"
+	"errors"
 
 	sq "github.com/Masterminds/squirrel"
 )
@@ -10,6 +11,26 @@ type User struct {
 	UserID   string
 	FullName string
 	IsAdmin  bool
+}
+
+func (m *Model) Forbidden() {
+	m.isErr(errors.New("Forbidden"))
+}
+
+func (m *Model) isAdmin() bool {
+	if m.user.IsAdmin {
+		return true
+	}
+	m.Forbidden()
+	return false
+}
+
+func (m *Model) isAdminOrUser(userID string) bool {
+	if m.user.IsAdmin || (m.user.UserID == userID) {
+		return true
+	}
+	m.Forbidden()
+	return false
 }
 
 func (m *Model) getUserByID(userID string) (*User, error) {
@@ -21,9 +42,9 @@ func (m *Model) getUserByID(userID string) (*User, error) {
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
-        if err != nil {
-                return nil, err
-        }
+	if err != nil {
+		return nil, err
+	}
 	return &user, nil
 }
 
@@ -41,21 +62,21 @@ func GetOrPutUser(provider, providerUserID, email, fullName string) (string, err
 		err = sq.Select("count(*)").From("user").
 			RunWith(tx).Limit(1).QueryRow().Scan(&userCount)
 		if err != nil {
-                        return "", err
-                }
+			return "", err
+		}
 		isAdmin := (userCount == 0)
 		setmap["is_admin"] = isAdmin
 		sq.Insert("user").SetMap(setmap).RunWith(tx).QueryRow().Scan()
 	} else if err != nil {
-                return "", err
-        }
+		return "", err
+	}
 	var userID string
 	err = sq.Select("user_id").From("user").Where(sq.Eq{providerUserIDColumn: providerUserID}).RunWith(tx).Limit(1).QueryRow().Scan(&userID)
 	if err != nil {
-                return "", err
-        }
+		return "", err
+	}
 	if err = tx.Commit(); err != nil {
-                return "", err
-        }
+		return "", err
+	}
 	return userID, err
 }

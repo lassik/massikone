@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"io"
 	"log"
-        "mime"
-        "path"
+	"mime"
+	"path"
 
 	sq "github.com/Masterminds/squirrel"
 )
+
+// SECURITY NOTE: Users can view each other's images if they somehow
+// know the ImageID.
 
 // type image struct {
 // 	ImageID  string // ^[0-9a-f]{40}\.(?:jpeg|png)$
@@ -67,10 +70,10 @@ func (m *Model) GetImage(imageId string) ([]byte, string, error) {
 	err := sq.Select("image_data").From("image").
 		Where(sq.Eq{"image_id": imageId}).
 		RunWith(m.tx).Limit(1).QueryRow().Scan(&imageData)
-        if err != nil {
-                return []byte{}, "", err
-        }
-        imageMimeType := mime.TypeByExtension(path.Ext(imageId))
+	if err != nil {
+		return []byte{}, "", err
+	}
+	imageMimeType := mime.TypeByExtension(path.Ext(imageId))
 	return imageData, imageMimeType, nil
 }
 

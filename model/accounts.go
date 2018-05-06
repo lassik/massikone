@@ -15,16 +15,16 @@ func (m *Model) GetAccounts(usedOnly bool) []map[string]interface{} {
 		From("period_account").OrderBy("account_id, nesting_level").
 		RunWith(m.tx).Query()
 	if m.isErr(err) {
-                return accounts
-        }
+		return accounts
+	}
 	defer rows.Close()
 	for rows.Next() {
 		var account_id string
 		var title string
 		var nesting_level int
 		if m.isErr(rows.Scan(&account_id, &title, &nesting_level)) {
-                        return accounts
-                }
+			return accounts
+		}
 		is_account := (nesting_level == AccountNestingLevel)
 		dash_level, htag_level := 0, ""
 		if !is_account {

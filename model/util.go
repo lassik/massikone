@@ -2,7 +2,9 @@ package model
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -10,10 +12,10 @@ import (
 )
 
 func (m *Model) isErr(err error) bool {
-        if m.Err == nil {
-                m.Err = err
-        }
-        return err != nil
+	if m.Err == nil {
+		m.Err = err
+	}
+	return err != nil
 }
 
 func parsePositiveInt(what, s string) int {
@@ -26,6 +28,17 @@ func parsePositiveInt(what, s string) int {
 		return -1
 	}
 	return val
+}
+
+func IsoFromFiDate(str string) string {
+	if str == "" {
+		return ""
+	}
+	date, err := time.Parse("2.1.2006", str)
+	if err != nil {
+		return ""
+	}
+	return date.Format("2006-01-02")
 }
 
 func FiFromIsoDate(str string) string {
@@ -49,4 +62,28 @@ func (m *Model) getIntFromDb(q sq.SelectBuilder) string {
 		return ""
 	}
 	return val.String
+}
+
+func centsFromAmount(amount string) (int, error) {
+	amount = regexp.MustCompile(`\s+`).ReplaceAllString(amount, "")
+	if amount == "" {
+		return 0, nil
+	}
+	ms := regexp.MustCompile(`^(\d+)(,(\d\d))?$`).FindStringSubmatch(amount)
+	if ms == nil {
+		return 0, fmt.Errorf("Invalid amount: %q", amount)
+	}
+	euros, err := strconv.Atoi(ms[1])
+	if err != nil {
+		return 0, err
+	}
+	cents := 0
+	if ms[3] != "" {
+		cents, err = strconv.Atoi(ms[3])
+		if err != nil {
+			return 0, err
+		}
+	}
+	cents = (euros * 100) + cents
+	return cents, nil
 }

@@ -1,7 +1,7 @@
 package reports
 
 import (
-        "../model"
+	"../model"
 )
 
 func BalanceSheetPdf(m *model.Model, getWriter GetWriter) {

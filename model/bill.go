@@ -2,22 +2,36 @@ package model
 
 import (
 	"database/sql"
-	"errors"
 	"log"
-	"net/http"
+	"strconv"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
+type BillEntry struct {
+	RowNumber     int
+	AccountID     int
+	IsDebit       bool
+	UnitCount     int
+	UnitCostCents int
+	Description   string
+}
+
 type Bill struct {
-	BillID       string
-	PaidDateFi   string
-	ClosedDateFi string
-	Description  string
-	PaidUser     User
-	Images       []map[string]string
-	PrevBillID   string
-	NextBillID   string
+	BillID          string
+	PrevBillID      string
+	NextBillID      string
+	PaidDateFi      string
+	ClosedDateFi    string
+	Description     string
+	PaidUser        User
+	CreditAccountID string
+	DebitAccountID  string
+	ImageID         string
+	Amount          string
+	Images          []map[string]string
+	Entries         []BillEntry
 }
 
 func withPaidUser(bill sq.SelectBuilder) sq.SelectBuilder {
@@ -44,6 +58,9 @@ func (m *Model) GetBills() interface{} {
 		From("bill").OrderBy("bill_id, description")
 	q = withPaidUser(q)
 	q = withCents(q)
+	if !m.user.IsAdmin {
+		q = q.Where(sq.Eq{"paid_user_id": m.user.UserID})
+	}
 	rows, err := q.RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return bills
@@ -82,6 +99,9 @@ func (m *Model) GetBills() interface{} {
 func (m *Model) GetBillsForImages() ([]map[string]interface{}, []int) {
 	var images []map[string]interface{}
 	var missing []int
+	if !m.isAdmin() {
+		return images, missing
+	}
 	rows, err := sq.Select("bill.bill_id, bill_image_num, image.image_id, description, image_data").
 		From("bill").
 		LeftJoin("bill_image on bill_id = bill_id").
@@ -163,8 +183,7 @@ func (m *Model) GetBillID(billID string) *Bill {
 		&bill.Description, &bill.PaidUser.UserID, &bill.PaidUser.FullName)) {
 		return nil
 	}
-	if !(m.user.IsAdmin || (m.user.UserID == bill.PaidUser.UserID)) {
-		m.isErr(errors.New("forbidden"))
+	if !m.isAdminOrUser(bill.PaidUser.UserID) {
 		return nil
 	}
 	bill.PaidDateFi = FiFromIsoDate(paidDate.String)
@@ -177,10 +196,112 @@ func (m *Model) GetBillID(billID string) *Bill {
 	return &bill
 }
 
-func (m *Model) PutBillID(billID string, r *http.Request) error {
-	return errors.New("foo")
+func (m *Model) populateBillEntriesFromBillFields(bill Bill) {
+	unitCostCents, err := centsFromAmount(bill.Amount)
+	if m.isErr(err) {
+		return
+	}
+	var entries []BillEntry
+	addEntry := func(accountIDString, description string, isDebit bool) {
+		accountID, _ := strconv.Atoi(bill.CreditAccountID)
+		if accountID > 0 {
+			entries = append(entries, BillEntry{
+				RowNumber:     len(entries),
+				UnitCount:     1,
+				UnitCostCents: unitCostCents,
+				AccountID:     accountID,
+				Description:   description,
+				IsDebit:       isDebit,
+			})
+		}
+	}
+	addEntry(bill.CreditAccountID, "Credit", false)
+	addEntry(bill.DebitAccountID, "Debet", true)
+	bill.Entries = entries
 }
 
-func (m *Model) PostBill(r *http.Request) (string, error) {
-	return "", errors.New("foo")
+func (m *Model) putBillEntries(bill Bill) {
+	_, err := sq.Delete("bill_entry").Where(sq.Eq{"bill_id": bill.BillID}).
+		RunWith(m.tx).Exec()
+	if m.isErr(err) {
+		return
+	}
+	for rowNumber, entry := range bill.Entries {
+		if entry.RowNumber != rowNumber {
+			panic("Row number mismatch")
+		}
+		if m.isErr(sq.Insert("bill_entry").
+			SetMap(sq.Eq{
+				"bill_id":         bill.BillID,
+				"row_number":      rowNumber,
+				"unit_count":      1,
+				"unit_cost_cents": entry.UnitCostCents,
+				"account_id":      entry.AccountID,
+				"debit":           entry.IsDebit,
+				"description":     entry.Description,
+			}).RunWith(m.tx).QueryRow().Scan()) {
+			return
+		}
+	}
+}
+
+func (m *Model) putBillImages(bill Bill) {
+	_, err := sq.Delete("bill_image").Where(sq.Eq{"bill_id": bill.BillID}).
+		RunWith(m.tx).Exec()
+	if m.isErr(err) {
+		return
+	}
+	if bill.ImageID == "" {
+		return
+	}
+	if m.isErr(sq.Insert("bill_image").
+		SetMap(sq.Eq{
+			"bill_id":        bill.BillID,
+			"bill_image_num": 1,
+			"image_id":       bill.ImageID,
+		}).RunWith(m.tx).QueryRow().Scan(&bill.BillID)) {
+		return
+	}
+}
+
+func (m *Model) PutBill(bill Bill) {
+	if bill.BillID == "" {
+		panic("Null BillID in PutBill")
+	}
+	setmap := sq.Eq{
+		"description": bill.Description,
+		"paid_date":   IsoFromFiDate(bill.PaidDateFi),
+	}
+	if !m.user.IsAdmin && bill.PaidUser.UserID != "" {
+		panic("Non-null PaidUser.UserID for non-admin in PutBill")
+	}
+	var oldPaidUserID string
+	if m.isErr(sq.Select("paid_user_id").
+		From("bill").Where(sq.Eq{"bill_id": bill.BillID}).
+		RunWith(m.tx).QueryRow().Scan(&oldPaidUserID)) {
+		return
+	}
+	if !m.isAdminOrUser(oldPaidUserID) {
+		return
+	}
+	if m.user.IsAdmin {
+		m.populateBillEntriesFromBillFields(bill)
+		m.putBillEntries(bill)
+	}
+	m.putBillImages(bill)
+	//"paid_user_id": bill.PaidUser.UserID
+	m.isErr(sq.Update("bill").SetMap(setmap).
+		Where(sq.Eq{"bill_id": bill.BillID}).
+		RunWith(m.tx).QueryRow().Scan())
+}
+
+func (m *Model) PostBill(bill Bill) string {
+	createdDate := time.Now().Format("2006-01-02")
+	if m.isErr(sq.Insert("bill").
+		SetMap(sq.Eq{"created_date": createdDate}).
+		RunWith(m.tx).QueryRow().Scan(&bill.BillID)) {
+		return ""
+	}
+	m.PutBill(bill)
+	return bill.BillID
 }

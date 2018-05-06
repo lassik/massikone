@@ -185,11 +185,32 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		})))
 }
 
+func billFromRequest(r *http.Request, billID string) model.Bill {
+	return model.Bill{
+		BillID:      billID,
+		PaidDateFi:  r.PostFormValue("paid_date_fi"),
+		Description: r.PostFormValue("description"),
+		PaidUser: model.User{
+			UserID: r.PostFormValue("paid_user_id"),
+		},
+		Amount:          r.PostFormValue("amount"),
+		CreditAccountID: r.PostFormValue("credit_account_id"),
+		DebitAccountID:  r.PostFormValue("debit_account_id"),
+	}
+}
+
 func putBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	billID := mux.Vars(r)["billID"]
-	err := m.PutBillID(billID, r)
-	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+	m.PutBill(billFromRequest(r, billID))
+	if m.Err != nil {
+		return
+	}
+	http.Redirect(w, r, "/bill/"+billID, http.StatusSeeOther)
+}
+
+func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	billID := m.PostBill(billFromRequest(r, ""))
+	if m.Err != nil {
 		return
 	}
 	http.Redirect(w, r, "/bill/"+billID, http.StatusSeeOther)
@@ -197,22 +218,13 @@ func putBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 
 func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(billTemplate.Render(
-		map[string]string{
-			"app_title": getAppTitle(),
-			// current_user: m.User,
+		map[string]interface{}{
+			"AppTitle":    getAppTitle(),
+			"CurrentUser": m.User(),
 			// admin: admin_data,
 			// credit_accounts: accounts,
 			// debit_accounts: accounts
 		})))
-}
-
-func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	billID, err := m.PostBill(r)
-	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-	http.Redirect(w, r, "/bill/"+billID, http.StatusSeeOther)
 }
 
 func getCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
