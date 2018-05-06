@@ -32,13 +32,15 @@ func MakeModel(userID string, adminOnly bool) Model {
 	if userID == "" {
 		return Model{Err: errors.New("Not logged in")}
 	}
-	user := getUserByID(userID)
-	if user == nil {
-		return Model{Err: errors.New("No such user")}
+	var m Model
+	m.tx, m.Err = db.Begin()
+	var user *User
+	user, m.Err = m.getUserByID(userID)
+	if user == nil && m.Err == nil {
+		m.Err = errors.New("No such user")
 	}
-	model := Model{user: *user}
-	model.tx, model.Err = db.Begin()
-	return model
+	m.user = *user
+	return m
 }
 
 func (m *Model) Close() {

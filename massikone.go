@@ -90,7 +90,7 @@ type ModelHandlerFunc func(*model.Model, http.ResponseWriter, *http.Request)
 func withModel(h ModelHandlerFunc, adminOnly bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := model.MakeModel(getSessionUserID(r), adminOnly)
-                defer m.Close()
+		defer m.Close()
 		if m.Err != nil {
 			log.Print(m.Err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized),
@@ -98,6 +98,12 @@ func withModel(h ModelHandlerFunc, adminOnly bool) http.HandlerFunc {
 			return
 		}
 		h(&m, w, r)
+		if m.Err != nil {
+			log.Print(m.Err)
+			http.Error(w, http.StatusText(http.StatusUnauthorized),
+				http.StatusUnauthorized)
+			return
+		}
 	}
 }
 
@@ -109,7 +115,7 @@ func adminOnly(h ModelHandlerFunc) http.HandlerFunc {
 	return withModel(h, true)
 }
 
-func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
+func finishLogin(w http.ResponseWriter, r *http.Request) {
 	gothUser, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
 		log.Print(err)
@@ -120,7 +126,7 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print("Unknown provider")
 		return
 	}
-	userID := model.GetOrPutUser(
+	userID, err := model.GetOrPutUser(
 		provider, gothUser.UserID, gothUser.Email, gothUser.Name)
 	if err != nil {
 		log.Print(err)
@@ -130,19 +136,22 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func postLogout(w http.ResponseWriter, r *http.Request) {
+func logout(w http.ResponseWriter, r *http.Request) {
 	setSessionUserID(w, r, "")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func getLoginPage(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(loginTemplate.Render(
+		map[string]string{"app_title": getAppTitle()})))
 }
 
 func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	bills := m.GetBills()
 	w.Write([]byte(billsTemplate.Render(
 		map[string]interface{}{
-			"app_title": getAppTitle(),
-			"current_user": map[string]string{
-				"full_name": m.User().FullName,
-			},
+			"AppTitle":    getAppTitle(),
+			"CurrentUser": m.User(),
 			"bills": map[string]interface{}{
 				"bills": bills,
 			},
@@ -150,31 +159,29 @@ func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
-	userID := getSessionUserID(r)
-	if userID == "" {
-		w.Write([]byte(loginTemplate.Render(
-			map[string]string{"app_title": getAppTitle()})))
-		return
+	if getSessionUserID(r) == "" {
+		getLoginPage(w, r)
+	} else {
+		anyUser(getBills)(w, r)
 	}
-	anyUser(getBills)(w, r)
 }
 
 func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	//accounts := model.GetAccounts(false)
+	//accounts := m.GetAccounts(false)
 	billID := mux.Vars(r)["billID"]
-	bill, err := m.GetBillID(billID)
+	bill := m.GetBillID(billID)
+	if m.Err != nil {
+		return
+	}
 	if bill == nil {
 		http.NotFound(w, r)
 		return
 	}
-	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
-			"app_title": getAppTitle(),
-			"bill":      bill,
+			"AppTitle":    getAppTitle(),
+			"CurrentUser": m.User(),
+			"Bill":        bill,
 		})))
 }
 
@@ -192,7 +199,7 @@ func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(billTemplate.Render(
 		map[string]string{
 			"app_title": getAppTitle(),
-			// current_user: model.user,
+			// current_user: m.User,
 			// admin: admin_data,
 			// credit_accounts: accounts,
 			// debit_accounts: accounts
@@ -215,7 +222,7 @@ func getCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
 
 func getImageRotated(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	imageID := mux.Vars(r)["imageID"]
-	rotatedImageID, err := model.GetImageRotated(m, imageID)
+	rotatedImageID, err := m.GetImageRotated(imageID)
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -227,7 +234,7 @@ func getImageRotated(m *model.Model, w http.ResponseWriter, r *http.Request) {
 // TODO: http header, esp. caching
 func getImage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	imageID := mux.Vars(r)["imageID"]
-	imageData, imageMimeType, err := model.GetImage(m, imageID)
+	imageData, imageMimeType, err := m.GetImage(imageID)
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -243,7 +250,7 @@ func postImage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	imageID, err := model.PostImage(m, file)
+	imageID, err := m.PostImage(file)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -292,9 +299,9 @@ func main() {
 		anyUser(postBill))
 
 	//p.Put(`/api/preferences`,
-	//	adminOnly(model.PutPreferences))
+	//	adminOnly(putPreferences))
 	//get(`/api/compare`,
-	//	adminOnly(model.GetBillsForCompare))
+	//	adminOnly(getCompare))
 	get(`/compare`,
 		adminOnly(getCompare))
 	get(`/report/income-statement`,
@@ -314,10 +321,10 @@ func main() {
 	get(`/report/full-statement`,
 		adminOnly(report(reports.FullStatementZip)))
 
-	get(`/auth/{provider}/callback`, authCallbackHandler)
+	get(`/auth/{provider}/callback`, finishLogin)
 	get(`/auth/{provider}`, gothic.BeginAuthHandler)
-	get(`/logout`, postLogout)
-	post(`/logout`, postLogout)
+	get(`/logout`, logout)
+	post(`/logout`, logout)
 	get(`/`, getBillsOrLogin)
 
 	http.Handle("/static/",

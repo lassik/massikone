@@ -1,10 +1,20 @@
 package model
 
 import (
+	"database/sql"
 	"log"
 	"strconv"
 	"time"
+
+	sq "github.com/Masterminds/squirrel"
 )
+
+func (m *Model) isErr(err error) bool {
+        if m.Err == nil {
+                m.Err = err
+        }
+        return err != nil
+}
 
 func parsePositiveInt(what, s string) int {
 	var val64 int64
@@ -27,4 +37,16 @@ func FiFromIsoDate(str string) string {
 		return ""
 	}
 	return date.Format("2.1.2006")
+}
+
+func (m *Model) getIntFromDb(q sq.SelectBuilder) string {
+	var val sql.NullString
+	err := q.RunWith(m.tx).Limit(1).QueryRow().Scan(&val)
+	if err != sql.ErrNoRows {
+		m.isErr(err)
+	}
+	if err != nil {
+		return ""
+	}
+	return val.String
 }

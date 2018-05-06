@@ -8,19 +8,23 @@ import (
 
 const AccountNestingLevel = 9
 
-func GetAccounts(usedOnly bool) []map[string]interface{} {
+func (m *Model) GetAccounts(usedOnly bool) []map[string]interface{} {
+	var accounts []map[string]interface{}
 	//populateAccounts()
 	rows, err := sq.Select("account_id, title, nesting_level").
 		From("period_account").OrderBy("account_id, nesting_level").
-		RunWith(db).Query()
-	check(err)
+		RunWith(m.tx).Query()
+	if m.isErr(err) {
+                return accounts
+        }
 	defer rows.Close()
-	var accounts []map[string]interface{}
 	for rows.Next() {
 		var account_id string
 		var title string
 		var nesting_level int
-		check(rows.Scan(&account_id, &title, &nesting_level))
+		if m.isErr(rows.Scan(&account_id, &title, &nesting_level)) {
+                        return accounts
+                }
 		is_account := (nesting_level == AccountNestingLevel)
 		dash_level, htag_level := 0, ""
 		if !is_account {

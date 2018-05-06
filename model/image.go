@@ -16,7 +16,7 @@ import (
 // 	Bytes    []byte
 // }
 
-func storePreparedImage(m *Model, imageId string, imageData []byte) (string, error) {
+func (m *Model) storePreparedImage(imageId string, imageData []byte) (string, error) {
 	statement, err := m.tx.Prepare(
 		"update image set image_id = ?, image_data = ? where image_id = ?")
 	if err != nil {
@@ -53,17 +53,29 @@ func storePreparedImage(m *Model, imageId string, imageData []byte) (string, err
 	return imageId, nil
 }
 
-func PostImage(m *Model, reader io.Reader) (string, error) {
+func (m *Model) PostImage(reader io.Reader) (string, error) {
 	imageId, imageData, err := prepareImage(reader)
 	if err != nil {
 		log.Print(err)
 		return "", err
 	}
-	return storePreparedImage(m, imageId, imageData)
+	return m.storePreparedImage(imageId, imageData)
 }
 
-func GetImageRotated(m *Model, imageId string) (string, error) {
-	imageData, _, err := GetImage(m, imageId)
+func (m *Model) GetImage(imageId string) ([]byte, string, error) {
+	var imageData []byte
+	err := sq.Select("image_data").From("image").
+		Where(sq.Eq{"image_id": imageId}).
+		RunWith(m.tx).Limit(1).QueryRow().Scan(&imageData)
+        if err != nil {
+                return []byte{}, "", err
+        }
+        imageMimeType := mime.TypeByExtension(path.Ext(imageId))
+	return imageData, imageMimeType, nil
+}
+
+func (m *Model) GetImageRotated(imageId string) (string, error) {
+	imageData, _, err := m.GetImage(imageId)
 	if err != nil {
 		log.Print(err)
 		return "", err
@@ -74,14 +86,5 @@ func GetImageRotated(m *Model, imageId string) (string, error) {
 		log.Print(err)
 		return "", err
 	}
-	return storePreparedImage(m, newImageId, newImageData)
-}
-
-func GetImage(m *Model, imageId string) ([]byte, string, error) {
-	var imageData []byte
-	check(sq.Select("image_data").From("image").
-		Where(sq.Eq{"image_id": imageId}).
-		RunWith(db).Limit(1).QueryRow().Scan(&imageData))
-        imageMimeType := mime.TypeByExtension(path.Ext(imageId))
-	return imageData, imageMimeType, nil
+	return m.storePreparedImage(newImageId, newImageData)
 }
