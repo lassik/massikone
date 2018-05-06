@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/gobuffalo/packr"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/hoisie/mustache"
@@ -97,11 +98,13 @@ func withModel(h ModelHandlerFunc, adminOnly bool) http.HandlerFunc {
 				http.StatusUnauthorized)
 			return
 		}
+		log.Print("before handler")
 		h(&m, w, r)
+		log.Print("after handler")
 		if m.Err != nil {
 			log.Print(m.Err)
-			http.Error(w, http.StatusText(http.StatusUnauthorized),
-				http.StatusUnauthorized)
+			http.Error(w, http.StatusText(http.StatusInternalServerError),
+				http.StatusInternalServerError)
 			return
 		}
 	}
@@ -220,10 +223,13 @@ func putBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	log.Print("controller postBill AAA")
 	billID := m.PostBill(billFromRequest(r, ""))
+	log.Print("controller postBill BBB")
 	if m.Err != nil {
 		return
 	}
+	log.Print("controller postBill CCC")
 	http.Redirect(w, r, "/bill/"+billID, http.StatusSeeOther)
 }
 
@@ -294,13 +300,10 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 }
 
 func main() {
-	var router mux.Router
+	router := mux.NewRouter()
 
 	get := func(path string, h http.HandlerFunc) {
 		router.NewRoute().Path(path).Handler(h).Methods("GET")
-	}
-	put := func(path string, h http.HandlerFunc) {
-		router.NewRoute().Path(path).Handler(h).Methods("PUT")
 	}
 	post := func(path string, h http.HandlerFunc) {
 		router.NewRoute().Path(path).Handler(h).Methods("POST")
@@ -314,7 +317,7 @@ func main() {
 		anyUser(postImage))
 	get(`/bill/{billID}`,
 		anyUser(getBillID))
-	put(`/bill/{billID}`,
+	post(`/bill/{billID}`,
 		anyUser(putBillID))
 	get(`/bill`,
 		anyUser(getNewBillPage))
@@ -349,10 +352,11 @@ func main() {
 	get(`/logout`, logout)
 	post(`/logout`, logout)
 	get(`/`, getBillsOrLogin)
-
-	http.Handle("/static/",
+	router.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/", http.FileServer(staticBox)))
-	http.Handle("/", &router)
+
 	log.Print("Starting web server")
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":"+port,
+		handlers.LoggingHandler(os.Stdout,
+			handlers.RecoveryHandler()(router)))
 }

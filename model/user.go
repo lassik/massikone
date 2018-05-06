@@ -29,7 +29,7 @@ func (m *Model) isAdmin() bool {
 }
 
 func (m *Model) isAdminOrUser(userID string) bool {
-	if m.user.IsAdmin || (m.user.UserID == userID) {
+	if m.user.IsAdmin || ((userID != "") && (m.user.UserID == userID)) {
 		return true
 	}
 	m.Forbidden()

@@ -167,26 +167,33 @@ func (m *Model) getNextBillID(billID string) string {
 
 func (m *Model) GetBillID(billID string) *Bill {
 	var bill Bill
+	var paidUserID sql.NullInt64
+	var paidUserFullName sql.NullString
 	var paidDateISO sql.NullString
+	var description sql.NullString
 	var cents sql.NullInt64
+	log.Print("GetBillID")
 	q := sq.Select("bill_id, paid_date, description").
 		From("bill").Where(sq.Eq{"bill_id": billID})
 	q = withPaidUser(q)
 	q = withCents(q)
 	if m.isErr(q.RunWith(m.tx).Limit(1).QueryRow().Scan(
-		&bill.BillID, &paidDateISO, &bill.Description,
-		&bill.PaidUser.UserID,
-		&bill.PaidUser.FullName, &cents)) {
+		&bill.BillID, &paidDateISO, &description,
+		&paidUserID,
+		&paidUserFullName, &cents)) {
 		return nil
 	}
 	if !m.isAdminOrUser(bill.PaidUser.UserID) {
 		return nil
 	}
+	bill.Description = description.String
 	bill.PaidDateISO = paidDateISO.String
 	bill.PaidDateFi = fiFromISODate(paidDateISO.String)
+	bill.PaidUser.UserID = strconv.Itoa(int(paidUserID.Int64))
+	bill.PaidUser.FullName = paidUserFullName.String
 	bill.Amount = amountFromCents(cents.Int64)
-	m.populateOtherBillFieldsFromBillEntries(&bill)
-	bill.Images = m.getBillImages(billID)
+	//m.populateOtherBillFieldsFromBillEntries(&bill)
+	//bill.Images = m.getBillImages(billID)
 	if len(bill.Images) > 0 {
 		bill.ImageID = bill.Images[0]["ImageID"]
 	}
@@ -204,7 +211,7 @@ func (m *Model) populateBillEntriesFromOtherBillFields(bill *Bill) {
 	}
 	var entries []BillEntry
 	addEntry := func(accountIDString, description string, isDebit bool) {
-		accountID, _ := strconv.Atoi(bill.CreditAccountID)
+		accountID, _ := strconv.Atoi(accountIDString)
 		if accountID > 0 {
 			entries = append(entries, BillEntry{
 				RowNumber:     len(entries),
@@ -276,6 +283,7 @@ func (m *Model) putBillImages(bill Bill) {
 }
 
 func (m *Model) PutBill(bill Bill) {
+	log.Print("PutBill AAA")
 	if bill.BillID == "" {
 		panic("Null BillID in PutBill")
 	}
@@ -283,36 +291,50 @@ func (m *Model) PutBill(bill Bill) {
 		"description": bill.Description,
 		"paid_date":   isoFromFiDate(bill.PaidDateFi),
 	}
+	log.Printf("PaidDate = %q", isoFromFiDate(bill.PaidDateFi))
 	if !m.user.IsAdmin && bill.PaidUser.UserID != "" {
 		panic("Non-null PaidUser.UserID for non-admin in PutBill")
 	}
-	var oldPaidUserID string
+	log.Print("PutBill BBB")
+	var oldPaidUserID sql.NullString
 	if m.isErr(sq.Select("paid_user_id").
 		From("bill").Where(sq.Eq{"bill_id": bill.BillID}).
 		RunWith(m.tx).QueryRow().Scan(&oldPaidUserID)) {
 		return
 	}
-	if !m.isAdminOrUser(oldPaidUserID) {
+	log.Print("PutBill CCC")
+	if !m.isAdminOrUser(oldPaidUserID.String) {
 		return
 	}
 	if m.user.IsAdmin {
 		m.populateBillEntriesFromOtherBillFields(&bill)
 		m.putBillEntries(bill)
 	}
+	log.Print("PutBill DDD")
 	m.putBillImages(bill)
 	//"paid_user_id": bill.PaidUser.UserID
+	log.Print("PutBill EEE")
 	m.isErr(sq.Update("bill").SetMap(setmap).
 		Where(sq.Eq{"bill_id": bill.BillID}).
 		RunWith(m.tx).QueryRow().Scan())
+	log.Print("PutBill FFF")
 }
 
 func (m *Model) PostBill(bill Bill) string {
 	createdDate := time.Now().Format("2006-01-02")
-	if m.isErr(sq.Insert("bill").
-		SetMap(sq.Eq{"created_date": createdDate}).
-		RunWith(m.tx).QueryRow().Scan(&bill.BillID)) {
+	log.Printf("PostBill %s", createdDate)
+	result, err := sq.Insert("bill").
+		Columns("created_date").Values(createdDate).
+		RunWith(m.tx).Exec()
+	if m.isErr(err) {
 		return ""
 	}
+	billIDInt64, err := result.LastInsertId()
+	if m.isErr(err) {
+		return ""
+	}
+	bill.BillID = strconv.Itoa(int(billIDInt64))
+	log.Printf("created bill #%s", bill.BillID)
 	m.PutBill(bill)
 	return bill.BillID
 }
