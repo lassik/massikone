@@ -365,5 +365,6 @@ func main() {
 	log.Print("Starting web server")
 	http.ListenAndServe(":"+port,
 		handlers.LoggingHandler(os.Stdout,
-			handlers.RecoveryHandler()(router)))
+			handlers.RecoveryHandler(
+				handlers.PrintRecoveryStack(true))(router)))
 }
