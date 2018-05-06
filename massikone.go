@@ -25,6 +25,7 @@ const sessionCurrentUser = "current_user"
 var sessionName = os.Getenv("SESSION_NAME")
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 var port = os.Getenv("PORT")
+var publicURL = os.Getenv("PUBLIC_URL")
 var staticBox = packr.NewBox("./public")
 var templatesBox = packr.NewBox("./views")
 
@@ -46,12 +47,11 @@ var compareTemplate *mustache.Template
 var loginTemplate *mustache.Template
 
 func init() {
-	baseURL := "http://127.0.0.1:" + port
 	goth.UseProviders(
 		gplus.New(
 			os.Getenv("GOOGLE_CLIENT_ID"),
 			os.Getenv("GOOGLE_CLIENT_SECRET"),
-			baseURL+"/auth/gplus/callback"),
+			publicURL+"/auth/gplus/callback"),
 	)
 }
 
