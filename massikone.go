@@ -121,7 +121,9 @@ func finishLogin(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
-	provider := map[string]string{"gplus": "google_oauth2"}[gothUser.Provider]
+	provider := map[string]string{
+		"gplus": "google_oauth2",
+	}[gothUser.Provider]
 	if provider == "" {
 		log.Print("Unknown provider")
 		return
@@ -152,8 +154,8 @@ func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		map[string]interface{}{
 			"AppTitle":    getAppTitle(),
 			"CurrentUser": m.User(),
-			"bills": map[string]interface{}{
-				"bills": bills,
+			"Bills": map[string][]model.Bill{
+				"Bills": bills,
 			},
 		})))
 }
@@ -177,25 +179,34 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	var users []model.User
+	if m.User().IsAdmin {
+		users = m.GetUsers(bill.PaidUser.UserID)
+	}
+	creditAccounts := m.GetAccounts(false, bill.CreditAccountID)
+	debitAccounts := m.GetAccounts(false, bill.DebitAccountID)
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
-			"AppTitle":    getAppTitle(),
-			"CurrentUser": m.User(),
-			"Bill":        bill,
+			"AppTitle":       getAppTitle(),
+			"CurrentUser":    m.User(),
+			"Bill":           bill,
+			"Users":          users,
+			"CreditAccounts": creditAccounts,
+			"DebitAccounts":  debitAccounts,
 		})))
 }
 
 func billFromRequest(r *http.Request, billID string) model.Bill {
 	return model.Bill{
-		BillID:      billID,
-		PaidDateFi:  r.PostFormValue("paid_date_fi"),
-		Description: r.PostFormValue("description"),
-		PaidUser: model.User{
-			UserID: r.PostFormValue("paid_user_id"),
-		},
+		BillID:          billID,
+		PaidDateFi:      r.PostFormValue("paid_date_fi"),
+		Description:     r.PostFormValue("description"),
 		Amount:          r.PostFormValue("amount"),
 		CreditAccountID: r.PostFormValue("credit_account_id"),
 		DebitAccountID:  r.PostFormValue("debit_account_id"),
+		PaidUser: model.User{
+			UserID: r.PostFormValue("paid_user_id"),
+		},
 	}
 }
 
@@ -217,13 +228,13 @@ func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	accounts := m.GetAccounts(false, "")
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
-			"AppTitle":    getAppTitle(),
-			"CurrentUser": m.User(),
-			// admin: admin_data,
-			// credit_accounts: accounts,
-			// debit_accounts: accounts
+			"AppTitle":       getAppTitle(),
+			"CurrentUser":    m.User(),
+			"CreditAccounts": accounts,
+			"DebitAccounts":  accounts,
 		})))
 }
 

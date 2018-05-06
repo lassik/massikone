@@ -30,7 +30,7 @@ func parsePositiveInt(what, s string) int {
 	return val
 }
 
-func IsoFromFiDate(str string) string {
+func isoFromFiDate(str string) string {
 	if str == "" {
 		return ""
 	}
@@ -41,7 +41,7 @@ func IsoFromFiDate(str string) string {
 	return date.Format("2006-01-02")
 }
 
-func FiFromIsoDate(str string) string {
+func fiFromISODate(str string) string {
 	if str == "" {
 		return ""
 	}
@@ -64,7 +64,16 @@ func (m *Model) getIntFromDb(q sq.SelectBuilder) string {
 	return val.String
 }
 
-func centsFromAmount(amount string) (int, error) {
+func amountFromCents(cents int64) string {
+	if cents <= 0 {
+		return ""
+	}
+	euros := cents / 100
+	cents = cents % 100
+	return fmt.Sprintf("%d,%02d", euros, cents)
+}
+
+func centsFromAmount(amount string) (int64, error) {
 	amount = regexp.MustCompile(`\s+`).ReplaceAllString(amount, "")
 	if amount == "" {
 		return 0, nil
@@ -85,5 +94,5 @@ func centsFromAmount(amount string) (int, error) {
 		}
 	}
 	cents = (euros * 100) + cents
-	return cents, nil
+	return int64(cents), nil
 }

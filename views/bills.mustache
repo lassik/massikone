@@ -14,7 +14,7 @@
       <h2>{{current_user.full_name}}</h2>
       <div class="btn-group" role="group" aria-label="Basic example">
         <a class="btn btn-info btn-lg" href="/bill">Uusi lasku</a>
-        {{#admin}}
+        {{#CurrentUser.IsAdmin}}
         <div class="btn-group">
           <button class="btn btn-info btn-lg dropdown-toggle" type="button" data-toggle="dropdown">Raportit <span class="caret"></span></button>
           <ul class="dropdown-menu">
@@ -31,35 +31,35 @@
             <li><a href="/compare">Vertaa tiliotteeseen&hellip;</a></li>
           </ul>
         </div>
-        {{/admin}}
+        {{/CurrentUser.IsAdmin}}
         <button type="button" class="btn btn-info btn-lg" id="logout-button">Kirjaudu ulos</button>
       </div>
       <form id="logout-form" method="POST" action="/logout" style="display: none"></form>
-      {{^bills}}
+      {{^Bills}}
       <p>Ei laskuja</p>
-      {{/bills}}
-      {{#bills}}
+      {{/Bills}}
+      {{#Bills}}
       <h2>Kulut</h2>
       <table class="table table-striped table-hover">
               <tr>
                 <th>Kulu</th>
                 <th class="text-right">Pvm</th>
                 <th class="text-right">&euro;</th>
-                {{#admin}}
+                {{#CurrentUser.IsAdmin}}
                 <th>Maksaja</th>
-                {{/admin}}
+                {{/CurrentUser.IsAdmin}}
                 <th>Kuvaus</th>
                 <th></th>
               </tr>
-              {{#bills}}
-              <tr class="clickable-row" data-href="/bill/{{bill_id}}" style="cursor: pointer">
-                <td><a class="btn btn-default" href="/bill/{{bill_id}}">{{bill_id}}</a></td>
-                <td class="text-right">{{paid_date_fi}}</td>
-                <td class="text-right">{{amount}}</td>
-                {{#admin}}
-                <td>{{paid_user_full_name}}</td>
-                {{/admin}}
-                <td>{{description}}</td>
+              {{#Bills}}
+              <tr class="clickable-row" data-href="/bill/{{BillID}}" style="cursor: pointer">
+                <td><a class="btn btn-default" href="/bill/{{BillID}}">{{BillID}}</a></td>
+                <td class="text-right">{{PaidDateFi}}</td>
+                <td class="text-right">{{Amount}}</td>
+                {{#CurrentUser.IsAdmin}}
+                <td>{{PaidUser.FullName}}</td>
+                {{/CurrentUser.IsAdmin}}
+                <td>{{Description}}</td>
                 <td>
             {{#image_missing}}
             <span class="glyphicon glyphicon-paperclip"
@@ -67,9 +67,9 @@
             {{/image_missing}}
           </td>
               </tr>
-              {{/bills}}
+              {{/Bills}}
       </table>
-      {{/bills}}
+      {{/Bills}}
     </div>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>

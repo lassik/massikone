@@ -24,47 +24,47 @@
           <a class="btn btn-lg btn-warning" href="/{{#Bill}}bill/{{BillID}}{{/Bill}}">Peruuta</a>
           <a class="btn btn-lg btn-info" href="/">Takaisin</a>
           {{#Bill}}
-          {{#PrevBillID}}
+          {{#HasPrevBill}}
           <a class="btn btn-lg btn-primary" href="/bill/{{PrevBillID}}">
             <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
           </a>
-          {{/PrevBillID}}
-          {{^PrevBillID}}
+          {{/HasPrevBill}}
+          {{^HasPrevBill}}
           <button class="btn btn-lg btn-primary disabled">
             <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
           </button>
-          {{/PrevBillID}}
-          {{#NextBillID}}
+          {{/HasPrevBill}}
+          {{#HasNextBill}}
           <a class="btn btn-lg btn-primary" href="/bill/{{NextBillID}}">
             <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
           </a>
-          {{/NextBillID}}
-          {{^NextBillID}}
+          {{/HasNextBill}}
+          {{^HasNextBill}}
           <button class="btn btn-lg btn-primary disabled">
             <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
           </button>
-          {{/NextBillID}}
+          {{/HasNextBill}}
           {{/Bill}}
         </div>
         <table class="table table-striped">
           <tr>
             <th>Maksaja:</th>
             <td>
-              {{#admin}}
-              <select class="form-control" name="PaidUser.id" value="{{#Bill}}{{PaidUser.id}}{{/Bill}}">
+              {{#CurrentUser.IsAdmin}}
+              <select class="form-control" name="paid_user_id" value="{{#Bill}}{{PaidUser.id}}{{/Bill}}">
                 <option value=""></option>
-                {{#users}}
-                <option value="{{user_id}}" {{#is_paid_user}}selected{{/is_paid_user}}>{{FullName}}</option>
-                {{/users}}
+                {{#Users}}
+                <option value="{{UserID}}"{{#IsMatch}} selected{{/IsMatch}}>{{FullName}}</option>
+                {{/Users}}
               </select>
-              {{/admin}}
-              {{^admin}}
+              {{/CurrentUser.IsAdmin}}
+              {{^CurrentUser.IsAdmin}}
               {{#Bill}}{{PaidUser.FullName}}{{/Bill}}
               {{^Bill}}{{CurrentUser.FullName}}{{/Bill}}
-              {{/admin}}
+              {{/CurrentUser.IsAdmin}}
             </td>
           </tr>
-          {{#admin}}
+          {{#CurrentUser.IsAdmin}}
           <tr>
             <th>Maksupäivä:</th>
             <td>
@@ -74,7 +74,7 @@
                      value="{{#Bill}}{{PaidDateFi}}{{/Bill}}">
             </td>
           </tr>
-          {{/admin}}
+          {{/CurrentUser.IsAdmin}}
           <tr>
             <th>Kuva:</th>
             <td>
@@ -91,14 +91,14 @@
           </tr>
           <tr>
             <th>Kulun selvennys:</th>
-            <td><textarea name="description" cols="80" rows="4">{{#Bill}}{{description}}{{/Bill}}</textarea></td>
+            <td><textarea name="description" cols="80" rows="4">{{#Bill}}{{Description}}{{/Bill}}</textarea></td>
           </tr>
-          {{#admin}}
+          {{#CurrentUser.IsAdmin}}
           <tr>
             <th>Summa:</th>
             <td>
               <input type="text" name="amount"
-                     value="{{#Bill}}{{amount}}{{/Bill}}"> &euro;
+                     value="{{#Bill}}{{Amount}}{{/Bill}}"> &euro;
             </td>
           </tr>
           <tr>
@@ -110,9 +110,9 @@
                   <td>
                     <select class="selectpicker" data-width="auto" data-live-search="true" name="credit_account_id">
                       <option value=""></option>
-                      {{#credit_accounts}}
-                      <option value="{{account_id}}" {{#selected}}selected{{/selected}}>{{prefix}} {{title}}</option>
-                      {{/credit_accounts}}
+                      {{#CreditAccounts}}
+                      <option value="{{AccountID}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
+                      {{/CreditAccounts}}
                     </select>
                   </td>
                 </tr>
@@ -121,9 +121,9 @@
                   <td>
                     <select class="selectpicker" data-width="auto" data-live-search="true" name="debit_account_id">
                       <option value=""></option>
-                      {{#debit_accounts}}
-                      <option value="{{account_id}}" {{#selected}}selected{{/selected}}>{{prefix}} {{title}}</option>
-                      {{/debit_accounts}}
+                      {{#DebitAccounts}}
+                      <option value="{{AccountID}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
+                      {{/DebitAccounts}}
                     </select>
                   </td>
                 </tr>
@@ -137,20 +137,20 @@
               <button type="button" class="btn btn-danger">Poista</button>
             </td>
           </tr>
-          {{/admin}}
+          {{/CurrentUser.IsAdmin}}
         </table>
         <input type="hidden" id="image-id" name="image_id"
-               value="{{#Bill}}{{#images}}{{image_id}}{{/images}}{{/Bill}}">
+               value="{{#Bill}}{{#Images}}{{ImageID}}{{/Images}}{{/Bill}}">
       </form>
       <form id="image-upload-form" enctype="multipart/form-data"
             style="display: none">
         <input type="file" name="file" id="image-upload-file"
-               accept=".jpeg,.jpg,.png,image/jpeg,image/png">
+               accept=".jpeg,.jpg,.png,.gif,image/jpeg,image/png,image/gif">
       </form>
       <div id="bill-image-container">
-        {{#Bill}}{{#images}}{{#image_id}}
-        <img src="/api/userimage/{{image_id}}">
-        {{/image_id}}{{/images}}{{/Bill}}
+        {{#Bill}}{{#Images}}{{#ImageID}}
+        <img src="/api/userimage/{{ImageID}}">
+        {{/ImageID}}{{/Images}}{{/Bill}}
       </div>
       <div id="bill-image-placeholder" class="well">
         <ul>
