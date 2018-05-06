@@ -179,21 +179,20 @@ func (m *Model) GetBillID(billID string) *Bill {
 	q = withCents(q)
 	if m.isErr(q.RunWith(m.tx).Limit(1).QueryRow().Scan(
 		&bill.BillID, &paidDateISO, &description,
-		&paidUserID,
-		&paidUserFullName, &cents)) {
+		&paidUserID, &paidUserFullName, &cents)) {
 		return nil
 	}
+	bill.PaidUser.UserID = strconv.Itoa(int(paidUserID.Int64))
+	bill.PaidUser.FullName = paidUserFullName.String
 	if !m.isAdminOrUser(bill.PaidUser.UserID) {
 		return nil
 	}
 	bill.Description = description.String
 	bill.PaidDateISO = paidDateISO.String
 	bill.PaidDateFi = fiFromISODate(paidDateISO.String)
-	bill.PaidUser.UserID = strconv.Itoa(int(paidUserID.Int64))
-	bill.PaidUser.FullName = paidUserFullName.String
 	bill.Amount = amountFromCents(cents.Int64)
-	//m.populateOtherBillFieldsFromBillEntries(&bill)
-	//bill.Images = m.getBillImages(billID)
+	m.populateOtherBillFieldsFromBillEntries(&bill)
+	bill.Images = m.getBillImages(billID)
 	if len(bill.Images) > 0 {
 		bill.ImageID = bill.Images[0]["ImageID"]
 	}
@@ -248,16 +247,16 @@ func (m *Model) putBillEntries(bill Bill) {
 		if entry.RowNumber != rowNumber {
 			panic("Row number mismatch")
 		}
-		if m.isErr(sq.Insert("bill_entry").
-			SetMap(sq.Eq{
-				"bill_id":         bill.BillID,
-				"row_number":      rowNumber,
-				"unit_count":      1,
-				"unit_cost_cents": entry.UnitCostCents,
-				"account_id":      entry.AccountID,
-				"debit":           entry.IsDebit,
-				"description":     entry.Description,
-			}).RunWith(m.tx).QueryRow().Scan()) {
+		_, err := sq.Insert("bill_entry").SetMap(sq.Eq{
+			"bill_id":         bill.BillID,
+			"row_number":      rowNumber,
+			"unit_count":      1,
+			"unit_cost_cents": entry.UnitCostCents,
+			"account_id":      entry.AccountID,
+			"debit":           entry.IsDebit,
+			"description":     entry.Description,
+		}).RunWith(m.tx).Exec()
+		if m.isErr(err) {
 			return
 		}
 	}
@@ -272,21 +271,22 @@ func (m *Model) putBillImages(bill Bill) {
 	if bill.ImageID == "" {
 		return
 	}
-	if m.isErr(sq.Insert("bill_image").
-		SetMap(sq.Eq{
-			"bill_id":        bill.BillID,
-			"bill_image_num": 1,
-			"image_id":       bill.ImageID,
-		}).RunWith(m.tx).QueryRow().Scan(&bill.BillID)) {
+	_, err = sq.Insert("bill_image").SetMap(sq.Eq{
+		"bill_id":        bill.BillID,
+		"bill_image_num": 1,
+		"image_id":       bill.ImageID,
+	}).RunWith(m.tx).Exec()
+	if m.isErr(err) {
 		return
 	}
 }
 
 func (m *Model) PutBill(bill Bill) {
-	log.Print("PutBill AAA")
-	if bill.BillID == "" {
-		panic("Null BillID in PutBill")
+	billID := parsePositiveInt("bill ID", bill.BillID)
+	if billID < 1 {
+		return
 	}
+	log.Printf("PutBill %d", billID)
 	setmap := sq.Eq{
 		"description": bill.Description,
 		"paid_date":   isoFromFiDate(bill.PaidDateFi),
@@ -298,8 +298,9 @@ func (m *Model) PutBill(bill Bill) {
 	log.Print("PutBill BBB")
 	var oldPaidUserID sql.NullString
 	if m.isErr(sq.Select("paid_user_id").
-		From("bill").Where(sq.Eq{"bill_id": bill.BillID}).
+		From("bill").Where(sq.Eq{"bill_id": billID}).
 		RunWith(m.tx).QueryRow().Scan(&oldPaidUserID)) {
+		log.Print("fuck 1")
 		return
 	}
 	log.Print("PutBill CCC")
@@ -307,25 +308,37 @@ func (m *Model) PutBill(bill Bill) {
 		return
 	}
 	if m.user.IsAdmin {
+		setmap["paid_user_id"] = bill.PaidUser.UserID
+		log.Print("populateBillEntriesFromOtherBillFields")
 		m.populateBillEntriesFromOtherBillFields(&bill)
+		log.Print("putBillEntries")
 		m.putBillEntries(bill)
 	}
-	log.Print("PutBill DDD")
+	log.Print("putBillImages")
 	m.putBillImages(bill)
-	//"paid_user_id": bill.PaidUser.UserID
 	log.Print("PutBill EEE")
-	m.isErr(sq.Update("bill").SetMap(setmap).
-		Where(sq.Eq{"bill_id": bill.BillID}).
-		RunWith(m.tx).QueryRow().Scan())
+	q := sq.Update("bill").SetMap(setmap).
+		Where(sq.Eq{"bill_id": billID}).
+		RunWith(m.tx)
+	result, err := q.Exec()
+	log.Printf("fuck 2 err=%q result=%q", err, result)
+	if m.isErr(err) {
+		log.Printf("fuck 2 %s", m.Err)
+		return
+	}
 	log.Print("PutBill FFF")
 }
 
 func (m *Model) PostBill(bill Bill) string {
 	createdDate := time.Now().Format("2006-01-02")
 	log.Printf("PostBill %s", createdDate)
-	result, err := sq.Insert("bill").
-		Columns("created_date").Values(createdDate).
-		RunWith(m.tx).Exec()
+	setMap := sq.Eq{
+		"created_date": createdDate,
+	}
+	if !m.user.IsAdmin {
+		setMap["paid_user_id"] = m.user.UserID
+	}
+	result, err := sq.Insert("bill").SetMap(setMap).RunWith(m.tx).Exec()
 	if m.isErr(err) {
 		return ""
 	}

@@ -86,10 +86,17 @@ func GetOrPutUser(provider, providerUserID, email, fullName string) (string, err
 		"email":              email,
 		"full_name":          fullName,
 	}
-	err = sq.Update("user").SetMap(setmap).
+	result, err := sq.Update("user").SetMap(setmap).
 		Where(sq.Eq{providerUserIDColumn: providerUserID}).
-		RunWith(tx).QueryRow().Scan()
-	if err == sql.ErrNoRows {
+		RunWith(tx).Exec()
+	if err != nil {
+		return "", err
+	}
+	count, err := result.RowsAffected()
+	if err != nil {
+		return "", err
+	}
+	if count < 1 {
 		var oldUserCount int
 		err = sq.Select("count(*)").From("user").
 			RunWith(tx).Limit(1).QueryRow().Scan(&oldUserCount)
@@ -99,8 +106,6 @@ func GetOrPutUser(provider, providerUserID, email, fullName string) (string, err
 		isAdmin := (oldUserCount == 0)
 		setmap["is_admin"] = isAdmin
 		sq.Insert("user").SetMap(setmap).RunWith(tx).QueryRow().Scan()
-	} else if err != nil {
-		return "", err
 	}
 	var userID string
 	err = sq.Select("user_id").From("user").

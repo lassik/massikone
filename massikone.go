@@ -148,7 +148,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 
 func getLoginPage(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(loginTemplate.Render(
-		map[string]string{"app_title": getAppTitle()})))
+		map[string]string{"AppTitle": getAppTitle()})))
 }
 
 func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
@@ -172,7 +172,6 @@ func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	//accounts := m.GetAccounts(false)
 	billID := mux.Vars(r)["billID"]
 	bill := m.GetBillID(billID)
 	if m.Err != nil {
@@ -183,11 +182,13 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var users []model.User
+	var creditAccounts []model.Account
+	var debitAccounts []model.Account
 	if m.User().IsAdmin {
 		users = m.GetUsers(bill.PaidUser.UserID)
+		creditAccounts = m.GetAccounts(false, bill.CreditAccountID)
+		debitAccounts = m.GetAccounts(false, bill.DebitAccountID)
 	}
-	creditAccounts := m.GetAccounts(false, bill.CreditAccountID)
-	debitAccounts := m.GetAccounts(false, bill.DebitAccountID)
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
 			"AppTitle":       getAppTitle(),
@@ -204,6 +205,7 @@ func billFromRequest(r *http.Request, billID string) model.Bill {
 		BillID:          billID,
 		PaidDateFi:      r.PostFormValue("paid_date_fi"),
 		Description:     r.PostFormValue("description"),
+		ImageID:         r.PostFormValue("image_id"),
 		Amount:          r.PostFormValue("amount"),
 		CreditAccountID: r.PostFormValue("credit_account_id"),
 		DebitAccountID:  r.PostFormValue("debit_account_id"),
@@ -246,7 +248,7 @@ func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 
 func getCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(compareTemplate.Render(
-		map[string]string{"app_title": getAppTitle()})))
+		map[string]string{"AppTitle": getAppTitle()})))
 }
 
 func getImageRotated(m *model.Model, w http.ResponseWriter, r *http.Request) {
