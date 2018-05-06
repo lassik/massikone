@@ -40,10 +40,10 @@ func templateFromBox(filename string) *mustache.Template {
 	return tmpl
 }
 
-var billsTemplate = templateFromBox("bills.mustache")
-var billTemplate = templateFromBox("bill.mustache")
-var compareTemplate = templateFromBox("compare.mustache")
-var loginTemplate = templateFromBox("login.mustache")
+var billsTemplate *mustache.Template
+var billTemplate *mustache.Template
+var compareTemplate *mustache.Template
+var loginTemplate *mustache.Template
 
 func init() {
 	baseURL := "http://127.0.0.1:" + port
@@ -302,6 +302,11 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 }
 
 func main() {
+	billsTemplate = templateFromBox("bills.mustache")
+	billTemplate = templateFromBox("bill.mustache")
+	compareTemplate = templateFromBox("compare.mustache")
+	loginTemplate = templateFromBox("login.mustache")
+
 	router := mux.NewRouter()
 
 	get := func(path string, h http.HandlerFunc) {
