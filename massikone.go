@@ -49,8 +49,8 @@ func init() {
 	baseURL := "http://127.0.0.1:" + port
 	goth.UseProviders(
 		gplus.New(
-			os.Getenv("GPLUS_KEY"),
-			os.Getenv("GPLUS_SECRET"),
+			os.Getenv("GOOGLE_CLIENT_ID"),
+			os.Getenv("GOOGLE_CLIENT_SECRET"),
 			baseURL+"/auth/gplus/callback"),
 	)
 }
