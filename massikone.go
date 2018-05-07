@@ -16,6 +16,7 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/gplus"
+	"github.com/toqueteos/webbrowser"
 
 	"./model"
 	"./reports"
@@ -358,13 +359,18 @@ func main() {
 		http.StripPrefix("/static/", http.FileServer(staticBox)))
 
 	addr := os.Getenv("ADDR")
-	if addr == "" {
+	noAddrGiven := (addr == "")
+	if noAddrGiven {
 		// Pick any open port, only allow connections from localhost.
 		addr = "127.0.0.1:0"
 	}
 	listener, err := net.Listen("tcp", addr)
 	check(err)
-	log.Print("Serving on http://", listener.Addr())
+	url := "http://" + listener.Addr().String()
+	log.Print("Serving on ", url)
+	if noAddrGiven {
+		webbrowser.Open(url)
+	}
 	check(http.Serve(listener,
 		handlers.LoggingHandler(os.Stdout,
 			handlers.RecoveryHandler(
