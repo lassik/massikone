@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
@@ -24,7 +25,6 @@ const sessionName = "massikone"
 const sessionCurrentUser = "current_user"
 
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-var port = os.Getenv("PORT")
 var publicURL = os.Getenv("PUBLIC_URL")
 var staticBox = packr.NewBox("./public")
 var templatesBox = packr.NewBox("./views")
@@ -357,9 +357,16 @@ func main() {
 	router.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/", http.FileServer(staticBox)))
 
-	log.Print("Starting web server")
-	http.ListenAndServe(":"+port,
+	addr := os.Getenv("ADDR")
+	if addr == "" {
+		// Pick any open port, only allow connections from localhost.
+		addr = "127.0.0.1:0"
+	}
+	listener, err := net.Listen("tcp", addr)
+	check(err)
+	log.Print("Serving on http://", listener.Addr())
+	check(http.Serve(listener,
 		handlers.LoggingHandler(os.Stdout,
 			handlers.RecoveryHandler(
-				handlers.PrintRecoveryStack(true))(router)))
+				handlers.PrintRecoveryStack(true))(router))))
 }
