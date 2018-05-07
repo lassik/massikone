@@ -311,7 +311,7 @@ func (m *Model) PutBill(bill Bill) {
 	q := sq.Update("bill").SetMap(setmap).
 		Where(sq.Eq{"bill_id": billID}).
 		RunWith(m.tx)
-	result, err := q.Exec()
+	_, err := q.Exec()
 	if m.isErr(err) {
 		return
 	}
