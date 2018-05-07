@@ -57,11 +57,7 @@ func (m *Model) GetBills() []Bill {
 	q := sq.Select("bill_id, paid_date, description").
 		From("bill").OrderBy("bill_id, description")
 	q = withPaidUser(q)
-	sqlString, _, _ := q.ToSql()
-	log.Print(sqlString)
 	q = withCents(q)
-	sqlString, _, _ = q.ToSql()
-	log.Print(sqlString)
 	if !m.user.IsAdmin {
 		q = q.Where(sq.Eq{"paid_user_id": m.user.UserID})
 	}
@@ -172,7 +168,6 @@ func (m *Model) GetBillID(billID string) *Bill {
 	var paidDateISO sql.NullString
 	var description sql.NullString
 	var cents sql.NullInt64
-	log.Print("GetBillID")
 	q := sq.Select("bill_id, paid_date, description").
 		From("bill").Where(sq.Eq{"bill_id": billID})
 	q = withPaidUser(q)
