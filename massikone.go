@@ -20,9 +20,9 @@ import (
 	"./reports"
 )
 
+const sessionName = "massikone"
 const sessionCurrentUser = "current_user"
 
-var sessionName = os.Getenv("SESSION_NAME")
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 var port = os.Getenv("PORT")
 var publicURL = os.Getenv("PUBLIC_URL")
