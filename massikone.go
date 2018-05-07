@@ -98,9 +98,7 @@ func withModel(h ModelHandlerFunc, adminOnly bool) http.HandlerFunc {
 				http.StatusUnauthorized)
 			return
 		}
-		log.Print("before handler")
 		h(&m, w, r)
-		log.Print("after handler")
 		if m.Err != nil {
 			log.Print(m.Err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError),
@@ -225,13 +223,10 @@ func putBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	log.Print("controller postBill AAA")
 	billID := m.PostBill(billFromRequest(r, ""))
-	log.Print("controller postBill BBB")
 	if m.Err != nil {
 		return
 	}
-	log.Print("controller postBill CCC")
 	http.Redirect(w, r, "/bill/"+billID, http.StatusSeeOther)
 }
 
