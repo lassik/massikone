@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eux
 cd "$(dirname "$0")"
+export GOPATH=$PWD/.go
 go get -u github.com/disintegration/imaging
 go get -u github.com/gobuffalo/packr
 go get -u github.com/gobuffalo/packr/...
