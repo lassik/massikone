@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eux
 cd "$(dirname "$0")"
-export GOPATH=$PWD
+export GOPATH=$PWD/.go
 export PATH=$GOPATH/bin:$PATH
 set -x
 ! which cloc >/dev/null 2>&1 || cloc *.go model reports views public
