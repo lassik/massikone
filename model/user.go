@@ -81,6 +81,9 @@ func (m *Model) GetUsers(matchUserID string) []User {
 func GetOrPutUser(provider, providerUserID, email, fullName string) (string, error) {
 	providerUserIDColumn := "user_id_" + provider
 	tx, err := db.Begin()
+	if err != nil {
+		return "", err
+	}
 	setmap := sq.Eq{
 		providerUserIDColumn: providerUserID,
 		"email":              email,
