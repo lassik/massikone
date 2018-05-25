@@ -13,4 +13,5 @@ go get -u github.com/jung-kurt/gofpdf
 go get -u github.com/markbates/goth
 go get -u github.com/Masterminds/squirrel
 go get -u github.com/mattn/go-sqlite3
+go get -u github.com/toqueteos/webbrowser
 go get -u github.com/xo/dburl
