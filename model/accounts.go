@@ -1,9 +1,10 @@
 package model
 
 import (
-	sq "github.com/Masterminds/squirrel"
 	"strconv"
 	"strings"
+
+	sq "github.com/Masterminds/squirrel"
 )
 
 const AccountNestingLevel = 9
