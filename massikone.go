@@ -29,7 +29,7 @@ const sessionCurrentUser = "current_user"
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 var publicURL = os.Getenv("PUBLIC_URL")
 var staticBox = packr.NewBox("./static")
-var templatesBox = packr.NewBox("./views")
+var templatesBox = packr.NewBox("./templates")
 
 func templateFromBox(filename string) *mustache.Template {
 	tmplString, err := templatesBox.MustString(filename)
