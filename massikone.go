@@ -82,7 +82,7 @@ func getSessionUserID(r *http.Request) int64 {
 	session, _ := store.Get(r, sessionName)
 	if id, ok := session.Values[sessionCurrentUser]; ok {
 		if sid, ok := id.(string); ok {
-			if iid, err := strconv.Atoi(sid); err != nil {
+			if iid, err := strconv.Atoi(sid); err == nil {
 				return int64(iid)
 			}
 		}
