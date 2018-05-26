@@ -28,8 +28,8 @@ type Model struct {
 	Err  error
 }
 
-func MakeModel(userID string, adminOnly bool) Model {
-	if userID == "" {
+func MakeModel(userID int64, adminOnly bool) Model {
+	if userID == 0 {
 		return Model{Err: errors.New("Not logged in")}
 	}
 	var m Model

@@ -10,7 +10,7 @@ import (
 )
 
 type User struct {
-	UserID   string
+	UserID   int64
 	FullName string
 	IsAdmin  bool
 	IsMatch  bool
@@ -28,15 +28,15 @@ func (m *Model) isAdmin() bool {
 	return false
 }
 
-func (m *Model) isAdminOrUser(userID string) bool {
-	if m.user.IsAdmin || ((userID != "") && (m.user.UserID == userID)) {
+func (m *Model) isAdminOrUser(userID int64) bool {
+	if m.user.IsAdmin || ((userID != 0) && (m.user.UserID == userID)) {
 		return true
 	}
 	m.Forbidden()
 	return false
 }
 
-func (m *Model) getUserByID(userID string) (*User, error) {
+func (m *Model) getUserByID(userID int64) (*User, error) {
 	var user User
 	q := sq.Select("user_id, full_name, is_admin").
 		From("user").Where(sq.Eq{"user_id": userID})
@@ -51,7 +51,7 @@ func (m *Model) getUserByID(userID string) (*User, error) {
 	return &user, nil
 }
 
-func (m *Model) GetUsers(matchUserID string) []User {
+func (m *Model) GetUsers(matchUserID int64) []User {
 	var noUsers []User
 	if !m.isAdmin() {
 		return noUsers
@@ -68,7 +68,7 @@ func (m *Model) GetUsers(matchUserID string) []User {
 		if m.isErr(rows.Scan(&u.UserID, &u.FullName, &u.IsAdmin)) {
 			return noUsers
 		}
-		u.IsMatch = (matchUserID != "" && u.UserID == matchUserID)
+		u.IsMatch = (matchUserID != 0 && u.UserID == matchUserID)
 		users = append(users, u)
 	}
 	sort.SliceStable(users, func(i, j int) bool {

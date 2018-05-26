@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gobuffalo/packr"
 	"github.com/gorilla/handlers"
@@ -77,14 +78,16 @@ func setSessionUserID(w http.ResponseWriter, r *http.Request, id string) {
 	session.Save(r, w)
 }
 
-func getSessionUserID(r *http.Request) string {
+func getSessionUserID(r *http.Request) int64 {
 	session, _ := store.Get(r, sessionName)
 	if id, ok := session.Values[sessionCurrentUser]; ok {
 		if sid, ok := id.(string); ok {
-			return sid
+			if iid, err := strconv.Atoi(sid); err != nil {
+				return int64(iid)
+			}
 		}
 	}
-	return ""
+	return 0
 }
 
 type ModelHandlerFunc func(*model.Model, http.ResponseWriter, *http.Request)
@@ -163,7 +166,7 @@ func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
-	if getSessionUserID(r) == "" {
+	if getSessionUserID(r) == 0 {
 		getLoginPage(w, r)
 	} else {
 		anyUser(getBills)(w, r)
@@ -200,6 +203,7 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func billFromRequest(r *http.Request, billID string) model.Bill {
+	paidUserID, _ := strconv.Atoi(r.PostFormValue("paid_user_id"))
 	return model.Bill{
 		BillID:          billID,
 		PaidDateFi:      r.PostFormValue("paid_date_fi"),
@@ -209,7 +213,7 @@ func billFromRequest(r *http.Request, billID string) model.Bill {
 		CreditAccountID: r.PostFormValue("credit_account_id"),
 		DebitAccountID:  r.PostFormValue("debit_account_id"),
 		PaidUser: model.User{
-			UserID: r.PostFormValue("paid_user_id"),
+			UserID: int64(paidUserID),
 		},
 	}
 }

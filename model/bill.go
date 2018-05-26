@@ -75,7 +75,7 @@ func (m *Model) scanBill(rowScanner sq.RowScanner) *Bill {
 	b.Description = description.String
 	b.PaidDateISO = paidDateISO.String
 	b.PaidDateFi = fiFromISODate(b.PaidDateISO)
-	b.PaidUser.UserID = strconv.Itoa(int(paidUserID.Int64))
+	b.PaidUser.UserID = paidUserID.Int64
 	b.PaidUser.FullName = paidUserFullName.String
 	b.Amount = amountFromCents(cents.Int64)
 	return &b
@@ -290,16 +290,16 @@ func (m *Model) PutBill(bill Bill) {
 		"description": bill.Description,
 		"paid_date":   isoFromFiDate(bill.PaidDateFi),
 	}
-	if !m.user.IsAdmin && bill.PaidUser.UserID != "" {
+	if !m.user.IsAdmin && bill.PaidUser.UserID != 0 {
 		panic("Non-null PaidUser.UserID for non-admin in PutBill")
 	}
-	var oldPaidUserID sql.NullString
+	var oldPaidUserID sql.NullInt64
 	if m.isErr(sq.Select("paid_user_id").
 		From("bill").Where(sq.Eq{"bill_id": billID}).
 		RunWith(m.tx).QueryRow().Scan(&oldPaidUserID)) {
 		return
 	}
-	if !m.isAdminOrUser(oldPaidUserID.String) {
+	if !m.isAdminOrUser(oldPaidUserID.Int64) {
 		return
 	}
 	if m.user.IsAdmin {
