@@ -63,9 +63,8 @@ func check(err error) {
 	}
 }
 
-func getAppTitle() string {
-	organization := "Testi"
-	return organization + " Massikone"
+func getAppTitle(prefs model.Preferences) string {
+	return prefs.OrgShortName + " Massikone"
 }
 
 func setSessionUserID(w http.ResponseWriter, r *http.Request, id int64) {
@@ -149,15 +148,17 @@ func logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func getLoginPage(w http.ResponseWriter, r *http.Request) {
+	prefs := model.GetPreferences()
 	w.Write([]byte(loginTemplate.Render(
-		map[string]string{"AppTitle": getAppTitle()})))
+		map[string]string{"AppTitle": getAppTitle(prefs)})))
 }
 
 func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	prefs := m.GetPreferences()
 	bills := m.GetBills()
 	w.Write([]byte(billsTemplate.Render(
 		map[string]interface{}{
-			"AppTitle":    getAppTitle(),
+			"AppTitle":    getAppTitle(prefs),
 			"CurrentUser": m.User(),
 			"Bills": map[string][]model.Bill{
 				"Bills": bills,
@@ -174,6 +175,7 @@ func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	prefs := m.GetPreferences()
 	billID := mux.Vars(r)["billID"]
 	bill := m.GetBillID(billID)
 	if m.Err != nil {
@@ -193,7 +195,7 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
-			"AppTitle":       getAppTitle(),
+			"AppTitle":       getAppTitle(prefs),
 			"CurrentUser":    m.User(),
 			"Bill":           bill,
 			"Users":          users,
@@ -236,10 +238,11 @@ func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	prefs := m.GetPreferences()
 	accounts := m.GetAccounts(false, "")
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
-			"AppTitle":       getAppTitle(),
+			"AppTitle":       getAppTitle(prefs),
 			"CurrentUser":    m.User(),
 			"CreditAccounts": accounts,
 			"DebitAccounts":  accounts,
@@ -247,8 +250,9 @@ func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	prefs := m.GetPreferences()
 	w.Write([]byte(compareTemplate.Render(
-		map[string]string{"AppTitle": getAppTitle()})))
+		map[string]string{"AppTitle": getAppTitle(prefs)})))
 }
 
 func getImageRotated(m *model.Model, w http.ResponseWriter, r *http.Request) {
