@@ -68,12 +68,12 @@ func getAppTitle() string {
 	return organization + " Massikone"
 }
 
-func setSessionUserID(w http.ResponseWriter, r *http.Request, id string) {
+func setSessionUserID(w http.ResponseWriter, r *http.Request, id int64) {
 	session, _ := store.Get(r, sessionName)
-	if id == "" {
+	if id == 0 {
 		delete(session.Values, sessionCurrentUser)
 	} else {
-		session.Values[sessionCurrentUser] = id
+		session.Values[sessionCurrentUser] = strconv.FormatInt(id, 10)
 	}
 	session.Save(r, w)
 }
@@ -144,7 +144,7 @@ func finishLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
-	setSessionUserID(w, r, "")
+	setSessionUserID(w, r, 0)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 

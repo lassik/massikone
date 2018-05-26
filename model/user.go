@@ -78,11 +78,11 @@ func (m *Model) GetUsers(matchUserID int64) []User {
 	return users
 }
 
-func GetOrPutUser(provider, providerUserID, email, fullName string) (string, error) {
+func GetOrPutUser(provider, providerUserID, email, fullName string) (int64, error) {
 	providerUserIDColumn := "user_id_" + provider
 	tx, err := db.Begin()
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	setmap := sq.Eq{
 		providerUserIDColumn: providerUserID,
@@ -93,32 +93,32 @@ func GetOrPutUser(provider, providerUserID, email, fullName string) (string, err
 		Where(sq.Eq{providerUserIDColumn: providerUserID}).
 		RunWith(tx).Exec()
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	count, err := result.RowsAffected()
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if count < 1 {
 		var oldUserCount int
 		err = sq.Select("count(*)").From("user").
 			RunWith(tx).Limit(1).QueryRow().Scan(&oldUserCount)
 		if err != nil {
-			return "", err
+			return 0, err
 		}
 		isAdmin := (oldUserCount == 0)
 		setmap["is_admin"] = isAdmin
 		sq.Insert("user").SetMap(setmap).RunWith(tx).QueryRow().Scan()
 	}
-	var userID string
+	var userID int64
 	err = sq.Select("user_id").From("user").
 		Where(sq.Eq{providerUserIDColumn: providerUserID}).
 		RunWith(tx).Limit(1).QueryRow().Scan(&userID)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if err = tx.Commit(); err != nil {
-		return "", err
+		return 0, err
 	}
 	return userID, err
 }
