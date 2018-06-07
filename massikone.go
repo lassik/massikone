@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gobuffalo/packr"
 	"github.com/gorilla/handlers"
@@ -366,17 +367,23 @@ func main() {
 	router.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/", http.FileServer(staticBox)))
 
-	addr := os.Getenv("ADDR")
-	noAddrGiven := (addr == "")
-	if noAddrGiven {
-		// Pick any open port, only allow connections from localhost.
-		addr = "127.0.0.1:0"
+	// By default, pick any open port and only allow connections
+	// from localhost.
+	addr := "127.0.0.1:0"
+	port := os.Getenv("PORT")
+	portGiven := (port != "")
+	if portGiven {
+		if strings.Contains(port, ":") {
+			addr = port
+		} else {
+			addr = ":" + port
+		}
 	}
 	listener, err := net.Listen("tcp", addr)
 	check(err)
 	url := "http://" + listener.Addr().String()
 	log.Print("Serving on ", url)
-	if noAddrGiven {
+	if !portGiven {
 		webbrowser.Open(url)
 	}
 	check(http.Serve(listener,
