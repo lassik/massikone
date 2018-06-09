@@ -40,6 +40,6 @@ func (m *Model) GetPreferences() Preferences {
 }
 
 func GetPreferences() Preferences {
-	prefs, _ := getPreferences(db)
+	prefs, _ := getPreferences(getDB())
 	return prefs
 }

@@ -10,17 +10,7 @@ import (
 	"github.com/xo/dburl"
 )
 
-var databaseUrl string
 var db *sql.DB
-
-func init() {
-	databaseUrl = os.Getenv("DATABASE_URL")
-	var err error
-	db, err = dburl.Open(databaseUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 type Model struct {
 	user User
@@ -28,12 +18,23 @@ type Model struct {
 	Err  error
 }
 
+func getDB() *sql.DB {
+	if db == nil {
+		var err error
+		db, err = dburl.Open(os.Getenv("DATABASE_URL"))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	return db
+}
+
 func MakeModel(userID int64, adminOnly bool) Model {
 	if userID == 0 {
 		return Model{Err: errors.New("Not logged in")}
 	}
 	var m Model
-	m.tx, m.Err = db.Begin()
+	m.tx, m.Err = getDB().Begin()
 	var user *User
 	user, m.Err = m.getUserByID(userID)
 	if user == nil && m.Err == nil {
