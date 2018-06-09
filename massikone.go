@@ -18,6 +18,7 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/gplus"
+	"github.com/subosito/gotenv"
 	"github.com/toqueteos/webbrowser"
 
 	"./model"
@@ -307,6 +308,8 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 }
 
 func main() {
+	gotenv.Load("massikone.ini")
+
 	billsTemplate = templateFromBox("bills.mustache")
 	billTemplate = templateFromBox("bill.mustache")
 	compareTemplate = templateFromBox("compare.mustache")
