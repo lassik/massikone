@@ -28,6 +28,13 @@ module Util
     format('%d,%02d', euros, cents)
   end
 
+  def self.amount_from_cents_thousands(cents)
+    return '' if cents.nil? || cents == 0
+    euros, cents = cents.divmod(100)
+    #thousand_euros, euros = euros.divmod(1000)
+    format('%d,%02d', euros, cents)
+  end
+
   def self.shorten(str)
     str.partition("\n")[0].gsub(/\s+/, ' ').strip[0..50]
   end
@@ -49,6 +56,34 @@ module Util
     [full_name, short_name]
   end
 
+  def self.load_financial_statement_rows(template)
+    # Tilitin: FinancialStatementModel.java
+    # new FinancialStatementRow(account_id, text, style, level, amounts)
+    File.foreach("accounts/#{template}.txt").map do |line|
+      case line.rstrip
+      when ''
+        nil
+      when '-', '--'
+        {type: '-'}
+      else
+        fields = line.rstrip.split(';')
+        raise unless fields.length >= 4 and fields.length.even?
+        raise unless fields[0].length == 3
+        type, style, level = fields[0][0], fields[0][1], fields[0][2].to_i
+        raise unless 'DHGST'.include?(type)
+        style = {'P' => nil, 'B' => :bold, 'I' => :italic}.fetch(style)
+        account_id_ranges = (1..(fields.length - 3)).to_a.map do |i|
+          first, limit = fields[i].to_i, fields[i + 1].to_i
+          limit = if limit == first then first + 1                   else limit end
+          [first, limit]
+        end
+        text = fields[-1]
+        {type: type, text: text, style: style, level: level,
+         account_id_ranges: account_id_ranges}
+      end
+    end.compact
+  end
+
   def self.load_account_tree
     # H;1011;Vastaavaa;0 -- Heading ; first account ID ; title ; level
     # A;1011;Perustamismenot;0 -- Account ; ID ; title ; flags
@@ -56,7 +91,7 @@ module Util
     # Sort those by level (assume all accounts are deeper than any heading).
     list = []
     File.foreach('accounts/chart-of-accounts.txt').drop(1).each do |line|
-      fields = line.chomp.split(';')
+      fields = line.rstrip.split(';')
       raise unless fields.length == 4
       row_type, account_id, title, last_field = fields
       account_id = account_id.to_i
@@ -66,8 +101,18 @@ module Util
       sort_level = {'H' => last_field, 'A' => 9}[row_type]
       sort_key = 10 * account_id + sort_level
       prefix = row_type == 'H' ? ('=' * dash_level) : account_id.to_s
+      account_type = if account_id then {
+                       0 => :asset,
+                       1 => :liability,
+                       2 => :equity,
+                       3 => :revenue,
+                       4 => :expense,
+                       5 => :profit_prev,
+                       6 => :profit,
+                     }.fetch(last_field)                      else nil                      end
       list.push(raw_account_id: account_id,
                 account_id: (row_type == 'A' ? account_id : nil),
+                account_type: account_type,
                 title: title,
                 prefix: prefix, htag_level: htag_level, sort_key: sort_key)
     end

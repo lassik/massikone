@@ -472,6 +472,75 @@ class Model
     update_bill! bill_id, params
   end
 
+  def include_account_id?(ranges, account_id)
+    ranges.any? do |range|
+      first, limit = range
+      account_id >= first and account_id < limit
+    end
+  end
+
+  def calc_balances_and_profit(accounts)
+    # Translated to Ruby from Tilitin AccountBalances.java
+    balances, profit = {}, 0
+    account_lookup = accounts.map { |a| [a[:account_id], a] }.to_h
+    entries = @db[:bill_entry].all
+    entries.each do |entry|
+      account = account_lookup[entry[:account_id]]
+      next unless account
+      balance = balances[entry[:account_id]]
+      if balance == nil
+        #count += 1
+      end
+      balance = balance || 0
+      amount = entry[:unit_count] * entry[:unit_cost_cents]
+      type = account[:account_type]
+      debit = entry[:debit]
+      # Tilin saldo lasketaan seuraavan taulukon mukaan:
+      #
+      # +-------------+--------+--------+
+      # | Account     | Debit  | Credit |
+      # +-------------+--------+--------+
+      # | Assets      |  INC   |  DEC   |
+      # | Expenses    |  INC   |  DEC   |
+      # | Liabilities |  DEC   |  INC   |
+      # | Equity      |  DEC   |  INC   |
+      # | Revenue     |  DEC   |  INC   |
+      # +-------------+--------+--------+
+      #
+      # (INC = saldo kasvaa, DEC = saldo vähenee)
+      if ((type == :asset && !debit) ||
+          (type == :expense && !debit) ||
+          (type == :liability && debit) ||
+          (type == :equity && debit) ||
+          (type == :revenue && debit) ||
+          (type == :profit_prev && debit) ||
+          (type == :profit && debit))
+        amount = -amount
+      end
+      case type
+      when :expense then profit -= amount
+      when :revenue then profit += amount
+      end
+      balance += amount
+      balances[entry[:account_id]] = balance
+    end
+    [balances, profit]
+  end
+
+  def calc_balance_of_account_ranges(balances, account_id_ranges)
+    # Translated to Ruby from Tilitin FinancialStatementModel.java calculateBalance()
+    sum = 0
+    expense_account_ids = Util.load_account_tree.select { |a| a[:account_type] == :expense }.map { |a| a[:account_id] }
+    balances.each_pair do |account_id, balance|
+      next unless include_account_id?(account_id_ranges, account_id)
+      next unless balance
+      balance = if expense_account_ids.include?(account_id) then -balance                 else balance end
+      sum += balance
+    end
+    puts("BALANCE SUM IS #{sum}")
+    sum
+  end
+
   private def populate_accounts
     if @db[:period].where(period_id: 1).update(period_id: 1) != 1
       @db[:period].insert(period_id: 1)
@@ -488,10 +557,28 @@ class Model
     end
   end
 
-  def get_accounts
+  def reject_unused_accounts(accounts, used_account_ids)
+    # Translated to Ruby from Tilitin ChartOfAccounts.java filterNonUsedAccounts()
+    ans, headings = [], []
+    accounts.each do |acct|
+      if acct[:htag_level]
+        while (not headings.empty?) and headings.last[:htag_level] >= acct[:htag_level]
+          headings.pop
+        end
+        headings.push(acct)
+      elsif used_account_ids.include?(acct[:account_id])
+        ans.concat(headings)
+        ans.push(acct)
+        headings.clear
+      end
+    end
+    ans
+  end
+
+  def get_accounts(used_only = false)
     populate_accounts
-    @db[:period_account].order(:account_id, :nesting_level)
-                        .select(:account_id, :title, :nesting_level).map do |a|
+    accounts = @db[:period_account].order(:account_id, :nesting_level)
+      .select(:account_id, :title, :nesting_level).map do |a|
       is_account = (a[:nesting_level] == ACCOUNT_NESTING_LEVEL)
       dash_level = is_account ? nil : 1 + a[:nesting_level]
       htag_level = is_account ? nil : 2 + a[:nesting_level]
@@ -501,6 +588,19 @@ class Model
        prefix: (is_account ? a[:account_id].to_s : '=' * dash_level),
        htag_level: htag_level}
     end
+    if used_only
+      reject_unused_accounts(
+        accounts,
+        @db[:bill_entry].select(:account_id).order(:account_id).distinct.map(:account_id)
+      )
+    else
+      accounts
+    end
+  end
+
+  def get_period_start_and_end_date(period_id = 1)
+    @db[:period].where(period_id: period_id).
+      select(:start_date, :end_date).map([:start_date, :end_date]).first
   end
 
   DEFAULT_PREFERENCES = {
