@@ -36,6 +36,7 @@ class Massikone < Roda
              ENV.fetch('GOOGLE_CLIENT_SECRET'),
              scope: 'email,profile'
   end
+
   def omniauth_providers
     [:google_oauth2]
   end
@@ -56,7 +57,7 @@ class Massikone < Roda
 
     r.on 'auth' do
       r.on [':provider', all: omniauth_providers] do |provider|
-        r.is ['callback', { method: %w[get post] }] do
+        r.is ['callback', {method: %w[get post]}] do
           auth = request.env['omniauth.auth']
           r.halt(403, 'Forbidden') unless auth && auth['provider'] == provider
           Model.new(nil) do |model|
@@ -86,7 +87,7 @@ class Massikone < Roda
 
       admin_data = if model.user && model.user[:is_admin]
                      {
-                       users: users
+                       users: users,
                      }
                    end
 
@@ -158,7 +159,7 @@ class Massikone < Roda
                    current_user: model.user,
                    admin: admin_data,
                    tags: all_tags,
-                   bills: { bills: bills }
+                   bills: {bills: bills}
         end
       end
 
@@ -190,7 +191,7 @@ class Massikone < Roda
             mustache(:bill,
                      admin: admin_data,
                      current_user: model.user,
-                     tags: [{ tag: 'ruoka', active: false }],
+                     tags: [{tag: 'ruoka', active: false}],
                      bill: bill,
                      credit_accounts: credit_accounts,
                      debit_accounts: debit_accounts)

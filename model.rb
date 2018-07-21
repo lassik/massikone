@@ -66,13 +66,13 @@ class Model
 
     @db.create_table? :bill do
       primary_key :bill_id
-      String  :description, null: false, default: ''
-      String  :paid_date, null: true
+      String :description, null: false, default: ''
+      String :paid_date, null: true
       foreign_key :paid_user_id, :user, null: true
       String :closed_date, null: true
       foreign_key :closed_user_id, :user, null: true
-      String  :created_date, null: false
-      String  :closed_type, null: true
+      String :created_date, null: false
+      String :closed_type, null: true
     end
 
     @db.create_table? :bill_entry do
@@ -151,7 +151,7 @@ class Model
 
   def whack_user(user)
     user = user.clone
-    user[:full_name], user[:short_name] = \
+    user[:full_name], user[:short_name] =
       Util.full_and_short_name(user[:full_name])
     user
   end
@@ -174,7 +174,7 @@ class Model
       raise "Seuraavia tietoja ei saatu: #{missing.join(', ')}"
     end
     columns = {
-      :email => email, :full_name => full_name, uid_field.to_sym => uid
+      :email => email, :full_name => full_name, uid_field.to_sym => uid,
     }
     if @db[:user].count == 0
       puts 'Creating first user and making them an admin'
@@ -241,7 +241,7 @@ class Model
     if status.exitstatus == 0
       new_image_format = case old_image_format
                          when 'JPEG' then 'jpeg'
-                         when 'PNG'  then 'png'
+                         when 'PNG' then 'png'
                          end
     end
     unless new_image_format
@@ -273,7 +273,7 @@ class Model
       "#{image_format}:-",
       '-rotate', '90',
       "#{image_format}:-",
-      stdin_data: old_image_data
+      stdin_data: old_image_data,
     )
     raise "Image conversion error: #{err_msg}" unless status.exitstatus == 0
     store_image_data(new_image_data, image_format)
@@ -281,7 +281,7 @@ class Model
 
   def get_bill_tags(bill_id)
     @db[:bill_tag].select(:tag).order(:tag).distinct
-                  .where(bill_id: bill_id).map { |x| { tag: x[:tag] } }
+                  .where(bill_id: bill_id).map { |x| {tag: x[:tag]} }
   end
 
   def get_bill_images(bill_id)
@@ -353,7 +353,7 @@ class Model
         debit: e[:debit],
         unit_count: 1,
         unit_cost_cents: e[:unit_cost_cents],
-        description: e[:description]
+        description: e[:description],
       )
     end
   end
@@ -387,13 +387,13 @@ class Model
     bills.each do |bill|
       bill[:amount] = Util.amount_from_cents(bill[:cents])
       bill[:description] = Util.shorten(bill[:description])
-      bill[:paid_user_full_name], = \
+      bill[:paid_user_full_name], =
         Util.full_and_short_name(bill[:paid_user_full_name])
       bill[:paid_date_fi] = Util.fi_from_iso_date(bill[:paid_date])
       bill[:tags] = get_bill_tags(bill[:bill_id])
       bill[:image_missing] = bill_image_missing?(bill[:bill_id])
     end
-    all_tags = bills.flat_map { |bill| bill[:tags] } .sort.uniq
+    all_tags = bills.flat_map { |bill| bill[:tags] }.sort.uniq
     [bills, all_tags]
   end
 
@@ -411,7 +411,7 @@ class Model
         'bill_id' => bill[:bill_id],
         'date' => bill[:paid_date],
         'cents' => bill[:cents],
-        'description' => Util.shorten(bill[:description])
+        'description' => Util.shorten(bill[:description]),
       }
     end
   end
@@ -445,7 +445,7 @@ class Model
                    unit_cost_cents: unit_cost_cents, description: 'Credit')
     end
     if debit_account_id && unit_cost_cents
-      entries.push(debit: true,  account_id: debit_account_id,
+      entries.push(debit: true, account_id: debit_account_id,
                    unit_cost_cents: unit_cost_cents, description: 'Debit')
     end
     bill_entries!(bill_id, entries)
@@ -467,7 +467,7 @@ class Model
 
   def post_bill(params)
     bill_id = @db[:bill].insert(
-      created_date: DateTime.now.strftime('%Y-%m-%d')
+      created_date: DateTime.now.strftime('%Y-%m-%d'),
     )
     update_bill! bill_id, params
   end
@@ -482,7 +482,7 @@ class Model
           period_id: 1,
           account_id: a[:raw_account_id],
           title: a[:title],
-          nesting_level: (a[:htag_level] ? a[:htag_level] - 1 : ACCOUNT_NESTING_LEVEL)
+          nesting_level: (a[:htag_level] ? a[:htag_level] - 1 : ACCOUNT_NESTING_LEVEL),
         )
       end
     end
@@ -495,17 +495,17 @@ class Model
       is_account = (a[:nesting_level] == ACCOUNT_NESTING_LEVEL)
       dash_level = is_account ? nil : 1 + a[:nesting_level]
       htag_level = is_account ? nil : 2 + a[:nesting_level]
-      { raw_account_id: a[:account_id],
-        account_id: (is_account ? a[:account_id] : nil),
-        title: a[:title],
-        prefix: (is_account ? a[:account_id].to_s : '=' * dash_level),
-        htag_level: htag_level }
+      {raw_account_id: a[:account_id],
+       account_id: (is_account ? a[:account_id] : nil),
+       title: a[:title],
+       prefix: (is_account ? a[:account_id].to_s : '=' * dash_level),
+       htag_level: htag_level}
     end
   end
 
   DEFAULT_PREFERENCES = {
     'org_full_name' => '',
-    'org_short_name' => ''
+    'org_short_name' => '',
   }.freeze
 
   def get_preferences

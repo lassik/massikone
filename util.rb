@@ -61,9 +61,9 @@ module Util
       row_type, account_id, title, last_field = fields
       account_id = account_id.to_i
       last_field = last_field.to_i
-      dash_level = { 'H' => 1 + last_field, 'A' => nil }[row_type]
-      htag_level = { 'H' => [2 + last_field, 6].min, 'A' => nil }[row_type]
-      sort_level = { 'H' => last_field, 'A' => 9 }[row_type]
+      dash_level = {'H' => 1 + last_field, 'A' => nil}[row_type]
+      htag_level = {'H' => [2 + last_field, 6].min, 'A' => nil}[row_type]
+      sort_level = {'H' => last_field, 'A' => 9}[row_type]
       sort_key = 10 * account_id + sort_level
       prefix = row_type == 'H' ? ('=' * dash_level) : account_id.to_s
       list.push(raw_account_id: account_id,

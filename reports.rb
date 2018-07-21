@@ -30,21 +30,21 @@ module Reports
       rows += bills.flat_map do |bill|
         [[bill[:bill_id], bill[:paid_date], '', '', '', '']] +
           (bill[:entries].map do |e|
-             debit = (if e[:debit]
-                        Util.amount_from_cents(e[:cents])
-                      else '' end)
-             credit = (if !e[:debit]
-                         Util.amount_from_cents(e[:cents])
-                       else '' end)
-             ['',
-              e[:account_id],
-              account_lookup[e[:account_id]],
-              debit,
-              credit,
-              bill[:description]]
-           end)
+            debit = (if e[:debit]
+              Util.amount_from_cents(e[:cents])
+            else ''             end)
+            credit = (if !e[:debit]
+              Util.amount_from_cents(e[:cents])
+            else ''             end)
+            ['',
+             e[:account_id],
+             account_lookup[e[:account_id]],
+             debit,
+             credit,
+             bill[:description]]
+          end)
       end
-      Prawn::Table.new(rows, self, cell_style: { size: 9 }).draw
+      Prawn::Table.new(rows, self, cell_style: {size: 9}).draw
       number_pages 'Sivu <page>/<total>',
                    at: [bounds.right - 150, 0],
                    width: 150,
@@ -89,40 +89,40 @@ module Reports
   end
 
   private_class_method def self.generate_zipfile(model, document, &block)
-    prefs = model.get_preferences
-    org_short_name = prefs['org_short_name']
-    zipfilepath = '/tmp/' + generate_filename(model, document) + '.zip'
-    # TODO: use mktemp
-    FileUtils.rm_f(zipfilepath)
-    Zip::File.open(zipfilepath, Zip::File::CREATE, &block)
-    zipfilepath
-  end
+                         prefs = model.get_preferences
+                         org_short_name = prefs['org_short_name']
+                         zipfilepath = '/tmp/' + generate_filename(model, document) + '.zip'
+                         # TODO: use mktemp
+                         FileUtils.rm_f(zipfilepath)
+                         Zip::File.open(zipfilepath, Zip::File::CREATE, &block)
+                         zipfilepath
+                       end
 
   private_class_method def self.add_bill_images_to_zip(model, zipfile, subdir)
-    subdir = File.join(File.basename(zipfile.name, '.zip'), subdir)
-    missing = []
-    things = model.get_bills_for_images
-    things.each do |thing|
-      if thing[:image_id]
-        image_in_zip = format('%s/tosite-%04d-%d-%s%s',
-                              subdir,
-                              thing[:bill_id],
-                              thing[:bill_image_num],
-                              Util.slug(thing[:description]),
-                              File.extname(thing[:image_id]))
-        zipfile.get_output_stream(image_in_zip) do |output|
-          output.write thing[:image_data]
-        end
-      else
-        missing.push("##{thing[:bill_id]}")
-      end
-    end
-    unless missing.empty?
-      zipfile.get_output_stream(format('%s/puuttuvat.txt', subdir)) do |out|
-        out.write(missing.join("\r\n"))
-      end
-    end
-  end
+                         subdir = File.join(File.basename(zipfile.name, '.zip'), subdir)
+                         missing = []
+                         things = model.get_bills_for_images
+                         things.each do |thing|
+                           if thing[:image_id]
+                             image_in_zip = format('%s/tosite-%04d-%d-%s%s',
+                                                   subdir,
+                                                   thing[:bill_id],
+                                                   thing[:bill_image_num],
+                                                   Util.slug(thing[:description]),
+                                                   File.extname(thing[:image_id]))
+                             zipfile.get_output_stream(image_in_zip) do |output|
+                               output.write thing[:image_data]
+                             end
+                           else
+                             missing.push("##{thing[:bill_id]}")
+                           end
+                         end
+                         unless missing.empty?
+                           zipfile.get_output_stream(format('%s/puuttuvat.txt', subdir)) do |out|
+                             out.write(missing.join("\r\n"))
+                           end
+                         end
+                       end
 
   def self.bill_images_zip(model)
     generate_zipfile(model, 'tositteet') do |zipfile|
@@ -146,8 +146,8 @@ module Reports
   end
 
   private_class_method def self.generate_filename(model, document)
-    year = 2017 # TODO
-    org_short_name = model.get_preferences['org_short_name']
-    Util.slug("#{org_short_name}-#{year}-#{document}")
-  end
+                         year = 2017 # TODO
+                         org_short_name = model.get_preferences['org_short_name']
+                         Util.slug("#{org_short_name}-#{year}-#{document}")
+                       end
 end
