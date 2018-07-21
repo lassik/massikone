@@ -241,18 +241,39 @@ class Massikone < Roda
       end
 
       r.on 'report' do
-        r.get 'general-journal' do
-          pdf_data, filename = Reports.general_journal_pdf(model)
+        def pdf(pdf_data_and_filename)
+          pdf_data, filename = pdf_data_and_filename
           response['Content-Type'] = 'application/pdf'
           response['Content-Disposition'] = "inline; filename=\"#{filename}\""
           pdf_data
         end
 
+        r.get 'income-statement' do
+          pdf(Reports.income_statement_pdf(model))
+        end
+
+        r.get 'income-statement-detailed' do
+          pdf(Reports.income_statement_detailed_pdf(model))
+        end
+
+        r.get 'balance-sheet' do
+          pdf(Reports.balance_sheet_pdf(model))
+        end
+
+        r.get 'balance-sheet-detailed' do
+          pdf(Reports.balance_sheet_detailed_pdf(model))
+        end
+
+        r.get 'general-journal' do
+          pdf(Reports.general_journal_pdf(model))
+        end
+
+        r.get 'general-ledger' do
+          pdf(Reports.general_ledger_pdf(model))
+        end
+
         r.get 'chart-of-accounts' do
-          pdf_data, filename = Reports.chart_of_accounts_pdf(model)
-          response['Content-Type'] = 'application/pdf'
-          response['Content-Disposition'] = "inline; filename=\"#{filename}\""
-          pdf_data
+          pdf(Reports.chart_of_accounts_pdf(model))
         end
 
         r.get 'massikone.zip' do
