@@ -34,7 +34,7 @@ var staticBox = packr.NewBox("./static")
 var templatesBox = packr.NewBox("./templates")
 
 func templateFromBox(filename string) *mustache.Template {
-	tmplString, err := templatesBox.MustString(filename)
+	tmplString, err := templatesBox.FindString(filename)
 	if err != nil {
 		panic(err)
 	}
