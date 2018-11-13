@@ -15,8 +15,8 @@ func addBillImagesToZip(m *model.Model, getWriter GetWriter) {
 			w, err := getWriter(
 				"image/"+path.Ext(image["image_id"].(string)),
 				fmt.Sprintf("tositteet/tosite-%03d-%d-%s%s",
-					image["bill_id"].(string),
-					image["bill_image_num"].(string),
+					image["bill_id"].(int),
+					image["bill_image_num"].(int),
 					slug(image["description"].(string)),
 					path.Ext(image["image_id"].(string))))
 			if err != nil {
