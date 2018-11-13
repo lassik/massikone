@@ -21,8 +21,8 @@ import (
 	"github.com/subosito/gotenv"
 	"github.com/toqueteos/webbrowser"
 
-	"./model"
-	"./reports"
+	"github.com/lassik/massikone/model"
+	"github.com/lassik/massikone/reports"
 )
 
 const sessionName = "massikone"

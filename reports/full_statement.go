@@ -6,7 +6,7 @@ import (
 	"log"
 	"path"
 
-	"../model"
+	"github.com/lassik/massikone/model"
 )
 
 func FullStatementZip(m *model.Model, getWriter GetWriter) {

@@ -1,7 +1,7 @@
 package reports
 
 import (
-	"../model"
+	"github.com/lassik/massikone/model"
 )
 
 func GeneralJournalPdf(m *model.Model, getWriter GetWriter) {

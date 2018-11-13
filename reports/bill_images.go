@@ -5,7 +5,7 @@ import (
 	"log"
 	"path"
 
-	"../model"
+	"github.com/lassik/massikone/model"
 )
 
 func addBillImagesToZip(m *model.Model, getWriter GetWriter) {
