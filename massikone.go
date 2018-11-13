@@ -13,6 +13,7 @@ import (
 	"github.com/gobuffalo/packr"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/hoisie/mustache"
 	"github.com/markbates/goth"
@@ -303,7 +304,12 @@ func main() {
 
 	publicURL = os.Getenv("PUBLIC_URL")
 
-	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	sessionSecret := []byte(os.Getenv("SESSION_SECRET"))
+	if len(sessionSecret) == 0 {
+		log.Print("No SESSION_SECRET, will logout everyone at exit")
+		sessionSecret = securecookie.GenerateRandomKey(32)
+	}
+	store = sessions.NewCookieStore(sessionSecret)
 	gothic.Store = store
 
 	goth.UseProviders(
