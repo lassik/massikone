@@ -28,8 +28,8 @@ import (
 const sessionName = "massikone"
 const sessionCurrentUser = "current_user"
 
-var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-var publicURL = os.Getenv("PUBLIC_URL")
+var store *sessions.CookieStore
+var publicURL string
 var staticBox = packr.NewBox("./static")
 var templatesBox = packr.NewBox("./templates")
 
@@ -49,15 +49,6 @@ var billsTemplate *mustache.Template
 var billTemplate *mustache.Template
 var compareTemplate *mustache.Template
 var loginTemplate *mustache.Template
-
-func init() {
-	goth.UseProviders(
-		gplus.New(
-			os.Getenv("GOOGLE_CLIENT_ID"),
-			os.Getenv("GOOGLE_CLIENT_SECRET"),
-			publicURL+"/auth/gplus/callback"),
-	)
-}
 
 func check(err error) {
 	if err != nil {
@@ -309,6 +300,18 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 
 func main() {
 	gotenv.Load("massikone.ini")
+
+	publicURL = os.Getenv("PUBLIC_URL")
+
+	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	gothic.Store = store
+
+	goth.UseProviders(
+		gplus.New(
+			os.Getenv("GOOGLE_CLIENT_ID"),
+			os.Getenv("GOOGLE_CLIENT_SECRET"),
+			publicURL+"/auth/gplus/callback"),
+	)
 
 	billsTemplate = templateFromBox("bills.mustache")
 	billTemplate = templateFromBox("bill.mustache")
