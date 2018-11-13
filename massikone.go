@@ -233,11 +233,17 @@ func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
 
 func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	prefs := m.GetPreferences()
-	accounts := m.GetAccounts(false, "")
+	var users []model.User
+	var accounts []model.Account
+	if m.User().IsAdmin {
+		users = m.GetUsers(0)
+		accounts = m.GetAccounts(false, "")
+	}
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
 			"AppTitle":       getAppTitle(prefs),
 			"CurrentUser":    m.User(),
+			"Users":          users,
 			"CreditAccounts": accounts,
 			"DebitAccounts":  accounts,
 		})))
