@@ -58,12 +58,13 @@ func check(err error) {
 }
 
 func getSessionSecret(envar string) []byte {
+	const minlen = 32
 	b := []byte(os.Getenv(envar))
-	if len(b) > 0 {
+	if len(b) >= minlen {
 		return b
 	}
 	log.Printf("No %s, will logout everyone at exit", envar)
-	b = make([]byte, 32)
+	b = make([]byte, minlen)
 	_, err := rand.Read(b)
 	check(err)
 	return b
