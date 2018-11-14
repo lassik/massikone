@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
 	"io"
 	"log"
@@ -13,7 +14,6 @@ import (
 	"github.com/gobuffalo/packr"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/hoisie/mustache"
 	"github.com/markbates/goth"
@@ -55,6 +55,18 @@ func check(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getSessionSecret(envar string) []byte {
+	b := []byte(os.Getenv(envar))
+	if len(b) > 0 {
+		return b
+	}
+	log.Printf("No %s, will logout everyone at exit", envar)
+	b = make([]byte, 32)
+	_, err := rand.Read(b)
+	check(err)
+	return b
 }
 
 func getAppTitle(prefs model.Preferences) string {
@@ -310,12 +322,7 @@ func main() {
 
 	publicURL = os.Getenv("PUBLIC_URL")
 
-	sessionSecret := []byte(os.Getenv("SESSION_SECRET"))
-	if len(sessionSecret) == 0 {
-		log.Print("No SESSION_SECRET, will logout everyone at exit")
-		sessionSecret = securecookie.GenerateRandomKey(32)
-	}
-	store = sessions.NewCookieStore(sessionSecret)
+	store = sessions.NewCookieStore(getSessionSecret("SESSION_SECRET"))
 	gothic.Store = store
 
 	goth.UseProviders(
