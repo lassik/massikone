@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gobuffalo/packr"
 	"github.com/gorilla/handlers"
@@ -410,24 +411,29 @@ func main() {
 
 	port := os.Getenv("PORT")
 	addr := ""
-	if publicURL == "" {
+	if strings.Contains(port, ":") {
+		addr = port
+	} else if publicURL == "" {
 		if port == "" {
 			port = "0"
 		}
-		addr = "127.0.0.1"
-	} else if port == "" {
-		log.Fatal("Julkiselle Massikoneelle täytyy määritellä PORT")
+		addr = "127.0.0.1:" + port
+	} else {
+		if port == "" {
+			log.Fatal("Julkiselle Massikoneelle täytyy määritellä PORT")
+		}
+		addr = ":" + port
 	}
-	addr += ":" + port
 	listener, err := net.Listen("tcp", addr)
 	check(err)
-	url := "http://" + listener.Addr().String()
-	log.Printf("Web-osoite: %s", url)
+	privateURL := "http://" + listener.Addr().String()
+	log.Printf("Yksityinen web-osoite: %s", privateURL)
 	if publicURL != "" {
+		log.Printf("Julkinen web-osoite: %s", publicURL)
 		log.Print("Käytettävissä julkisesti, kirjautuminen vaadittu")
 	} else {
 		log.Print("Käytettävissä vain tällä tietokoneella")
-		webbrowser.Open(url)
+		webbrowser.Open(privateURL)
 	}
 	check(http.Serve(listener,
 		handlers.LoggingHandler(os.Stdout,
