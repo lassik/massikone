@@ -56,20 +56,8 @@ func check(err error) {
 	}
 }
 
-func getSessionSecret(envar string) []byte {
-	const minlen = 32
-	b := []byte(os.Getenv(envar))
-	if len(b) >= minlen {
-		return b
-	}
-	if len(b) == 0 {
-		log.Printf("%s tyhjä", envar)
-	} else {
-		log.Printf("%s lyhyempi kuin %d merkkiä, jätetään käyttämättä",
-			envar, minlen)
-	}
-	log.Printf("Sisäänkirjautumiset eivät säily palvelimen sulkemisen jälkeen")
-	b = make([]byte, minlen)
+func makeSessionSecret() []byte {
+	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	check(err)
 	return b
@@ -350,7 +338,7 @@ func main() {
 
 	publicURL = os.Getenv("PUBLIC_URL")
 	if publicURL != "" {
-		store = sessions.NewCookieStore(getSessionSecret("SESSION_SECRET"))
+		store = sessions.NewCookieStore(makeSessionSecret())
 		gothic.Store = store
 		goth.UseProviders(
 			gplus.New(
