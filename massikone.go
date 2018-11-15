@@ -62,7 +62,13 @@ func getSessionSecret(envar string) []byte {
 	if len(b) >= minlen {
 		return b
 	}
-	log.Printf("No %s, will logout everyone at exit", envar)
+	if len(b) == 0 {
+		log.Printf("%s tyhjä", envar)
+	} else {
+		log.Printf("%s lyhyempi kuin %d merkkiä, jätetään käyttämättä",
+			envar, minlen)
+	}
+	log.Printf("Sisäänkirjautumiset eivät säily palvelimen sulkemisen jälkeen")
 	b = make([]byte, minlen)
 	_, err := rand.Read(b)
 	check(err)
