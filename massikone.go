@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/gobuffalo/packr"
 	"github.com/gorilla/handlers"
@@ -85,6 +84,9 @@ func setSessionUserID(w http.ResponseWriter, r *http.Request, id int64) {
 }
 
 func getSessionUserID(r *http.Request) int64 {
+	if publicURL == "" {
+		return 1
+	}
 	session, _ := store.Get(r, sessionName)
 	if id, ok := session.Values[sessionCurrentUser]; ok {
 		if sid, ok := id.(string); ok {
@@ -150,8 +152,10 @@ func finishLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
-	setSessionUserID(w, r, 0)
-	gothic.Logout(w, r)
+	if publicURL != "" {
+		setSessionUserID(w, r, 0)
+		gothic.Logout(w, r)
+	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -167,6 +171,7 @@ func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(billsTemplate.Render(
 		map[string]interface{}{
 			"AppTitle":    getAppTitle(prefs),
+			"IsPublic":    (publicURL != ""),
 			"CurrentUser": m.User(),
 			"Bills": map[string][]model.Bill{
 				"Bills": bills,
@@ -321,18 +326,25 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 
 func main() {
 	gotenv.Load("massikone.ini")
+	wd, _ := os.Getwd()
+	log.Printf("Työhakemisto: %s", wd)
+
+	if os.Getenv("DATABASE_URL") == "" {
+		os.Setenv("DATABASE_URL", "sqlite://massikone.db")
+	}
+	log.Printf("Tietokanta: %s", os.Getenv("DATABASE_URL"))
 
 	publicURL = os.Getenv("PUBLIC_URL")
-
-	store = sessions.NewCookieStore(getSessionSecret("SESSION_SECRET"))
-	gothic.Store = store
-
-	goth.UseProviders(
-		gplus.New(
-			os.Getenv("GOOGLE_CLIENT_ID"),
-			os.Getenv("GOOGLE_CLIENT_SECRET"),
-			publicURL+"/auth/gplus/callback"),
-	)
+	if publicURL != "" {
+		store = sessions.NewCookieStore(getSessionSecret("SESSION_SECRET"))
+		gothic.Store = store
+		goth.UseProviders(
+			gplus.New(
+				os.Getenv("GOOGLE_CLIENT_ID"),
+				os.Getenv("GOOGLE_CLIENT_SECRET"),
+				publicURL+"/auth/gplus/callback"),
+		)
+	}
 
 	billsTemplate = templateFromBox("bills.mustache")
 	billTemplate = templateFromBox("bill.mustache")
@@ -394,23 +406,25 @@ func main() {
 	router.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/", http.FileServer(staticBox)))
 
-	// By default, pick any open port and only allow connections
-	// from localhost.
-	addr := "127.0.0.1:0"
 	port := os.Getenv("PORT")
-	portGiven := (port != "")
-	if portGiven {
-		if strings.Contains(port, ":") {
-			addr = port
-		} else {
-			addr = ":" + port
+	addr := ""
+	if publicURL == "" {
+		if port == "" {
+			port = "0"
 		}
+		addr = "127.0.0.1"
+	} else if port == "" {
+		log.Fatal("Julkiselle Massikoneelle täytyy määritellä PORT")
 	}
+	addr += ":" + port
 	listener, err := net.Listen("tcp", addr)
 	check(err)
 	url := "http://" + listener.Addr().String()
-	log.Print("Serving on ", url)
-	if !portGiven {
+	log.Printf("Web-osoite: %s", url)
+	if publicURL != "" {
+		log.Print("Käytettävissä julkisesti, kirjautuminen vaadittu")
+	} else {
+		log.Print("Käytettävissä vain tällä tietokoneella")
 		webbrowser.Open(url)
 	}
 	check(http.Serve(listener,

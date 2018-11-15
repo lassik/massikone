@@ -32,7 +32,9 @@
           </ul>
         </div>
         {{/CurrentUser.IsAdmin}}
+        {{#IsPublic}}
         <button type="button" class="btn btn-info btn-lg" id="logout-button">Kirjaudu ulos</button>
+        {{/IsPublic}}
       </div>
       <form id="logout-form" method="POST" action="/logout" style="display: none"></form>
       {{^Bills}}
