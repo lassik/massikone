@@ -325,10 +325,18 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 }
 
 func main() {
-	gotenv.Load("massikone.ini")
 	wd, _ := os.Getwd()
 	log.Printf("Työhakemisto: %s", wd)
 
+	iniFile := "massikone.ini"
+	err := gotenv.Load(iniFile)
+	if err == nil {
+		log.Printf("Asetustiedosto %s käytössä", iniFile)
+	} else if os.IsNotExist(err) {
+		log.Printf("Asetustiedostoa %s ei ole työhakemistossa", iniFile)
+	} else {
+		log.Fatalf("Asetustiedoston %s käyttö epäonnistui. %s", iniFile, err)
+	}
 	if os.Getenv("DATABASE_URL") == "" {
 		os.Setenv("DATABASE_URL", "sqlite://massikone.db")
 	}
