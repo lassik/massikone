@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -320,6 +321,8 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 }
 
 func main() {
+	log.Printf("Massikone (%s, %s/%s)",
+		runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	wd, _ := os.Getwd()
 	log.Printf("Työhakemisto: %s", wd)
 
@@ -433,7 +436,9 @@ func main() {
 		log.Print("Käytettävissä julkisesti, kirjautuminen vaadittu")
 	} else {
 		log.Print("Käytettävissä vain tällä tietokoneella")
-		webbrowser.Open(privateURL)
+		if err = webbrowser.Open(privateURL); err != nil {
+			log.Printf("Selaimen avaaminen ei onnistunut. %s", err)
+		}
 	}
 	check(http.Serve(listener,
 		handlers.LoggingHandler(os.Stdout,
