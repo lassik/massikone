@@ -151,6 +151,7 @@ func finishLogin(w http.ResponseWriter, r *http.Request) {
 
 func logout(w http.ResponseWriter, r *http.Request) {
 	setSessionUserID(w, r, 0)
+	gothic.Logout(w, r)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
