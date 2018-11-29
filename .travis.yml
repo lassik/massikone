@@ -5,6 +5,8 @@ os:
   - linux
   - osx
   - windows
+env:
+  - GO111MODULE=on
 install: "true"
 script:
   - go generate
