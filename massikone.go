@@ -1,5 +1,7 @@
 package main
 
+//go:generate go run staticgen/main.go
+
 import (
 	"crypto/rand"
 	"fmt"
@@ -12,11 +14,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gobuffalo/packr"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/hoisie/mustache"
+	"github.com/lassik/airfreight"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/gplus"
@@ -32,13 +34,11 @@ const sessionCurrentUser = "current_user"
 
 var store *sessions.CookieStore
 var publicURL string
-var staticBox = packr.NewBox("./static")
-var templatesBox = packr.NewBox("./templates")
 
-func templateFromBox(filename string) *mustache.Template {
-	tmplString, err := templatesBox.FindString(filename)
-	if err != nil {
-		panic(err)
+func getTemplate(filename string) *mustache.Template {
+	tmplString := templates[filename].Contents
+	if tmplString == "" {
+		panic("Template not found")
 	}
 	tmpl, err := mustache.ParseString(tmplString)
 	if err != nil {
@@ -47,10 +47,10 @@ func templateFromBox(filename string) *mustache.Template {
 	return tmpl
 }
 
-var billsTemplate *mustache.Template
-var billTemplate *mustache.Template
-var compareTemplate *mustache.Template
-var loginTemplate *mustache.Template
+var billsTemplate = getTemplate("/bills.mustache")
+var billTemplate = getTemplate("/bill.mustache")
+var compareTemplate = getTemplate("/compare.mustache")
+var loginTemplate = getTemplate("/login.mustache")
 
 func check(err error) {
 	if err != nil {
@@ -352,11 +352,6 @@ func main() {
 		)
 	}
 
-	billsTemplate = templateFromBox("bills.mustache")
-	billTemplate = templateFromBox("bill.mustache")
-	compareTemplate = templateFromBox("compare.mustache")
-	loginTemplate = templateFromBox("login.mustache")
-
 	router := mux.NewRouter()
 
 	get := func(path string, h http.HandlerFunc) {
@@ -410,7 +405,8 @@ func main() {
 	post(`/logout`, logout)
 	get(`/`, getBillsOrLogin)
 	router.PathPrefix("/static/").Handler(
-		http.StripPrefix("/static/", http.FileServer(staticBox)))
+		http.StripPrefix("/static/",
+			http.FileServer(airfreight.HTTPFileSystem(static))))
 
 	port := os.Getenv("PORT")
 	addr := ""
