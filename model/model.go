@@ -75,6 +75,9 @@ func MakeModel(userID int64, adminOnly bool) Model {
 	if user == nil && m.Err == nil {
 		m.Err = errors.New("No such user")
 	}
+	if adminOnly && (user == nil || !user.IsAdmin) {
+		m.Err = errors.New("Forbidden")
+	}
 	m.user = *user
 	return m
 }
