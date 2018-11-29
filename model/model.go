@@ -41,29 +41,26 @@ func migrate(tx *sql.Tx) {
 	}
 }
 
-func EnsureInitializedDB() {
+func Initialize() {
 	if db != nil {
 		return
 	}
+	var tx *sql.Tx
 	var err error
 	log.Printf("Tietokanta: %s", os.Getenv("DATABASE_URL"))
-	db, err = dburl.Open(os.Getenv("DATABASE_URL"))
-	if err != nil {
+	if db, err = dburl.Open(os.Getenv("DATABASE_URL")); err != nil {
 		log.Fatal(err)
 	}
-	tx, err := db.Begin()
-	if err != nil {
+	if tx, err = db.Begin(); err != nil {
 		log.Fatal(err)
 	}
 	migrate(tx)
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func getDB() *sql.DB {
-	EnsureInitializedDB()
 	return db
 }
 
