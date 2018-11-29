@@ -2,3 +2,4 @@
 /massikone.db*
 /massikone.ini
 /static.go
+/templates.go
