@@ -15,63 +15,63 @@
       <div class="btn-group" role="group" aria-label="Basic example">
         <a class="btn btn-info btn-lg" href="/tosite">Uusi tosite</a>
         {{#CurrentUser.IsAdmin}}
-        <div class="btn-group">
-          <button class="btn btn-info btn-lg dropdown-toggle" type="button" data-toggle="dropdown">Raportit <span class="caret"></span></button>
-          <ul class="dropdown-menu">
-            <li><a href="/raportti/tuloslaskelma">Tuloslaskelma</a></li>
-            <li><a href="/raportti/tuloslaskelma-erittelyin">Tuloslaskelma erittelyin</a></li>
-            <li><a href="/raportti/tase">Tase</a></li>
-            <li><a href="/raportti/tase-erittelyin">Tase erittelyin</a></li>
-            <li><a href="/raportti/paivakirja">Päiväkirja</a></li>
-            <li><a href="/raportti/paakirja">Pääkirja</a></li>
-            <li><a href="/raportti/tilikartta">Tilikartta</a></li>
-            <li class="divider"></li>
-            <li><a href="/raportti/tilinpaatos">Kaikki zip-tiedostona&hellip;</a></li>
-            <li class="divider"></li>
-            <li><a href="/vertaa">Vertaa tiliotteeseen&hellip;</a></li>
-          </ul>
-        </div>
-        <a class="btn btn-info btn-lg" href="/asetukset">Asetukset</a>
+          <div class="btn-group">
+            <button class="btn btn-info btn-lg dropdown-toggle" type="button" data-toggle="dropdown">Raportit <span class="caret"></span></button>
+            <ul class="dropdown-menu">
+              <li><a href="/raportti/tuloslaskelma">Tuloslaskelma</a></li>
+              <li><a href="/raportti/tuloslaskelma-erittelyin">Tuloslaskelma erittelyin</a></li>
+              <li><a href="/raportti/tase">Tase</a></li>
+              <li><a href="/raportti/tase-erittelyin">Tase erittelyin</a></li>
+              <li><a href="/raportti/paivakirja">Päiväkirja</a></li>
+              <li><a href="/raportti/paakirja">Pääkirja</a></li>
+              <li><a href="/raportti/tilikartta">Tilikartta</a></li>
+              <li class="divider"></li>
+              <li><a href="/raportti/tilinpaatos">Kaikki zip-tiedostona&hellip;</a></li>
+              <li class="divider"></li>
+              <li><a href="/vertaa">Vertaa tiliotteeseen&hellip;</a></li>
+            </ul>
+          </div>
+          <a class="btn btn-info btn-lg" href="/asetukset">Asetukset</a>
         {{/CurrentUser.IsAdmin}}
         {{#IsPublic}}
-        <button type="button" class="btn btn-info btn-lg" id="logout-button">Kirjaudu ulos</button>
+          <button type="button" class="btn btn-info btn-lg" id="logout-button">Kirjaudu ulos</button>
         {{/IsPublic}}
       </div>
       <form id="logout-form" method="POST" action="/ulos" style="display: none"></form>
       {{^Bills}}
-      <p>Ei tositteita</p>
+        <p>Ei tositteita</p>
       {{/Bills}}
       {{#Bills}}
-      <h2>Kulut</h2>
-      <table class="table table-striped table-hover">
-              <tr>
-                <th>Kulu</th>
-                <th class="text-right">Pvm</th>
-                <th class="text-right">&euro;</th>
-                {{#CurrentUser.IsAdmin}}
-                <th>Maksaja</th>
-                {{/CurrentUser.IsAdmin}}
-                <th>Kuvaus</th>
-                <th></th>
-              </tr>
-              {{#Bills}}
-              <tr class="clickable-row" data-href="/tosite/{{BillID}}" style="cursor: pointer">
-                <td><a class="btn btn-default" href="/tosite/{{BillID}}">{{BillID}}</a></td>
-                <td class="text-right">{{PaidDateFi}}</td>
-                <td class="text-right">{{Amount}}</td>
-                {{#CurrentUser.IsAdmin}}
+        <h2>Kulut</h2>
+        <table class="table table-striped table-hover">
+          <tr>
+            <th>Kulu</th>
+            <th class="text-right">Pvm</th>
+            <th class="text-right">&euro;</th>
+            {{#CurrentUser.IsAdmin}}
+              <th>Maksaja</th>
+            {{/CurrentUser.IsAdmin}}
+            <th>Kuvaus</th>
+            <th></th>
+          </tr>
+          {{#Bills}}
+            <tr class="clickable-row" data-href="/tosite/{{BillID}}" style="cursor: pointer">
+              <td><a class="btn btn-default" href="/tosite/{{BillID}}">{{BillID}}</a></td>
+              <td class="text-right">{{PaidDateFi}}</td>
+              <td class="text-right">{{Amount}}</td>
+              {{#CurrentUser.IsAdmin}}
                 <td>{{PaidUser.FullName}}</td>
-                {{/CurrentUser.IsAdmin}}
-                <td>{{Description}}</td>
-                <td>
-            {{#image_missing}}
-            <span class="glyphicon glyphicon-paperclip"
-                  title="Kuva puuttuu"></span>
-            {{/image_missing}}
-          </td>
-              </tr>
-              {{/Bills}}
-      </table>
+              {{/CurrentUser.IsAdmin}}
+              <td>{{Description}}</td>
+              <td>
+                {{#image_missing}}
+                  <span class="glyphicon glyphicon-paperclip"
+                        title="Kuva puuttuu"></span>
+                {{/image_missing}}
+              </td>
+            </tr>
+          {{/Bills}}
+        </table>
       {{/Bills}}
     </div>
     <script src="/static/js/jquery.min.js"></script>

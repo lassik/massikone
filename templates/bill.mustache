@@ -24,26 +24,26 @@
           <a class="btn btn-lg btn-warning" href="/{{#Bill}}bill/{{BillID}}{{/Bill}}">Peruuta</a>
           <a class="btn btn-lg btn-info" href="/">Takaisin</a>
           {{#Bill}}
-          {{#HasPrevBill}}
-          <a class="btn btn-lg btn-primary" href="/tosite/{{PrevBillID}}">
-            <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
-          </a>
-          {{/HasPrevBill}}
-          {{^HasPrevBill}}
-          <button class="btn btn-lg btn-primary disabled">
-            <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
-          </button>
-          {{/HasPrevBill}}
-          {{#HasNextBill}}
-          <a class="btn btn-lg btn-primary" href="/tosite/{{NextBillID}}">
-            <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
-          </a>
-          {{/HasNextBill}}
-          {{^HasNextBill}}
-          <button class="btn btn-lg btn-primary disabled">
-            <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
-          </button>
-          {{/HasNextBill}}
+            {{#HasPrevBill}}
+              <a class="btn btn-lg btn-primary" href="/tosite/{{PrevBillID}}">
+                <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
+              </a>
+            {{/HasPrevBill}}
+            {{^HasPrevBill}}
+              <button class="btn btn-lg btn-primary disabled">
+                <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
+              </button>
+            {{/HasPrevBill}}
+            {{#HasNextBill}}
+              <a class="btn btn-lg btn-primary" href="/tosite/{{NextBillID}}">
+                <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
+              </a>
+            {{/HasNextBill}}
+            {{^HasNextBill}}
+              <button class="btn btn-lg btn-primary disabled">
+                <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
+              </button>
+            {{/HasNextBill}}
           {{/Bill}}
         </div>
         <table class="table table-striped">
@@ -51,29 +51,29 @@
             <th>Maksaja:</th>
             <td>
               {{#CurrentUser.IsAdmin}}
-              <select class="form-control" name="paid_user_id" value="{{#Bill}}{{PaidUser.id}}{{/Bill}}">
-                <option value=""></option>
-                {{#Users}}
-                <option value="{{UserID}}"{{#IsMatch}} selected{{/IsMatch}}>{{FullName}}</option>
-                {{/Users}}
-              </select>
+                <select class="form-control" name="paid_user_id" value="{{#Bill}}{{PaidUser.id}}{{/Bill}}">
+                  <option value=""></option>
+                  {{#Users}}
+                    <option value="{{UserID}}"{{#IsMatch}} selected{{/IsMatch}}>{{FullName}}</option>
+                  {{/Users}}
+                </select>
               {{/CurrentUser.IsAdmin}}
               {{^CurrentUser.IsAdmin}}
-              {{#Bill}}{{PaidUser.FullName}}{{/Bill}}
-              {{^Bill}}{{CurrentUser.FullName}}{{/Bill}}
+                {{#Bill}}{{PaidUser.FullName}}{{/Bill}}
+                {{^Bill}}{{CurrentUser.FullName}}{{/Bill}}
               {{/CurrentUser.IsAdmin}}
             </td>
           </tr>
           {{#CurrentUser.IsAdmin}}
-          <tr>
-            <th>Maksupäivä:</th>
-            <td>
-              <input type="text" class="datepicker"
-                     data-provide="datepicker" data-date-language="fi"
-                     name="paid_date_fi"
-                     value="{{#Bill}}{{PaidDateFi}}{{/Bill}}">
-            </td>
-          </tr>
+            <tr>
+              <th>Maksupäivä:</th>
+              <td>
+                <input type="text" class="datepicker"
+                       data-provide="datepicker" data-date-language="fi"
+                       name="paid_date_fi"
+                       value="{{#Bill}}{{PaidDateFi}}{{/Bill}}">
+              </td>
+            </tr>
           {{/CurrentUser.IsAdmin}}
           <tr>
             <th>Kuva:</th>
@@ -94,48 +94,48 @@
             <td><textarea name="description" cols="80" rows="4">{{#Bill}}{{Description}}{{/Bill}}</textarea></td>
           </tr>
           {{#CurrentUser.IsAdmin}}
-          <tr>
-            <th>Summa:</th>
-            <td>
-              <input type="text" name="amount"
-                     value="{{#Bill}}{{Amount}}{{/Bill}}"> &euro;
-            </td>
-          </tr>
-          <tr>
-            <th>Tilit kirjanpidossa:</th>
-            <td>
-              <table class="table">
-                <tr>
-                  <th>Credit (tililtä):</th>
-                  <td>
-                    <select class="selectpicker" data-width="auto" data-live-search="true" name="credit_account_id">
-                      <option value=""></option>
-                      {{#CreditAccounts}}
-                      <option value="{{AccountID}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
-                      {{/CreditAccounts}}
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <th>Debet (tilille):</th>
-                  <td>
-                    <select class="selectpicker" data-width="auto" data-live-search="true" name="debit_account_id">
-                      <option value=""></option>
-                      {{#DebitAccounts}}
-                      <option value="{{AccountID}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
-                      {{/DebitAccounts}}
-                    </select>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <th>Tila:</th>
-            <td>
-              <button type="button" class="btn btn-danger">Poista</button>
-            </td>
-          </tr>
+            <tr>
+              <th>Summa:</th>
+              <td>
+                <input type="text" name="amount"
+                       value="{{#Bill}}{{Amount}}{{/Bill}}"> &euro;
+              </td>
+            </tr>
+            <tr>
+              <th>Tilit kirjanpidossa:</th>
+              <td>
+                <table class="table">
+                  <tr>
+                    <th>Credit (tililtä):</th>
+                    <td>
+                      <select class="selectpicker" data-width="auto" data-live-search="true" name="credit_account_id">
+                        <option value=""></option>
+                        {{#CreditAccounts}}
+                          <option value="{{AccountID}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
+                        {{/CreditAccounts}}
+                      </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Debet (tilille):</th>
+                    <td>
+                      <select class="selectpicker" data-width="auto" data-live-search="true" name="debit_account_id">
+                        <option value=""></option>
+                        {{#DebitAccounts}}
+                          <option value="{{AccountID}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
+                        {{/DebitAccounts}}
+                      </select>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <th>Tila:</th>
+              <td>
+                <button type="button" class="btn btn-danger">Poista</button>
+              </td>
+            </tr>
           {{/CurrentUser.IsAdmin}}
         </table>
         <input type="hidden" id="image-id" name="image_id"
@@ -148,15 +148,15 @@
       </form>
       <div id="bill-image-container">
         {{#Bill}}{{#Images}}{{#ImageID}}
-        <img src="/api/userimage/{{ImageID}}">
+          <img src="/api/userimage/{{ImageID}}">
         {{/ImageID}}{{/Images}}{{/Bill}}
       </div>
       <div id="bill-image-placeholder" class="well">
         <ul>
           <li>Valitse kuva laskusta tai kuitista.
-          <li>Kuvasta täytyy näkyä <b>päivämäärä</b> ja <b>summa</b>. Kuittia saa täydentää kirjoittamalla.</li>
-          <li>
-            Tuetut tiedostomuodot ovat JPEG, PNG ja GIF.</li>
+            <li>Kuvasta täytyy näkyä <b>päivämäärä</b> ja <b>summa</b>. Kuittia saa täydentää kirjoittamalla.</li>
+            <li>
+              Tuetut tiedostomuodot ovat JPEG, PNG ja GIF.</li>
           </li>
         </ul>
       </div>
