@@ -5,3 +5,7 @@ os:
   - linux
   - osx
   - windows
+script:
+  - go generate
+  - go build
+  - go test
