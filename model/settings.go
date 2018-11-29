@@ -18,6 +18,17 @@ func getSetting(settings *Settings, name, value string) {
 	}
 }
 
+func (m *Model) PutSettings(settings Settings) {
+	m.putSetting("OrgFullName", settings.OrgFullName)
+	m.putSetting("OrgShortName", settings.OrgShortName)
+}
+
+func (m *Model) putSetting(name, value string) {
+	_, err := sq.Update("setting").Set("value", value).
+		Where(sq.Eq{"name": name}).RunWith(m.tx).Exec()
+	m.isErr(err)
+}
+
 func getSettings(runner sq.BaseRunner) (Settings, error) {
 	settings := Settings{}
 	rows, err := sq.Select("name, value").From("setting").

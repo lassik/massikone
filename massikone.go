@@ -49,6 +49,7 @@ func getTemplate(filename string) *mustache.Template {
 
 var billsTemplate = getTemplate("/bills.mustache")
 var billTemplate = getTemplate("/bill.mustache")
+var settingsTemplate = getTemplate("/settings.mustache")
 var compareTemplate = getTemplate("/compare.mustache")
 var loginTemplate = getTemplate("/login.mustache")
 
@@ -264,6 +265,26 @@ func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		})))
 }
 
+func getSettings(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	settings := m.GetSettings()
+	users := m.GetUsers(0)
+	w.Write([]byte(settingsTemplate.Render(
+		map[string]interface{}{
+			"AppTitle":    getAppTitle(settings),
+			"CurrentUser": m.User(),
+			"Settings":    model.GetSettings(),
+			"Users":       users,
+		})))
+}
+
+func putSettings(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	m.PutSettings(model.Settings{
+		OrgFullName:  r.PostFormValue("OrgFullName"),
+		OrgShortName: r.PostFormValue("OrgShortName"),
+	})
+	http.Redirect(w, r, "/asetukset", http.StatusSeeOther)
+}
+
 func getCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	settings := m.GetSettings()
 	w.Write([]byte(compareTemplate.Render(
@@ -376,10 +397,12 @@ func main() {
 	post(`/tosite`,
 		anyUser(postBill))
 
-	//p.Put(`/api/settings`,
-	//	adminOnly(putSettings))
+	post(`/api/settings`,
+		adminOnly(putSettings))
 	//get(`/api/compare`,
 	//	adminOnly(getCompare))
+	get(`/asetukset`,
+		adminOnly(getSettings))
 	get(`/vertaa`,
 		adminOnly(getCompare))
 	get(`/raportti/tuloslaskelma`,

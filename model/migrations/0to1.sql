@@ -64,4 +64,7 @@ CREATE TABLE 'bill_image' (
   PRIMARY KEY ('bill_id', 'bill_image_num')
 );
 
+INSERT INTO setting values ("OrgFullName", "");
+INSERT INTO setting values ("OrgShortName", "");
+
 INSERT INTO version (version) values (1);
