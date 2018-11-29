@@ -14,8 +14,8 @@
     <div class="container">
       <h1>{{AppTitle}}</h1>
       <h2>{{CurrentUser.FullName}}</h2>
-      {{#Bill}}<h2>Lasku #{{BillID}}</h2>{{/Bill}}
-      {{^Bill}}<h2>Uusi lasku</h2>{{/Bill}}
+      {{#Bill}}<h2>Tosite #{{BillID}}</h2>{{/Bill}}
+      {{^Bill}}<h2>Uusi tosite</h2>{{/Bill}}
       <form id="bill-form" enctype="multipart/form-data"
             {{#Bill}}method="POST" action="/bill/{{BillID}}"{{/Bill}}
             {{^Bill}}method="POST" action="/bill"{{/Bill}}>
