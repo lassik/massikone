@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	sq "github.com/Masterminds/squirrel"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/xo/dburl"
 )
@@ -18,14 +19,51 @@ type Model struct {
 	Err  error
 }
 
-func getDB() *sql.DB {
-	if db == nil {
-		var err error
-		db, err = dburl.Open(os.Getenv("DATABASE_URL"))
-		if err != nil {
+func getVersion(tx *sql.Tx) int {
+	var version int
+	sq.Select("version").From("version").RunWith(tx).QueryRow().Scan(&version)
+	return version
+}
+
+func migrate(tx *sql.Tx) {
+	migs := []string{"/0to1.sql"}
+	maxVersion := len(migs)
+	oldVersion := getVersion(tx)
+	log.Printf("Tietokannan versio: %d", oldVersion)
+	if oldVersion > maxVersion {
+		log.Fatal("Tietokanta vaatii uudemman version Massikoneesta")
+	}
+	for m := oldVersion; m < maxVersion; m++ {
+		log.Printf("Muunnetaan tietokanta uudempaan muotoon (%s)", migs[m])
+		if _, err := tx.Exec(migrations[migs[m]].Contents); err != nil {
 			log.Fatal(err)
 		}
 	}
+}
+
+func EnsureInitializedDB() {
+	if db != nil {
+		return
+	}
+	var err error
+	log.Printf("Tietokanta: %s", os.Getenv("DATABASE_URL"))
+	db, err = dburl.Open(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+	migrate(tx)
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getDB() *sql.DB {
+	EnsureInitializedDB()
 	return db
 }
 

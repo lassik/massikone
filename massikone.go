@@ -338,7 +338,7 @@ func main() {
 	if os.Getenv("DATABASE_URL") == "" {
 		os.Setenv("DATABASE_URL", "sqlite://massikone.db")
 	}
-	log.Printf("Tietokanta: %s", os.Getenv("DATABASE_URL"))
+	model.EnsureInitializedDB()
 
 	publicURL = os.Getenv("PUBLIC_URL")
 	if publicURL != "" {

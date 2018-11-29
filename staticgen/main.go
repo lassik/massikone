@@ -7,4 +7,6 @@ func main() {
 		WriteFile("static.go")
 	packer.Package("main").Map("templates", "templates").
 		WriteFile("templates.go")
+	packer.Package("model").Map("migrations", "model/migrations").
+		WriteFile("model/migrations.go")
 }

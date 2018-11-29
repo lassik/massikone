@@ -1,5 +1,6 @@
 /massikone
 /massikone.db*
 /massikone.ini
+/model/migrations.go
 /static.go
 /templates.go
