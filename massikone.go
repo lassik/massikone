@@ -235,7 +235,7 @@ func putBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	if m.Err != nil {
 		return
 	}
-	http.Redirect(w, r, "/bill/"+billID, http.StatusSeeOther)
+	http.Redirect(w, r, "/tosite/"+billID, http.StatusSeeOther)
 }
 
 func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
@@ -243,7 +243,7 @@ func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	if m.Err != nil {
 		return
 	}
-	http.Redirect(w, r, "/bill/"+billID, http.StatusSeeOther)
+	http.Redirect(w, r, "/tosite/"+billID, http.StatusSeeOther)
 }
 
 func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
@@ -367,42 +367,42 @@ func main() {
 		anyUser(getImage))
 	post(`/api/userimage`,
 		anyUser(postImage))
-	get(`/bill/{billID}`,
+	get(`/tosite/{billID}`,
 		anyUser(getBillID))
-	post(`/bill/{billID}`,
+	post(`/tosite/{billID}`,
 		anyUser(putBillID))
-	get(`/bill`,
+	get(`/tosite`,
 		anyUser(getNewBillPage))
-	post(`/bill`,
+	post(`/tosite`,
 		anyUser(postBill))
 
 	//p.Put(`/api/preferences`,
 	//	adminOnly(putPreferences))
 	//get(`/api/compare`,
 	//	adminOnly(getCompare))
-	get(`/compare`,
+	get(`/vertaa`,
 		adminOnly(getCompare))
-	get(`/report/income-statement`,
+	get(`/raportti/tuloslaskelma`,
 		adminOnly(report(reports.IncomeStatementPdf)))
-	get(`/report/income-statement-detailed`,
+	get(`/raportti/tuloslaskelma-erittelyin`,
 		adminOnly(report(reports.IncomeStatementDetailedPdf)))
-	get(`/report/balance-sheet`,
+	get(`/raportti/tase`,
 		adminOnly(report(reports.BalanceSheetPdf)))
-	get(`/report/balance-sheet-detailed`,
+	get(`/raportti/tase-erittelyin`,
 		adminOnly(report(reports.BalanceSheetDetailedPdf)))
-	get(`/report/general-journal`,
+	get(`/raportti/paivakirja`,
 		adminOnly(report(reports.GeneralJournalPdf)))
-	get(`/report/general-ledger`,
+	get(`/raportti/paakirja`,
 		adminOnly(report(reports.GeneralLedgerPdf)))
-	get(`/report/chart-of-accounts`,
+	get(`/raportti/tilikartta`,
 		adminOnly(report(reports.ChartOfAccountsPdf)))
-	get(`/report/full-statement`,
+	get(`/raportti/tilinpaatos`,
 		adminOnly(report(reports.FullStatementZip)))
 
 	get(`/auth/{provider}/callback`, finishLogin)
 	get(`/auth/{provider}`, gothic.BeginAuthHandler)
-	get(`/logout`, logout)
-	post(`/logout`, logout)
+	get(`/ulos`, logout)
+	post(`/ulos`, logout)
 	get(`/`, getBillsOrLogin)
 	router.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/",

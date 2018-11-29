@@ -17,15 +17,15 @@
       {{#Bill}}<h2>Tosite #{{BillID}}</h2>{{/Bill}}
       {{^Bill}}<h2>Uusi tosite</h2>{{/Bill}}
       <form id="bill-form" enctype="multipart/form-data"
-            {{#Bill}}method="POST" action="/bill/{{BillID}}"{{/Bill}}
-            {{^Bill}}method="POST" action="/bill"{{/Bill}}>
+            {{#Bill}}method="POST" action="/tosite/{{BillID}}"{{/Bill}}
+            {{^Bill}}method="POST" action="/tosite"{{/Bill}}>
         <div class="btn-group">
           <input type="submit" class="btn btn-lg btn-success" value="Tallenna">
           <a class="btn btn-lg btn-warning" href="/{{#Bill}}bill/{{BillID}}{{/Bill}}">Peruuta</a>
           <a class="btn btn-lg btn-info" href="/">Takaisin</a>
           {{#Bill}}
           {{#HasPrevBill}}
-          <a class="btn btn-lg btn-primary" href="/bill/{{PrevBillID}}">
+          <a class="btn btn-lg btn-primary" href="/tosite/{{PrevBillID}}">
             <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
           </a>
           {{/HasPrevBill}}
@@ -35,7 +35,7 @@
           </button>
           {{/HasPrevBill}}
           {{#HasNextBill}}
-          <a class="btn btn-lg btn-primary" href="/bill/{{NextBillID}}">
+          <a class="btn btn-lg btn-primary" href="/tosite/{{NextBillID}}">
             <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
           </a>
           {{/HasNextBill}}

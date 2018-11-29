@@ -13,22 +13,22 @@
       <h1>{{AppTitle}}</h1>
       <h2>{{current_user.full_name}}</h2>
       <div class="btn-group" role="group" aria-label="Basic example">
-        <a class="btn btn-info btn-lg" href="/bill">Uusi tosite</a>
+        <a class="btn btn-info btn-lg" href="/tosite">Uusi tosite</a>
         {{#CurrentUser.IsAdmin}}
         <div class="btn-group">
           <button class="btn btn-info btn-lg dropdown-toggle" type="button" data-toggle="dropdown">Raportit <span class="caret"></span></button>
           <ul class="dropdown-menu">
-            <li><a href="/report/income-statement">Tuloslaskelma</a></li>
-            <li><a href="/report/income-statement-detailed">Tuloslaskelma erittelyin</a></li>
-            <li><a href="/report/balance-sheet">Tase</a></li>
-            <li><a href="/report/balance-sheet-detailed">Tase erittelyin</a></li>
-            <li><a href="/report/general-journal">Päiväkirja</a></li>
-            <li><a href="/report/general-ledger">Pääkirja</a></li>
-            <li><a href="/report/chart-of-accounts">Tilikartta</a></li>
+            <li><a href="/raportti/tuloslaskelma">Tuloslaskelma</a></li>
+            <li><a href="/raportti/tuloslaskelma-erittelyin">Tuloslaskelma erittelyin</a></li>
+            <li><a href="/raportti/tase">Tase</a></li>
+            <li><a href="/raportti/tase-erittelyin">Tase erittelyin</a></li>
+            <li><a href="/raportti/paivakirja">Päiväkirja</a></li>
+            <li><a href="/raportti/paakirja">Pääkirja</a></li>
+            <li><a href="/raportti/tilikartta">Tilikartta</a></li>
             <li class="divider"></li>
-            <li><a href="/report/full-statement">Kaikki zip-tiedostona&hellip;</a></li>
+            <li><a href="/raportti/tilinpaatos">Kaikki zip-tiedostona&hellip;</a></li>
             <li class="divider"></li>
-            <li><a href="/compare">Vertaa tiliotteeseen&hellip;</a></li>
+            <li><a href="/vertaa">Vertaa tiliotteeseen&hellip;</a></li>
           </ul>
         </div>
         {{/CurrentUser.IsAdmin}}
@@ -36,7 +36,7 @@
         <button type="button" class="btn btn-info btn-lg" id="logout-button">Kirjaudu ulos</button>
         {{/IsPublic}}
       </div>
-      <form id="logout-form" method="POST" action="/logout" style="display: none"></form>
+      <form id="logout-form" method="POST" action="/ulos" style="display: none"></form>
       {{^Bills}}
       <p>Ei tositteita</p>
       {{/Bills}}
@@ -54,8 +54,8 @@
                 <th></th>
               </tr>
               {{#Bills}}
-              <tr class="clickable-row" data-href="/bill/{{BillID}}" style="cursor: pointer">
-                <td><a class="btn btn-default" href="/bill/{{BillID}}">{{BillID}}</a></td>
+              <tr class="clickable-row" data-href="/tosite/{{BillID}}" style="cursor: pointer">
+                <td><a class="btn btn-default" href="/tosite/{{BillID}}">{{BillID}}</a></td>
                 <td class="text-right">{{PaidDateFi}}</td>
                 <td class="text-right">{{Amount}}</td>
                 {{#CurrentUser.IsAdmin}}
