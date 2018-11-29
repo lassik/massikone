@@ -9,6 +9,15 @@ type Settings struct {
 	OrgShortName string
 }
 
+func getSetting(settings *Settings, name, value string) {
+	switch name {
+	case "OrgFullName":
+		settings.OrgFullName = value
+	case "OrgShortName":
+		settings.OrgShortName = value
+	}
+}
+
 func getSettings(runner sq.BaseRunner) (Settings, error) {
 	settings := Settings{}
 	rows, err := sq.Select("name, value").From("setting").
@@ -23,12 +32,7 @@ func getSettings(runner sq.BaseRunner) (Settings, error) {
 		if err = rows.Scan(&name, &value); err != nil {
 			return settings, err
 		}
-		switch name {
-		case "org_full_name":
-			settings.OrgFullName = value
-		case "org_short_name":
-			settings.OrgShortName = value
-		}
+		getSetting(&settings, name, value)
 	}
 	return settings, rows.Err()
 }
