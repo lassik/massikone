@@ -2,7 +2,7 @@ CREATE TABLE 'version' (
   'version' integer NOT NULL PRIMARY KEY
 );
 
-CREATE TABLE 'preference' (
+CREATE TABLE 'setting' (
   'name' varchar(255) NOT NULL PRIMARY KEY,
   'value' varchar(255) NOT NULL
 );

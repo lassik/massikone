@@ -34,8 +34,8 @@ func slug(str string) string {
 
 func generateFilename(document string) string {
 	year := "2018" // TODO
-	//prefs := modelGetPreferences()
-	//orgShortName := prefs["org_short_name"]
+	//settings := modelGetSettings()
+	//orgShortName := settings["org_short_name"]
 	orgShortName := "Testi"
 	return slug(orgShortName + "-" + year + "-" + document)
 }

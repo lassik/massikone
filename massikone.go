@@ -65,8 +65,8 @@ func makeSessionSecret() []byte {
 	return b
 }
 
-func getAppTitle(prefs model.Preferences) string {
-	return prefs.OrgShortName + " Massikone"
+func getAppTitle(settings model.Settings) string {
+	return settings.OrgShortName + " Massikone"
 }
 
 func setSessionUserID(w http.ResponseWriter, r *http.Request, id int64) {
@@ -156,17 +156,17 @@ func logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func getLoginPage(w http.ResponseWriter, r *http.Request) {
-	prefs := model.GetPreferences()
+	settings := model.GetSettings()
 	w.Write([]byte(loginTemplate.Render(
-		map[string]string{"AppTitle": getAppTitle(prefs)})))
+		map[string]string{"AppTitle": getAppTitle(settings)})))
 }
 
 func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	prefs := m.GetPreferences()
+	settings := m.GetSettings()
 	bills := m.GetBills()
 	w.Write([]byte(billsTemplate.Render(
 		map[string]interface{}{
-			"AppTitle":    getAppTitle(prefs),
+			"AppTitle":    getAppTitle(settings),
 			"IsPublic":    (publicURL != ""),
 			"CurrentUser": m.User(),
 			"Bills": map[string][]model.Bill{
@@ -184,7 +184,7 @@ func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	prefs := m.GetPreferences()
+	settings := m.GetSettings()
 	billID := mux.Vars(r)["billID"]
 	bill := m.GetBillID(billID)
 	if m.Err != nil {
@@ -204,7 +204,7 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
-			"AppTitle":       getAppTitle(prefs),
+			"AppTitle":       getAppTitle(settings),
 			"CurrentUser":    m.User(),
 			"Bill":           bill,
 			"Users":          users,
@@ -247,7 +247,7 @@ func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	prefs := m.GetPreferences()
+	settings := m.GetSettings()
 	var users []model.User
 	var accounts []model.Account
 	if m.User().IsAdmin {
@@ -256,7 +256,7 @@ func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
-			"AppTitle":       getAppTitle(prefs),
+			"AppTitle":       getAppTitle(settings),
 			"CurrentUser":    m.User(),
 			"Users":          users,
 			"CreditAccounts": accounts,
@@ -265,9 +265,9 @@ func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	prefs := m.GetPreferences()
+	settings := m.GetSettings()
 	w.Write([]byte(compareTemplate.Render(
-		map[string]string{"AppTitle": getAppTitle(prefs)})))
+		map[string]string{"AppTitle": getAppTitle(settings)})))
 }
 
 func getImageRotated(m *model.Model, w http.ResponseWriter, r *http.Request) {
@@ -376,8 +376,8 @@ func main() {
 	post(`/tosite`,
 		anyUser(postBill))
 
-	//p.Put(`/api/preferences`,
-	//	adminOnly(putPreferences))
+	//p.Put(`/api/settings`,
+	//	adminOnly(putSettings))
 	//get(`/api/compare`,
 	//	adminOnly(getCompare))
 	get(`/vertaa`,

@@ -4,42 +4,42 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-type Preferences struct {
+type Settings struct {
 	OrgFullName  string
 	OrgShortName string
 }
 
-func getPreferences(runner sq.BaseRunner) (Preferences, error) {
-	prefs := Preferences{}
-	rows, err := sq.Select("name, value").From("preference").
+func getSettings(runner sq.BaseRunner) (Settings, error) {
+	settings := Settings{}
+	rows, err := sq.Select("name, value").From("setting").
 		RunWith(runner).Query()
 	if err != nil {
-		return prefs, err
+		return settings, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var name string
 		var value string
 		if err = rows.Scan(&name, &value); err != nil {
-			return prefs, err
+			return settings, err
 		}
 		switch name {
 		case "org_full_name":
-			prefs.OrgFullName = value
+			settings.OrgFullName = value
 		case "org_short_name":
-			prefs.OrgShortName = value
+			settings.OrgShortName = value
 		}
 	}
-	return prefs, rows.Err()
+	return settings, rows.Err()
 }
 
-func (m *Model) GetPreferences() Preferences {
-	prefs, err := getPreferences(m.tx)
+func (m *Model) GetSettings() Settings {
+	settings, err := getSettings(m.tx)
 	m.isErr(err)
-	return prefs
+	return settings
 }
 
-func GetPreferences() Preferences {
-	prefs, _ := getPreferences(getDB())
-	return prefs
+func GetSettings() Settings {
+	settings, _ := getSettings(getDB())
+	return settings
 }
