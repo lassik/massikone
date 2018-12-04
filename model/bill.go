@@ -16,6 +16,7 @@ type BillEntry struct {
 	IsDebit       bool
 	UnitCount     int64
 	UnitCostCents int64
+	Amount        string
 	Description   string
 }
 
@@ -201,6 +202,31 @@ func (m *Model) GetBillID(billID string) *Bill {
 	b.HasPrevBill = (b.PrevBillID != "")
 	b.HasNextBill = (b.NextBillID != "")
 	return b
+}
+
+func (m *Model) populateBillEntries(bill *Bill) {
+	q := sq.Select("row_number, account_id, debit, unit_count, unit_cost_cents, description").From("bill_entry").
+		Where(sq.Eq{"bill_id": bill.BillID}).
+		OrderBy("bill_id, row_number")
+	rows, err := q.RunWith(m.tx).Query()
+	if m.isErr(err) {
+		return
+	}
+	entries := []BillEntry{}
+	defer rows.Close()
+	for rows.Next() {
+		e := BillEntry{}
+		if m.isErr(rows.Scan(&e.RowNumber, &e.AccountID,
+			&e.IsDebit, &e.UnitCount, &e.UnitCostCents, &e.Description)) {
+			return
+		}
+		e.Amount = amountFromCents(e.UnitCount * e.UnitCostCents)
+		entries = append(entries, e)
+	}
+	if m.isErr(rows.Err()) {
+		return
+	}
+	bill.Entries = entries
 }
 
 func (m *Model) populateBillEntriesFromOtherBillFields(bill *Bill) {
