@@ -59,3 +59,22 @@ func (m *Model) GetAccounts(usedOnly bool, matchAccountID string) []Account {
 	}
 	return accounts
 }
+
+func (m *Model) GetAccountLookup() map[int]string {
+        lookup := map[int]string{}
+        rows, err := sq.Select("account_id, title").
+		From("period_account").OrderBy("account_id").
+                Where(sq.Eq{"nesting_level": AccountNestingLevel}).
+		RunWith(m.tx).Query()
+	if m.isErr(err) {
+		return lookup
+	}
+	defer rows.Close()
+	for rows.Next() {
+                var accountID int
+                var title string
+                rows.Scan(&accountID, &title)
+                lookup[accountID] = title
+        }
+        return lookup
+}
