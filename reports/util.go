@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jung-kurt/gofpdf"
+	"golang.org/x/text/unicode/norm"
 )
 
 type GetWriter func(mimeType, filename string) (io.Writer, error)
@@ -37,7 +38,7 @@ func generateFilename(document string) string {
 	//settings := modelGetSettings()
 	//orgShortName := settings["org_short_name"]
 	orgShortName := "Testi"
-	return slug(orgShortName + "-" + year + "-" + document)
+	return norm.NFC.String(slug(orgShortName + "-" + year + "-" + document))
 }
 
 func blankPdf(getWriter GetWriter, filename string) {

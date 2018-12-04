@@ -43,3 +43,5 @@ golang.org/x/net v0.0.0-20180706051357-32a936f46389 h1:U+zCn5sqaq+q4hrnMrz9sgrW1
 golang.org/x/net v0.0.0-20180706051357-32a936f46389/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd h1:QQhib242ErYDSMitlBm8V7wYCm/1a25hV8qMadIKLPA=
 golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
+golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
+golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=

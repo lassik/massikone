@@ -17,4 +17,5 @@ require (
 	github.com/toqueteos/webbrowser v1.1.0
 	github.com/xo/dburl v0.0.0-20180921222126-e33971d4c132
 	golang.org/x/image v0.0.0-20181109232246-249dc8530c0e // indirect
+	golang.org/x/text v0.3.0
 )
