@@ -16,6 +16,22 @@ type User struct {
 	IsMatch  bool
 }
 
+func countUsers(tx *sql.Tx) int {
+	var count int
+	sq.Select("count(*)").From("user").
+		RunWith(tx).Limit(1).QueryRow().Scan(&count)
+	return count
+}
+
+func getUserIDByAuth(tx *sql.Tx, authProvider, authUserID string) int64 {
+	var userID int64
+	sq.Select("user_id").From("user_auth").Where(sq.Eq{
+		"auth_provider": authProvider,
+		"auth_user_id":  authUserID,
+	}).RunWith(tx).Limit(1).QueryRow().Scan(&userID)
+	return userID
+}
+
 func (m *Model) Forbidden() {
 	m.isErr(errors.New("Forbidden"))
 }
@@ -78,45 +94,41 @@ func (m *Model) GetUsers(matchUserID int64) []User {
 	return users
 }
 
-func GetOrPutUser(provider, providerUserID, fullName string) (int64, error) {
-	providerUserIDColumn := "user_id_" + provider
+func GetOrPutUser(authProvider, authUserID, fullName string) (int64, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
 	}
-	setmap := sq.Eq{
-		providerUserIDColumn: providerUserID,
-		"full_name":          fullName,
-	}
-	result, err := sq.Update("user").SetMap(setmap).
-		Where(sq.Eq{providerUserIDColumn: providerUserID}).
-		RunWith(tx).Exec()
-	if err != nil {
-		return 0, err
-	}
-	count, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-	if count < 1 {
-		var oldUserCount int
-		err = sq.Select("count(*)").From("user").
-			RunWith(tx).Limit(1).QueryRow().Scan(&oldUserCount)
+	userID := getUserIDByAuth(tx, authProvider, authUserID)
+	if userID == 0 {
+		err = sq.Select("coalesce(max(user_id), 0) + 1").From("user").
+			RunWith(tx).Limit(1).QueryRow().Scan(&userID)
 		if err != nil {
 			return 0, err
 		}
-		isAdmin := (oldUserCount == 0)
-		setmap["is_admin"] = isAdmin
-		sq.Insert("user").SetMap(setmap).RunWith(tx).QueryRow().Scan()
+		_, err = sq.Insert("user").SetMap(sq.Eq{
+			"user_id":   userID,
+			"full_name": fullName,
+			"is_admin":  (countUsers(tx) == 0),
+		}).RunWith(tx).Exec()
+		if err != nil {
+			return 0, err
+		}
+		_, err = sq.Insert("user_auth").SetMap(sq.Eq{
+			"user_id":       userID,
+			"auth_provider": authProvider,
+			"auth_user_id":  authUserID,
+		}).RunWith(tx).Exec()
+	} else {
+		_, err = sq.Update("user").SetMap(sq.Eq{
+			"full_name": fullName,
+		}).Where(sq.Eq{"user_id": userID}).RunWith(tx).Exec()
 	}
-	var userID int64
-	err = sq.Select("user_id").From("user").
-		Where(sq.Eq{providerUserIDColumn: providerUserID}).
-		RunWith(tx).Limit(1).QueryRow().Scan(&userID)
 	if err != nil {
 		return 0, err
 	}
-	if err = tx.Commit(); err != nil {
+	err = tx.Commit()
+	if err != nil {
 		return 0, err
 	}
 	return userID, err

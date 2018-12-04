@@ -10,8 +10,14 @@ CREATE TABLE 'setting' (
 CREATE TABLE 'user' (
   'user_id' integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   'full_name' varchar(255) NOT NULL,
-  'is_admin' Boolean DEFAULT (0) NOT NULL,
-  'user_id_google_oauth2' varchar(255) NULL
+  'is_admin' Boolean DEFAULT (0) NOT NULL
+);
+
+CREATE TABLE 'user_auth' (
+  'user_id' integer NOT NULL REFERENCES 'user',
+  'auth_provider' varchar(255) NOT NULL,
+  'auth_user_id' varchar(255) NOT NULL,
+  PRIMARY KEY ('user_id', 'auth_provider')
 );
 
 CREATE TABLE 'period' (

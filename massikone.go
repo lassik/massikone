@@ -131,15 +131,8 @@ func finishLogin(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
-	provider := map[string]string{
-		"gplus": "google_oauth2",
-	}[gothUser.Provider]
-	if provider == "" {
-		log.Print("Unknown provider")
-		return
-	}
 	userID, err := model.GetOrPutUser(
-		provider, gothUser.UserID, gothUser.Name)
+		gothUser.Provider, gothUser.UserID, gothUser.Name)
 	if err != nil {
 		log.Print(err)
 		return
