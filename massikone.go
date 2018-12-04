@@ -139,7 +139,7 @@ func finishLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID, err := model.GetOrPutUser(
-		provider, gothUser.UserID, gothUser.Email, gothUser.Name)
+		provider, gothUser.UserID, gothUser.Name)
 	if err != nil {
 		log.Print(err)
 		return

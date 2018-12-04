@@ -78,7 +78,7 @@ func (m *Model) GetUsers(matchUserID int64) []User {
 	return users
 }
 
-func GetOrPutUser(provider, providerUserID, email, fullName string) (int64, error) {
+func GetOrPutUser(provider, providerUserID, fullName string) (int64, error) {
 	providerUserIDColumn := "user_id_" + provider
 	tx, err := db.Begin()
 	if err != nil {
@@ -86,7 +86,6 @@ func GetOrPutUser(provider, providerUserID, email, fullName string) (int64, erro
 	}
 	setmap := sq.Eq{
 		providerUserIDColumn: providerUserID,
-		"email":              email,
 		"full_name":          fullName,
 	}
 	result, err := sq.Update("user").SetMap(setmap).

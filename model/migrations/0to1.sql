@@ -9,7 +9,6 @@ CREATE TABLE 'setting' (
 
 CREATE TABLE 'user' (
   'user_id' integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-  'email' varchar(255) NOT NULL,
   'full_name' varchar(255) NOT NULL,
   'is_admin' Boolean DEFAULT (0) NOT NULL,
   'user_id_google_oauth2' varchar(255) NULL
