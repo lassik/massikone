@@ -44,11 +44,8 @@ func generateFilename(document string) string {
 func blankPdf(getWriter GetWriter, filename string) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
-	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(40, 10, "Hello, world")
 	writer, err := getWriter("application/pdf",
 		generateFilename(filename)+".pdf")
 	check(err)
-	err = pdf.Output(writer)
-	check(err)
+	check(pdf.Output(writer))
 }
