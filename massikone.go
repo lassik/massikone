@@ -32,7 +32,7 @@ import (
 const sessionName = "massikone"
 const sessionCurrentUser = "current_user"
 
-var store *sessions.CookieStore
+var cookieStore *sessions.CookieStore
 var publicURL string
 
 func getTemplate(filename string) *mustache.Template {
@@ -71,7 +71,7 @@ func getAppTitle(settings model.Settings) string {
 }
 
 func setSessionUserID(w http.ResponseWriter, r *http.Request, id int64) {
-	session, _ := store.Get(r, sessionName)
+	session, _ := cookieStore.Get(r, sessionName)
 	if id == 0 {
 		delete(session.Values, sessionCurrentUser)
 	} else {
@@ -84,7 +84,7 @@ func getSessionUserID(r *http.Request) int64 {
 	if publicURL == "" {
 		return 1
 	}
-	session, _ := store.Get(r, sessionName)
+	session, _ := cookieStore.Get(r, sessionName)
 	if id, ok := session.Values[sessionCurrentUser]; ok {
 		if sid, ok := id.(string); ok {
 			if iid, err := strconv.Atoi(sid); err == nil {
@@ -356,8 +356,8 @@ func main() {
 
 	publicURL = os.Getenv("PUBLIC_URL")
 	if publicURL != "" {
-		store = sessions.NewCookieStore(makeSessionSecret())
-		gothic.Store = store
+		cookieStore = sessions.NewCookieStore(makeSessionSecret())
+		gothic.Store = cookieStore
 		goth.UseProviders(
 			gplus.New(
 				os.Getenv("GOOGLE_CLIENT_ID"),
