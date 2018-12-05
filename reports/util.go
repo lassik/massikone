@@ -30,6 +30,13 @@ type document struct {
 	rows      [][]cell
 }
 
+type pdfCtx struct {
+	pdf        *gofpdf.Fpdf
+	pageWidth  float64
+	sideMargin float64
+	tr         func(s string) string
+}
+
 func check(err error) {
 	if err != nil {
 		log.Fatal(err)
@@ -69,6 +76,46 @@ func blankPdf(getWriter GetWriter, filename string) {
 	check(pdf.Output(writer))
 }
 
+func doRow(ctx pdfCtx, row []cell, isHeader bool) {
+	pdf := ctx.pdf
+	if len(row) == 0 {
+		return
+	}
+	totalWidth := 0
+	for _, thisCell := range row {
+		if thisCell.width < 1 {
+			panic("thisCell.width < 1")
+		}
+		totalWidth += thisCell.width
+	}
+	multiplier := ctx.pageWidth / float64(totalWidth)
+	pdf.SetX(ctx.sideMargin)
+	for _, thisCell := range row {
+		height := 5.0
+		if isHeader {
+			height = 7.0
+		}
+		indentWidth := float64(thisCell.indentLevel) * 4.0
+		width := multiplier*float64(thisCell.width) - indentWidth
+		if indentWidth > 0 {
+			pdf.CellFormat(indentWidth, height, "",
+				"", 0, "", false, 0, "")
+		}
+		if thisCell.bold || isHeader {
+			pdf.SetFont("", "B", 0)
+		} else {
+			pdf.SetFont("", "", 0)
+		}
+		align := "L"
+		if thisCell.rightAlign {
+			align = "R"
+		}
+		pdf.CellFormat(width, height, ctx.tr(thisCell.text),
+			"", 0, align, false, 0, "")
+	}
+	pdf.Ln(-1)
+}
+
 func writePdf(doc document, getWriter GetWriter) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.SetFont("Helvetica", "", 9)
@@ -81,6 +128,7 @@ func writePdf(doc document, getWriter GetWriter) {
 	pdf.SetMargins(sideMargin, topMargin, sideMargin)
 	pageWidth, _ := pdf.GetPageSize()
 	pageWidth -= 2 * sideMargin
+	ctx := pdfCtx{pdf: pdf, pageWidth: pageWidth, sideMargin: sideMargin, tr: tr}
 	pdf.SetHeaderFunc(func() {
 		div3 := pageWidth / 3
 		const height = 8.0
@@ -103,60 +151,11 @@ func writePdf(doc document, getWriter GetWriter) {
 			"", 0, "C", false, 0, "")
 		pdf.CellFormat(div3, height, tr(doc.printDate),
 			"", 1, "R", false, 0, "")
-		headerTotalWidth := float64(0)
-		for _, thisCell := range doc.headerRow {
-			headerTotalWidth += float64(thisCell.width)
-		}
-		if headerTotalWidth < 1 {
-			panic("headerTotalWidth < 1")
-		}
-		multiplier := pageWidth / headerTotalWidth
-		pdf.SetX(sideMargin)
-		pdf.SetFont("", "B", 0)
-		for _, thisCell := range doc.headerRow {
-			const height = 7.0
-			width := multiplier * float64(thisCell.width)
-			align := "L"
-			if thisCell.rightAlign {
-				align = "R"
-			}
-			pdf.CellFormat(width, height, tr(thisCell.text),
-				"", 0, align, false, 0, "")
-		}
-		pdf.Ln(-1)
+		doRow(ctx, doc.headerRow, true)
 	})
 	pdf.AddPage()
 	for _, thisRow := range doc.rows {
-		totalWidth := float64(0)
-		for _, thisCell := range thisRow {
-			totalWidth += float64(thisCell.width)
-		}
-		if totalWidth < 1 {
-			panic("totalWidth < 1")
-		}
-		multiplier := pageWidth / totalWidth
-		pdf.SetX(sideMargin)
-		for _, thisCell := range thisRow {
-			height := 5.0
-			indentWidth := float64(thisCell.indentLevel) * 4
-			if indentWidth > 0 {
-				pdf.CellFormat(indentWidth, height, "",
-					"", 0, "", false, 0, "")
-			}
-			if thisCell.bold {
-				pdf.SetFont("", "B", 0)
-			} else {
-				pdf.SetFont("", "", 0)
-			}
-			width := multiplier*float64(thisCell.width) - indentWidth
-			align := "L"
-			if thisCell.rightAlign {
-				align = "R"
-			}
-			pdf.CellFormat(width, height, tr(thisCell.text),
-				"", 0, align, false, 0, "")
-		}
-		pdf.Ln(-1)
+		doRow(ctx, thisRow, false)
 	}
 	writer, err := getWriter("application/pdf",
 		generateFilename(doc.filename)+".pdf")
