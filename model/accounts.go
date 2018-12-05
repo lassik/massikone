@@ -7,7 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-const AccountNestingLevel = 9
+const accountNestingLevel = 9
 
 type Account struct {
 	RawAccountID string
@@ -35,7 +35,7 @@ func (m *Model) GetAccounts(usedOnly bool, matchAccountID string) []Account {
 		if m.isErr(rows.Scan(&a.RawAccountID, &a.Title, &nestingLevel)) {
 			return noAccounts
 		}
-		isAccount := (nestingLevel == AccountNestingLevel)
+		isAccount := (nestingLevel == accountNestingLevel)
 		dashLevel := 0
 		a.HTagLevel = ""
 		if !isAccount {
@@ -64,7 +64,7 @@ func (m *Model) GetAccountLookup() map[int]string {
 	lookup := map[int]string{}
 	rows, err := sq.Select("account_id, title").
 		From("period_account").OrderBy("account_id").
-		Where(sq.Eq{"nesting_level": AccountNestingLevel}).
+		Where(sq.Eq{"nesting_level": accountNestingLevel}).
 		RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return lookup
