@@ -59,11 +59,15 @@ func check(err error) {
 	}
 }
 
-func makeSessionSecret() []byte {
-	b := make([]byte, 32)
-	_, err := rand.Read(b)
-	check(err)
-	return b
+func getSessionSecret(fromEnv string) []byte {
+	const minLen = 32
+	secret := []byte(fromEnv)
+	if len(secret) < minLen {
+		secret = make([]byte, minLen)
+		_, err := rand.Read(secret)
+		check(err)
+	}
+	return secret
 }
 
 func getAppTitle(settings model.Settings) string {
@@ -356,7 +360,8 @@ func main() {
 
 	publicURL = os.Getenv("PUBLIC_URL")
 	if publicURL != "" {
-		cookieStore = sessions.NewCookieStore(makeSessionSecret())
+		cookieStore = sessions.NewCookieStore(
+			getSessionSecret(os.Getenv("SESSION_SECRET")))
 		gothic.Store = cookieStore
 		goth.UseProviders(
 			gplus.New(
