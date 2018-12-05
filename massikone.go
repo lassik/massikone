@@ -332,7 +332,7 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 		generate(m, func(mimeType, filename string) (io.Writer, error) {
 			w.Header().Set("Content-Type", mimeType)
 			w.Header().Set("Content-Disposition",
-				fmt.Sprintf("attachment; filename=%q", filename))
+				fmt.Sprintf("inline; filename=%q", filename))
 			return w, nil
 		})
 	}
