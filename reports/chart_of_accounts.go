@@ -9,7 +9,7 @@ import (
 func ChartOfAccountsPdf(m *model.Model, getWriter GetWriter) {
 	accounts := m.GetAccountList(false, "")
 	doc := document{
-		orgName:   model.GetSettings().OrgShortName,
+		orgName:   m.GetSettings().OrgShortName,
 		title:     "Tilikartta",
 		filename:  "tilikartta",
 		period:    "1.1.2018 - 31.12.2018",

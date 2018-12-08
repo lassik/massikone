@@ -269,7 +269,7 @@ func getSettings(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		map[string]interface{}{
 			"AppTitle":    getAppTitle(settings),
 			"CurrentUser": m.User(),
-			"Settings":    model.GetSettings(),
+			"Settings":    settings,
 			"Users":       users,
 		})))
 }
