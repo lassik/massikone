@@ -22,11 +22,15 @@ const (
 type Account struct {
 	AccountID    int
 	AccountType  int
+	NestingLevel int
 	AccountIDStr string
 	Prefix       string
 	Title        string
-	HTagLevel    string
 	IsMatch      bool
+}
+
+func (acct Account) IsHeading() bool {
+	return acct.NestingLevel != accountNestingLevel
 }
 
 func selectAccount() sq.SelectBuilder {
@@ -37,18 +41,15 @@ func selectAccount() sq.SelectBuilder {
 
 func scanAccount(rows sq.RowScanner) (Account, error) {
 	var a Account
-	var nestingLevel int
 	if err := rows.Scan(&a.AccountID, &a.AccountType,
-		&a.Title, &nestingLevel); err != nil {
+		&a.Title, &a.NestingLevel); err != nil {
 		return a, err
 	}
-	isAccount := (nestingLevel == accountNestingLevel)
-	if isAccount {
+	if a.IsHeading() {
+		a.Prefix = strings.Repeat("=", a.NestingLevel+1)
+	} else {
 		a.AccountIDStr = strconv.Itoa(a.AccountID)
 		a.Prefix = a.AccountIDStr
-	} else {
-		a.HTagLevel = strconv.Itoa(2 + nestingLevel)
-		a.Prefix = strings.Repeat("=", 1+nestingLevel)
 	}
 	return a, nil
 }

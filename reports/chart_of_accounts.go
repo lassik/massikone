@@ -1,8 +1,6 @@
 package reports
 
 import (
-	"strconv"
-
 	"github.com/lassik/massikone/model"
 )
 
@@ -16,14 +14,7 @@ func ChartOfAccountsPdf(m *model.Model, getWriter GetWriter) {
 		printDate: "1.12.2018",
 	}
 	for _, acct := range accounts {
-		level := 0
-		if acct.HTagLevel != "" {
-			level, _ = strconv.Atoi(acct.HTagLevel)
-		}
-		if level < 1 {
-			level = 9
-		}
-		bold := level < 9
+		bold := acct.IsHeading()
 		thisRow := []cell{
 			cell{
 				text:  acct.AccountIDStr,
@@ -33,7 +24,7 @@ func ChartOfAccountsPdf(m *model.Model, getWriter GetWriter) {
 			cell{
 				text:        acct.Title,
 				bold:        bold,
-				indentLevel: level,
+				indentLevel: acct.NestingLevel,
 				width:       10,
 			},
 		}
