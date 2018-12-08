@@ -72,7 +72,7 @@ func withCents(bill sq.SelectBuilder) sq.SelectBuilder {
 	return bill.Column(fmt.Sprintf("max((%s), (%s)) as cents", debit, credit))
 }
 
-func (m *Model) selectBill() sq.SelectBuilder {
+func selectBill() sq.SelectBuilder {
 	q := sq.Select("bill_id, description, paid_date").
 		From("bill").OrderBy("bill_id, description")
 	q = withPaidUser(q)
@@ -80,17 +80,16 @@ func (m *Model) selectBill() sq.SelectBuilder {
 	return q
 }
 
-func (m *Model) scanBill(rowScanner sq.RowScanner) *Bill {
+func scanBill(rows sq.RowScanner) (Bill, error) {
 	var b Bill
 	var description sql.NullString
 	var paidDateISO sql.NullString
 	var paidUserID sql.NullInt64
 	var paidUserFullName sql.NullString
 	var cents sql.NullInt64
-	if m.isErr(rowScanner.Scan(
-		&b.BillID, &description, &paidDateISO,
-		&paidUserID, &paidUserFullName, &cents)) {
-		return nil
+	if err := rows.Scan(&b.BillID, &description, &paidDateISO,
+		&paidUserID, &paidUserFullName, &cents); err != nil {
+		return b, err
 	}
 	b.Description = description.String
 	b.PaidDateISO = paidDateISO.String
@@ -98,13 +97,13 @@ func (m *Model) scanBill(rowScanner sq.RowScanner) *Bill {
 	b.PaidUser.UserID = paidUserID.Int64
 	b.PaidUser.FullName = paidUserFullName.String
 	b.Amount = amountFromCents(cents.Int64)
-	return &b
+	return b, nil
 }
 
 func (m *Model) GetBills() []Bill {
 	noBills := []Bill{}
 	bills := noBills
-	q := m.selectBill()
+	q := selectBill()
 	if !m.user.IsAdmin {
 		q = q.Where(sq.Eq{"paid_user_id": m.user.UserID})
 	}
@@ -114,11 +113,11 @@ func (m *Model) GetBills() []Bill {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		b := m.scanBill(rows)
-		if b == nil {
+		bill, err := scanBill(rows)
+		if m.isErr(err) {
 			return noBills
 		}
-		bills = append(bills, *b)
+		bills = append(bills, bill)
 	}
 	if m.isErr(rows.Err()) {
 		return noBills
@@ -132,19 +131,19 @@ func (m *Model) GetBillsForJournal() []Bill {
 	if !m.isAdmin() {
 		return noBills
 	}
-	q := m.selectBill()
+	q := selectBill()
 	rows, err := q.RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return noBills
 	}
 	defer rows.Close()
 	for rows.Next() {
-		b := m.scanBill(rows)
-		if b == nil {
+		bill, err := scanBill(rows)
+		if m.isErr(err) {
 			return noBills
 		}
-		m.populateBillEntries(b)
-		bills = append(bills, *b)
+		m.populateBillEntries(&bill)
+		bills = append(bills, bill)
 	}
 	if m.isErr(rows.Err()) {
 		return noBills
@@ -229,15 +228,15 @@ func (m *Model) getNextBillID(billID string) string {
 }
 
 func (m *Model) GetBillID(billID string) *Bill {
-	b := m.scanBill(m.selectBill().Where(sq.Eq{"bill_id": billID}).
+	b, err := scanBill(selectBill().Where(sq.Eq{"bill_id": billID}).
 		RunWith(m.tx).QueryRow())
-	if b == nil {
+	if err != nil {
 		return nil
 	}
 	if !m.isAdminOrUser(b.PaidUser.UserID) {
 		return nil
 	}
-	m.populateOtherBillFieldsFromBillEntries(b)
+	m.populateOtherBillFieldsFromBillEntries(&b)
 	b.Images = m.getBillImages(billID)
 	if len(b.Images) > 0 {
 		b.ImageID = b.Images[0]["ImageID"]
@@ -246,7 +245,7 @@ func (m *Model) GetBillID(billID string) *Bill {
 	b.NextBillID = m.getNextBillID(billID)
 	b.HasPrevBill = (b.PrevBillID != "")
 	b.HasNextBill = (b.NextBillID != "")
-	return b
+	return &b
 }
 
 func (m *Model) populateBillEntries(bill *Bill) {
@@ -418,18 +417,18 @@ func (m *Model) GetLedger() []LedgerAccount {
 		return emptyLedger
 	}
 	acctMap := m.GetAccountMap()
-	rows, err := m.selectBill().RunWith(m.tx).Query()
+	rows, err := selectBill().RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return emptyLedger
 	}
 	defer rows.Close()
 	ledgerMap := map[int]LedgerAccount{}
 	for rows.Next() {
-		bill := m.scanBill(rows)
-		if bill == nil {
+		bill, err := scanBill(rows)
+		if err != nil {
 			return emptyLedger
 		}
-		m.populateBillEntries(bill)
+		m.populateBillEntries(&bill)
 		for _, billEntry := range bill.Entries {
 			ledgerAccount := ledgerMap[billEntry.AccountID]
 			ledgerAccount.AccountID = billEntry.AccountID
