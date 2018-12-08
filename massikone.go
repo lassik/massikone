@@ -154,7 +154,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func getLoginPage(w http.ResponseWriter, r *http.Request) {
-	settings := model.GetSettings()
+	settings := model.GetSettingsWithoutModel()
 	w.Write([]byte(loginTemplate.Render(
 		map[string]string{"AppTitle": getAppTitle(settings)})))
 }

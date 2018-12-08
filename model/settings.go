@@ -54,7 +54,7 @@ func (m *Model) GetSettings() Settings {
 	return settings
 }
 
-func GetSettings() Settings {
+func GetSettingsWithoutModel() Settings {
 	settings, _ := getSettings(getDB())
 	return settings
 }
