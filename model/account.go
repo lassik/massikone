@@ -29,8 +29,22 @@ type Account struct {
 	IsMatch      bool
 }
 
+type AccountRange struct {
+	Start int
+	Limit int
+}
+
 func (acct Account) IsHeading() bool {
 	return acct.NestingLevel != accountNestingLevel
+}
+
+func accountIDInRange(accountID int, ranges []AccountRange) bool {
+	for _, ar := range ranges {
+		if accountID >= ar.Start && accountID < ar.Limit {
+			return true
+		}
+	}
+	return false
 }
 
 func selectAccount() sq.SelectBuilder {
