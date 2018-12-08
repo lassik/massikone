@@ -80,6 +80,16 @@ func (m *Model) GetLedger() Ledger {
 	}
 	acctList := []LedgerAccount{}
 	for _, ledgerAccount := range ledgerMap {
+		ents := ledgerAccount.Entries
+		sort.Slice(ents, func(i, j int) bool {
+			if ents[i].PaidDateISO < ents[j].PaidDateISO {
+				return true
+			}
+			if ents[i].PaidDateISO > ents[j].PaidDateISO {
+				return false
+			}
+			return ents[i].BillID < ents[j].BillID
+		})
 		acctList = append(acctList, ledgerAccount)
 	}
 	sort.Slice(acctList, func(i, j int) bool {
