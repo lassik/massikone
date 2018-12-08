@@ -5,9 +5,9 @@ import (
 )
 
 func IncomeStatementPdf(m *model.Model, getWriter GetWriter) {
-	blankPdf(getWriter, "tuloslaskelma")
+	blankPdf(m, getWriter, "tuloslaskelma")
 }
 
 func IncomeStatementDetailedPdf(m *model.Model, getWriter GetWriter) {
-	blankPdf(getWriter, "tuloslaskelma erittelyin")
+	blankPdf(m, getWriter, "tuloslaskelma erittelyin")
 }

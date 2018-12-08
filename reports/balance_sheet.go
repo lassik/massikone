@@ -5,9 +5,9 @@ import (
 )
 
 func BalanceSheetPdf(m *model.Model, getWriter GetWriter) {
-	blankPdf(getWriter, "tase")
+	blankPdf(m, getWriter, "tase")
 }
 
 func BalanceSheetDetailedPdf(m *model.Model, getWriter GetWriter) {
-	blankPdf(getWriter, "tase erittelyin")
+	blankPdf(m, getWriter, "tase erittelyin")
 }

@@ -75,5 +75,5 @@ func GeneralJournalPdf(m *model.Model, getWriter GetWriter) {
 			})
 		}
 	}
-	writePdf(doc, getWriter)
+	writePdf(m, doc, getWriter)
 }

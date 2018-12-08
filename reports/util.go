@@ -9,6 +9,8 @@ import (
 
 	"github.com/jung-kurt/gofpdf"
 	"golang.org/x/text/unicode/norm"
+
+	"github.com/lassik/massikone/model"
 )
 
 type GetWriter func(mimeType, filename string) (io.Writer, error)
@@ -81,19 +83,18 @@ func slug(str string) string {
 	return str
 }
 
-func generateFilename(document string) string {
+func generateFilename(m *model.Model, document string) string {
 	year := "2018" // TODO
-	//settings := modelGetSettings()
-	//orgShortName := settings["org_short_name"]
-	orgShortName := "Testi"
-	return norm.NFC.String(slug(orgShortName + "-" + year + "-" + document))
+	settings := m.GetSettings()
+	return norm.NFC.String(slug(
+		settings.OrgShortName + "-" + year + "-" + document))
 }
 
-func blankPdf(getWriter GetWriter, filename string) {
+func blankPdf(m *model.Model, getWriter GetWriter, filename string) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	writer, err := getWriter("application/pdf",
-		generateFilename(filename)+".pdf")
+		generateFilename(m, filename)+".pdf")
 	check(err)
 	check(pdf.Output(writer))
 }
@@ -138,7 +139,7 @@ func doRow(ctx pdfCtx, row []cell, isHeader bool) {
 	pdf.Ln(-1)
 }
 
-func writePdf(doc document, getWriter GetWriter) {
+func writePdf(m *model.Model, doc document, getWriter GetWriter) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.SetFont("Helvetica", "", 9)
 	trFromUtf8 := pdf.UnicodeTranslatorFromDescriptor("")
@@ -180,7 +181,7 @@ func writePdf(doc document, getWriter GetWriter) {
 		doRow(ctx, thisRow, false)
 	}
 	writer, err := getWriter("application/pdf",
-		generateFilename(doc.filename)+".pdf")
+		generateFilename(m, doc.filename)+".pdf")
 	check(err)
 	check(pdf.Output(writer))
 }

@@ -39,5 +39,5 @@ func ChartOfAccountsPdf(m *model.Model, getWriter GetWriter) {
 		}
 		doc.rows = append(doc.rows, thisRow)
 	}
-	writePdf(doc, getWriter)
+	writePdf(m, doc, getWriter)
 }
