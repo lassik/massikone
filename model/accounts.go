@@ -53,7 +53,7 @@ func scanAccount(rows sq.RowScanner) (Account, error) {
 	return a, nil
 }
 
-func (m *Model) GetAccounts(usedOnly bool, matchAccountID string) []Account {
+func (m *Model) GetAccountList(usedOnly bool, matchAccountID string) []Account {
 	noAccounts := []Account{}
 	accounts := noAccounts
 	rows, err := selectAccount().RunWith(m.tx).Query()

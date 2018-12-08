@@ -197,8 +197,8 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	var debitAccounts []model.Account
 	if m.User().IsAdmin {
 		users = m.GetUsers(bill.PaidUser.UserID)
-		creditAccounts = m.GetAccounts(false, bill.CreditAccountID)
-		debitAccounts = m.GetAccounts(false, bill.DebitAccountID)
+		creditAccounts = m.GetAccountList(false, bill.CreditAccountID)
+		debitAccounts = m.GetAccountList(false, bill.DebitAccountID)
 	}
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
@@ -250,7 +250,7 @@ func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	var accounts []model.Account
 	if m.User().IsAdmin {
 		users = m.GetUsers(0)
-		accounts = m.GetAccounts(false, "")
+		accounts = m.GetAccountList(false, "")
 	}
 	w.Write([]byte(billTemplate.Render(
 		map[string]interface{}{
