@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/jung-kurt/gofpdf"
@@ -43,19 +44,40 @@ func check(err error) {
 	}
 }
 
+var whitespace = regexp.MustCompile(`\s+`)
+var nonWordChar = regexp.MustCompile(`[^\d\pL-]`)
+var dashesMany = regexp.MustCompile(`--+`)
+var dashesStart = regexp.MustCompile(`^-+`)
+var dashesEnd = regexp.MustCompile(`-+$`)
+
+func truncateUnicode(str string, maxRunes int) string {
+	runes := 0
+	for runeByteOffset := range str {
+		if runes >= maxRunes {
+			return str[:runeByteOffset]
+		}
+		runes++
+	}
+	return str
+}
+
 func shorten(str string) string {
 	str = strings.SplitN(str, "\n", 2)[0]
-	//.gsub(`\s+`, ' ').strip.slice(0:50)
+	str = whitespace.ReplaceAllString(str, " ")
+	str = strings.TrimSpace(str)
+	str = truncateUnicode(str, 50)
 	return str
 }
 
 func slug(str string) string {
 	str = strings.SplitN(str, "\n", 2)[0]
 	str = strings.ToLower(str)
-	//str = str.gsub(`\s+`, '-').gsub(`[^\w-]`, "")
-	//str = str.gsub(`--+`, '-').gsub(`^-`, "")
+	str = whitespace.ReplaceAllString(str, "-")
+	str = nonWordChar.ReplaceAllString(str, "")
+	str = dashesMany.ReplaceAllString(str, "-")
+	str = dashesStart.ReplaceAllString(str, "")
 	str = shorten(str)
-	//str = str.gsub(`-$`, "")
+	str = dashesEnd.ReplaceAllString(str, "")
 	return str
 }
 
