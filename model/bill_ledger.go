@@ -54,13 +54,14 @@ func (m *Model) GetLedger() Ledger {
 			ledgerAccount.AccountID = billEntry.AccountID
 			ledgerAccount.AccountTitle =
 				acctMap[ledgerAccount.AccountID].Title
-			ledgerAccount.CurrentBalanceCents += cents
 			ledgerEntry := LedgerEntry{}
 			if billEntry.IsDebit {
 				ledgerEntry.DebitAmount = billEntry.Amount
+				ledgerAccount.CurrentBalanceCents += cents
 				totalDebitCents += cents
 			} else {
 				ledgerEntry.CreditAmount = billEntry.Amount
+				ledgerAccount.CurrentBalanceCents -= cents
 				totalCreditCents += cents
 			}
 			ledgerEntry.BalanceAfter = amountFromCents(
