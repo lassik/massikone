@@ -103,11 +103,9 @@ func (m *Model) GetAccountMap() map[int]Account {
 		if m.isErr(err) {
 			break
 		}
-		if acct.IsHeading() {
-			continue
+		if !acct.IsHeading() {
+                        acctMap[acct.AccountID] = acct
 		}
-		acctID, _ := strconv.Atoi(acct.AccountIDStr)
-		acctMap[acctID] = acct
 	}
 	return acctMap
 }
