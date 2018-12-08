@@ -25,7 +25,8 @@ func GeneralJournalPdf(m *model.Model, getWriter GetWriter) {
 			cell{text: "Selite", width: descriptionWidth},
 		},
 	}
-	for _, bill := range m.GetBillsForJournal() {
+	journal := m.GetJournal()
+	for _, bill := range journal.Bills {
 		doc.rows = append(doc.rows, []cell{
 			cell{
 				text:  bill.BillID,
@@ -75,5 +76,22 @@ func GeneralJournalPdf(m *model.Model, getWriter GetWriter) {
 			})
 		}
 	}
+	doc.rows = append(doc.rows, []cell{
+		cell{width: numberWidth},
+		cell{width: accountWidth},
+		cell{
+			text:       amountFromCents(journal.TotalDebitCents),
+			width:      numberWidth,
+			rightAlign: true,
+			bold:       true,
+		},
+		cell{
+			text:       amountFromCents(journal.TotalCreditCents),
+			width:      numberWidth,
+			rightAlign: true,
+			bold:       true,
+		},
+		cell{width: descriptionWidth},
+	})
 	writePdf(m, doc, getWriter)
 }
