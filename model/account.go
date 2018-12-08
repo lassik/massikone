@@ -104,7 +104,7 @@ func (m *Model) GetAccountMap() map[int]Account {
 			break
 		}
 		if !acct.IsHeading() {
-                        acctMap[acct.AccountID] = acct
+			acctMap[acct.AccountID] = acct
 		}
 	}
 	return acctMap
