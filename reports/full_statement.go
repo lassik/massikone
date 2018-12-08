@@ -10,7 +10,7 @@ import (
 )
 
 func FullStatementZip(m *model.Model, getWriter GetWriter) {
-	zipFilename := generateFilename("tilinpaatos")
+	zipFilename := generateFilename("tilinpäätos")
 	zipBasename := path.Base(zipFilename)
 	outerWriter, err := getWriter("application/zip", zipFilename+".zip")
 	if err != nil {
