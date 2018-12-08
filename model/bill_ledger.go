@@ -22,42 +22,52 @@ type LedgerAccount struct {
 	Entries             []LedgerEntry
 }
 
-func (m *Model) GetLedger() []LedgerAccount {
-	emptyLedger := []LedgerAccount{}
+type Ledger struct {
+	Accounts         []LedgerAccount
+	TotalDebitCents  int64
+	TotalCreditCents int64
+}
+
+func (m *Model) GetLedger() Ledger {
+	ledger := Ledger{}
 	if !m.isAdmin() {
-		return emptyLedger
+		return ledger
 	}
 	acctMap := m.GetAccountMap()
 	rows, err := selectBill().RunWith(m.tx).Query()
 	if m.isErr(err) {
-		return emptyLedger
+		return ledger
 	}
 	defer rows.Close()
 	ledgerMap := map[int]LedgerAccount{}
+	var totalDebitCents int64
+	var totalCreditCents int64
 	for rows.Next() {
 		bill, err := scanBill(rows)
 		if err != nil {
-			return emptyLedger
+			return ledger
 		}
 		m.populateBillEntries(&bill)
 		for _, billEntry := range bill.Entries {
+			cents := billEntry.UnitCount * billEntry.UnitCostCents
 			ledgerAccount := ledgerMap[billEntry.AccountID]
 			ledgerAccount.AccountID = billEntry.AccountID
 			ledgerAccount.AccountTitle =
 				acctMap[ledgerAccount.AccountID].Title
-			ledgerAccount.CurrentBalanceCents +=
-				billEntry.UnitCount * billEntry.UnitCostCents
+			ledgerAccount.CurrentBalanceCents += cents
 			ledgerEntry := LedgerEntry{}
+			if billEntry.IsDebit {
+				ledgerEntry.DebitAmount = billEntry.Amount
+				totalDebitCents += cents
+			} else {
+				ledgerEntry.CreditAmount = billEntry.Amount
+				totalCreditCents += cents
+			}
 			ledgerEntry.BalanceAfter = amountFromCents(
 				ledgerAccount.CurrentBalanceCents)
 			ledgerEntry.BillID = bill.BillID
 			ledgerEntry.PaidDateISO = bill.PaidDateISO
 			ledgerEntry.PaidDateFi = bill.PaidDateFi
-			if billEntry.IsDebit {
-				ledgerEntry.DebitAmount = billEntry.Amount
-			} else {
-				ledgerEntry.CreditAmount = billEntry.Amount
-			}
 			ledgerEntry.Description = billEntry.Description
 			ledgerAccount.Entries =
 				append(ledgerAccount.Entries, ledgerEntry)
@@ -65,14 +75,17 @@ func (m *Model) GetLedger() []LedgerAccount {
 		}
 	}
 	if m.isErr(rows.Err()) {
-		return emptyLedger
+		return ledger
 	}
-	ledger := []LedgerAccount{}
+	acctList := []LedgerAccount{}
 	for _, ledgerAccount := range ledgerMap {
-		ledger = append(ledger, ledgerAccount)
+		acctList = append(acctList, ledgerAccount)
 	}
-	sort.Slice(ledger, func(i, j int) bool {
-		return ledger[i].AccountID < ledger[j].AccountID
+	sort.Slice(acctList, func(i, j int) bool {
+		return acctList[i].AccountID < acctList[j].AccountID
 	})
+	ledger.Accounts = acctList
+	ledger.TotalDebitCents = totalDebitCents
+	ledger.TotalCreditCents = totalCreditCents
 	return ledger
 }

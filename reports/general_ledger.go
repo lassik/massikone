@@ -27,7 +27,8 @@ func GeneralLedgerPdf(m *model.Model, getWriter GetWriter) {
 			cell{text: "Selite", width: descriptionWidth},
 		},
 	}
-	for _, account := range m.GetLedger() {
+	ledger := m.GetLedger()
+	for _, account := range ledger.Accounts {
 		doc.rows = append(doc.rows, []cell{
 			cell{
 				text:  strconv.Itoa(account.AccountID),
@@ -94,5 +95,24 @@ func GeneralLedgerPdf(m *model.Model, getWriter GetWriter) {
 			})
 		}
 	}
+	doc.rows = append(doc.rows, []cell{
+		cell{width: numberWidth},
+		cell{width: numberWidth},
+		cell{width: dateWidth},
+		cell{
+			text:       amountFromCents(ledger.TotalDebitCents),
+			width:      numberWidth,
+			rightAlign: true,
+			bold:       true,
+		},
+		cell{
+			text:       amountFromCents(ledger.TotalCreditCents),
+			width:      numberWidth,
+			rightAlign: true,
+			bold:       true,
+		},
+		cell{width: numberWidth},
+		cell{width: descriptionWidth},
+	})
 	writePdf(m, doc, getWriter)
 }
