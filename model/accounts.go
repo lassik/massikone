@@ -20,9 +20,9 @@ const (
 )
 
 type Account struct {
-	RawAccountID string
-	AccountID    string
+	AccountID    int
 	AccountType  int
+	AccountIDStr string
 	Prefix       string
 	Title        string
 	HTagLevel    string
@@ -43,27 +43,24 @@ func (m *Model) GetAccounts(usedOnly bool, matchAccountID string) []Account {
 	for rows.Next() {
 		var a Account
 		var nestingLevel int
-		if m.isErr(rows.Scan(&a.RawAccountID, &a.AccountType,
+		if m.isErr(rows.Scan(&a.AccountID, &a.AccountType,
 			&a.Title, &nestingLevel)) {
 			return noAccounts
 		}
 		isAccount := (nestingLevel == accountNestingLevel)
 		dashLevel := 0
-		a.HTagLevel = ""
 		if !isAccount {
 			dashLevel = 1 + nestingLevel
 			a.HTagLevel = strconv.Itoa(2 + nestingLevel)
 		}
-		a.Prefix = a.RawAccountID
-		if !isAccount {
+		if isAccount {
+			a.AccountIDStr = strconv.Itoa(a.AccountID)
+			a.Prefix = a.AccountIDStr
+		} else {
 			a.Prefix = strings.Repeat("=", dashLevel)
 		}
-		a.AccountID = ""
-		if isAccount {
-			a.AccountID = a.RawAccountID
-		}
 		a.IsMatch = (matchAccountID != "" &&
-			a.AccountID == matchAccountID)
+			a.AccountIDStr == matchAccountID)
 		accounts = append(accounts, a)
 	}
 	if usedOnly {

@@ -113,7 +113,7 @@
                       <select class="selectpicker" data-width="auto" data-live-search="true" name="credit_account_id">
                         <option value=""></option>
                         {{#CreditAccounts}}
-                          <option value="{{AccountID}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
+                          <option value="{{AccountIDStr}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
                         {{/CreditAccounts}}
                       </select>
                     </td>
@@ -124,7 +124,7 @@
                       <select class="selectpicker" data-width="auto" data-live-search="true" name="debit_account_id">
                         <option value=""></option>
                         {{#DebitAccounts}}
-                          <option value="{{AccountID}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
+                          <option value="{{AccountIDStr}}"{{#IsMatch}} selected{{/IsMatch}}>{{Prefix}} {{Title}}</option>
                         {{/DebitAccounts}}
                       </select>
                     </td>

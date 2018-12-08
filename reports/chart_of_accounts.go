@@ -26,7 +26,7 @@ func ChartOfAccountsPdf(m *model.Model, getWriter GetWriter) {
 		bold := level < 9
 		thisRow := []cell{
 			cell{
-				text:  acct.AccountID,
+				text:  acct.AccountIDStr,
 				bold:  bold,
 				width: 1,
 			},
