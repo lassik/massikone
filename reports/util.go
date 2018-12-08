@@ -83,6 +83,15 @@ func slug(str string) string {
 	return str
 }
 
+func amountFromCents(cents int64) string {
+	if cents <= 0 {
+		return ""
+	}
+	euros := cents / 100
+	cents = cents % 100
+	return fmt.Sprintf("%d,%02d", euros, cents)
+}
+
 func generateFilename(m *model.Model, document string) string {
 	year := "2018" // TODO
 	settings := m.GetSettings()
