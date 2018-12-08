@@ -89,6 +89,9 @@ func (m *Model) GetAccountMap() map[int]Account {
 		if m.isErr(err) {
 			break
 		}
+		if acct.IsHeading() {
+			continue
+		}
 		acctID, _ := strconv.Atoi(acct.AccountIDStr)
 		acctMap[acctID] = acct
 	}
