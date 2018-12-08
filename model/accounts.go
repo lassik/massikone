@@ -60,21 +60,21 @@ func (m *Model) GetAccounts(usedOnly bool, matchAccountID string) []Account {
 	return accounts
 }
 
-func (m *Model) GetAccountLookup() map[int]string {
-	lookup := map[int]string{}
+func (m *Model) GetAccountMap() map[int]Account {
+	acctMap := map[int]Account{}
 	rows, err := sq.Select("account_id, title").
 		From("period_account").OrderBy("account_id").
 		Where(sq.Eq{"nesting_level": accountNestingLevel}).
 		RunWith(m.tx).Query()
 	if m.isErr(err) {
-		return lookup
+		return acctMap
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var accountID int
-		var title string
-		rows.Scan(&accountID, &title)
-		lookup[accountID] = title
+		var acctID int
+		acct := Account{}
+		rows.Scan(&acctID, &acct.Title)
+		acctMap[acctID] = acct
 	}
-	return lookup
+	return acctMap
 }

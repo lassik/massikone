@@ -417,7 +417,7 @@ func (m *Model) GetLedger() []LedgerAccount {
 	if !m.isAdmin() {
 		return emptyLedger
 	}
-	accountLookup := m.GetAccountLookup()
+	acctMap := m.GetAccountMap()
 	rows, err := m.selectBill().RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return emptyLedger
@@ -434,7 +434,7 @@ func (m *Model) GetLedger() []LedgerAccount {
 			ledgerAccount := ledgerMap[billEntry.AccountID]
 			ledgerAccount.AccountID = billEntry.AccountID
 			ledgerAccount.AccountTitle =
-				accountLookup[ledgerAccount.AccountID]
+				acctMap[ledgerAccount.AccountID].Title
 			ledgerAccount.CurrentBalanceCents +=
 				billEntry.UnitCount * billEntry.UnitCostCents
 			ledgerEntry := LedgerEntry{}

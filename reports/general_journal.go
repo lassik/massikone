@@ -10,7 +10,7 @@ func GeneralJournalPdf(m *model.Model, getWriter GetWriter) {
 	const numberWidth = 2
 	const accountWidth = 8
 	const descriptionWidth = 10
-	accountLookup := m.GetAccountLookup()
+	acctMap := m.GetAccountMap()
 	doc := document{
 		title:     "Päiväkirja",
 		filename:  "päiväkirja",
@@ -53,7 +53,7 @@ func GeneralJournalPdf(m *model.Model, getWriter GetWriter) {
 				cell{
 					text: fmt.Sprintf("%d %s",
 						entry.AccountID,
-						accountLookup[entry.AccountID],
+						acctMap[entry.AccountID].Title,
 					),
 					width:       accountWidth,
 					indentLevel: 1,
