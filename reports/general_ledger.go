@@ -11,6 +11,15 @@ func GeneralLedgerPdf(m *model.Model, getWriter GetWriter) {
 	const numberWidth = 2
 	const accountWidth = 8
 	const descriptionWidth = 10
+	emptyRow := []cell{
+		cell{width: numberWidth},
+		cell{width: numberWidth},
+		cell{width: dateWidth},
+		cell{width: numberWidth},
+		cell{width: numberWidth},
+		cell{width: numberWidth},
+		cell{width: descriptionWidth},
+	}
 	doc := document{
 		title:     "Pääkirja",
 		filename:  "pääkirja",
@@ -94,6 +103,7 @@ func GeneralLedgerPdf(m *model.Model, getWriter GetWriter) {
 				},
 			})
 		}
+		doc.rows = append(doc.rows, emptyRow)
 	}
 	doc.rows = append(doc.rows, []cell{
 		cell{width: numberWidth},
