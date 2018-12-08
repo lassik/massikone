@@ -9,9 +9,20 @@ import (
 
 const accountNestingLevel = 9
 
+const (
+	AssetAccount      = 0 // Vastaavaa
+	LiabilityAccount  = 1 // Vastattavaa
+	EquityAccount     = 2 // Oma pääoma
+	RevenueAccount    = 3 // Tulot
+	ExpenseAccount    = 4 // Menot
+	PastProfitAccount = 5 // Edellisten tilikausien voitto
+	ProfitAccount     = 6 // Tilikauden voitto
+)
+
 type Account struct {
 	RawAccountID string
 	AccountID    string
+	AccountType  int
 	Prefix       string
 	Title        string
 	HTagLevel    string
@@ -22,7 +33,7 @@ func (m *Model) GetAccounts(usedOnly bool, matchAccountID string) []Account {
 	noAccounts := []Account{}
 	accounts := noAccounts
 	//populateAccounts()
-	rows, err := sq.Select("account_id, title, nesting_level").
+	rows, err := sq.Select("account_id, account_type, title, nesting_level").
 		From("period_account").OrderBy("account_id, nesting_level").
 		RunWith(m.tx).Query()
 	if m.isErr(err) {
@@ -32,7 +43,8 @@ func (m *Model) GetAccounts(usedOnly bool, matchAccountID string) []Account {
 	for rows.Next() {
 		var a Account
 		var nestingLevel int
-		if m.isErr(rows.Scan(&a.RawAccountID, &a.Title, &nestingLevel)) {
+		if m.isErr(rows.Scan(&a.RawAccountID, &a.AccountType,
+			&a.Title, &nestingLevel)) {
 			return noAccounts
 		}
 		isAccount := (nestingLevel == accountNestingLevel)

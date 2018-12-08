@@ -29,6 +29,7 @@ CREATE TABLE 'period' (
 CREATE TABLE 'period_account' (
   'period_id' integer NOT NULL REFERENCES 'period',
   'account_id' integer NOT NULL,
+  'account_type' integer NOT NULL,
   'title' varchar(255) NOT NULL,
   'starting_balance_cents' integer DEFAULT (0) NOT NULL,
   'nesting_level' integer DEFAULT (0) NOT NULL,
