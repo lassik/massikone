@@ -43,16 +43,12 @@ func scanAccount(rows sq.RowScanner) (Account, error) {
 		return a, err
 	}
 	isAccount := (nestingLevel == accountNestingLevel)
-	dashLevel := 0
-	if !isAccount {
-		dashLevel = 1 + nestingLevel
-		a.HTagLevel = strconv.Itoa(2 + nestingLevel)
-	}
 	if isAccount {
 		a.AccountIDStr = strconv.Itoa(a.AccountID)
 		a.Prefix = a.AccountIDStr
 	} else {
-		a.Prefix = strings.Repeat("=", dashLevel)
+		a.HTagLevel = strconv.Itoa(2 + nestingLevel)
+		a.Prefix = strings.Repeat("=", 1+nestingLevel)
 	}
 	return a, nil
 }
