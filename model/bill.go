@@ -203,6 +203,14 @@ func (m *Model) GetBillID(billID string) *Bill {
 	return &b
 }
 
+func scanBillEntry(rows sq.RowScanner) (BillEntry, error) {
+	e := BillEntry{}
+	err := rows.Scan(&e.RowNumber, &e.AccountID,
+		&e.IsDebit, &e.UnitCount, &e.UnitCostCents, &e.Description)
+	e.Amount = amountFromCents(e.UnitCount * e.UnitCostCents)
+	return e, err
+}
+
 func (m *Model) populateBillEntries(bill *Bill) {
 	q := sq.Select("row_number, account_id, debit, unit_count, unit_cost_cents, description").From("bill_entry").
 		Where(sq.Eq{"bill_id": bill.BillID}).
@@ -214,12 +222,10 @@ func (m *Model) populateBillEntries(bill *Bill) {
 	entries := []BillEntry{}
 	defer rows.Close()
 	for rows.Next() {
-		e := BillEntry{}
-		if m.isErr(rows.Scan(&e.RowNumber, &e.AccountID,
-			&e.IsDebit, &e.UnitCount, &e.UnitCostCents, &e.Description)) {
+		e, err := scanBillEntry(rows)
+		if m.isErr(err) {
 			return
 		}
-		e.Amount = amountFromCents(e.UnitCount * e.UnitCostCents)
 		entries = append(entries, e)
 	}
 	if m.isErr(rows.Err()) {
