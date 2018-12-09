@@ -38,7 +38,7 @@ func (acct Account) IsHeading() bool {
 	return acct.NestingLevel != accountNestingLevel
 }
 
-func accountIDInRange(accountID int, ranges []AccountRange) bool {
+func AccountIDInRange(accountID int, ranges []AccountRange) bool {
 	for _, ar := range ranges {
 		if accountID >= ar.Start && accountID < ar.Limit {
 			return true

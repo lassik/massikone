@@ -35,7 +35,7 @@ func GetAccountRangeBalance(acctMap map[int]Account,
 	balances map[int]int64, ranges []AccountRange) int64 {
 	var rangesBalance int64
 	for acctID, balance := range balances {
-		if accountIDInRange(acctID, ranges) {
+		if AccountIDInRange(acctID, ranges) {
 			if acctMap[acctID].AccountType == ExpenseAccount {
 				rangesBalance -= balance
 			} else {
