@@ -52,19 +52,21 @@ func (m *Model) isAdminOrUser(userID int64) bool {
 	return false
 }
 
-func (m *Model) getUserByID(userID int64) (*User, error) {
+func selectUser() sq.SelectBuilder {
+	return sq.Select("user_id, full_name, is_admin").
+		From("user").
+		OrderBy("lower(full_name)")
+}
+
+func scanUser(rows sq.RowScanner) (User, error) {
 	var user User
-	q := sq.Select("user_id, full_name, is_admin").
-		From("user").Where(sq.Eq{"user_id": userID})
-	err := q.RunWith(m.tx).Limit(1).QueryRow().Scan(
-		&user.UserID, &user.FullName, &user.IsAdmin)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+	err := rows.Scan(&user.UserID, &user.FullName, &user.IsAdmin)
+	return user, err
+}
+
+func (m *Model) getUserByID(userID int64) (User, error) {
+	return scanUser(selectUser().Where(sq.Eq{"user_id": userID}).
+		RunWith(m.tx).QueryRow())
 }
 
 func (m *Model) GetUsers(matchUserID int64) []User {
@@ -72,20 +74,19 @@ func (m *Model) GetUsers(matchUserID int64) []User {
 	if !m.isAdmin() {
 		return noUsers
 	}
-	rows, err := sq.Select("user_id, full_name, is_admin").
-		From("user").OrderBy("user_id").RunWith(m.tx).Query()
+	rows, err := selectUser().RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return noUsers
 	}
 	defer rows.Close()
 	users := noUsers
 	for rows.Next() {
-		var u User
-		if m.isErr(rows.Scan(&u.UserID, &u.FullName, &u.IsAdmin)) {
+		user, err := scanUser(rows)
+		if m.isErr(err) {
 			return noUsers
 		}
-		u.IsMatch = (matchUserID != 0 && u.UserID == matchUserID)
-		users = append(users, u)
+		user.IsMatch = (matchUserID != 0 && user.UserID == matchUserID)
+		users = append(users, user)
 	}
 	sort.SliceStable(users, func(i, j int) bool {
 		return strings.ToLower(users[i].FullName) <

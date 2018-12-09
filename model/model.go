@@ -68,16 +68,22 @@ func MakeModel(userID int64, adminOnly bool) Model {
 		return Model{Err: errors.New("Not logged in")}
 	}
 	var m Model
-	m.tx, m.Err = getDB().Begin()
-	var user *User
-	user, m.Err = m.getUserByID(userID)
-	if user == nil && m.Err == nil {
+	var err error
+	m.tx, err = getDB().Begin()
+	if m.isErr(err) {
+		return m
+	}
+	m.user, err = m.getUserByID(userID)
+	if err == sql.ErrNoRows {
 		m.Err = errors.New("No such user")
+		return m
 	}
-	if adminOnly && (user == nil || !user.IsAdmin) {
-		m.Err = errors.New("Forbidden")
+	if m.isErr(err) {
+		return m
 	}
-	m.user = *user
+	if adminOnly && !m.user.IsAdmin {
+		m.Forbidden()
+	}
 	return m
 }
 
