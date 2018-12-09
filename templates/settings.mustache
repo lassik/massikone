@@ -16,50 +16,54 @@
         <a class="btn btn-lg btn-warning" href="/">Takaisin</a>
       </div>
       <h2>Yhdistyksen nimi</h2>
-      <form enctype="multipart/form-data" method="POST" action="/api/settings">
-        <table class="table table-striped table-hover">
-          <tr>
-            <th><label for="OrgFullName">Koko nimi:</label></th>
-            <td>
-              <input type="text" class="form-control"
-                     name="OrgFullName" id="OrgFullName"
-                     value="{{Settings.OrgFullName}}" />
-            </td>
-          </tr>
-          <tr>
-            <th><label for="OrgShortName">Lyhennetty nimi:</label></th>
-            <td>
-              <input type="text" class="form-control"
-                     name="OrgShortName" id="OrgShortName"
-                     value="{{Settings.OrgShortName}}" />
-            </td>
-          </tr>
-        </table>
-        <input type="submit" class="btn btn-lg btn-success" value="Tallenna nimet" />
-      </form>
-      <h2>Käyttäjien oikeudet</h2>
-      <form enctype="multipart/form-data" method="POST" action="/api/permissions">
-        <table class="table table-striped table-hover">
-          <tr>
-            <th>Käyttäjä</th>
-            <th>Oikeudet tositteisiin</th>
-          </tr>
-          {{#Users}}
+      <div class="well well-lg">
+        <form enctype="multipart/form-data" method="POST" action="/api/settings">
+          <table class="table table-striped table-hover">
             <tr>
-              <td>{{FullName}}</td>
+              <th><label for="OrgFullName">Koko nimi:</label></th>
               <td>
-                <select name="{{UserId}}">
-                  <option value="0">Deaktivoitu</option>
-                  <option value="1">Vain omat</option>
-                  <option value="2">Selata kaikkea</option>
-                  <option value="3">Muokata kaikkea</option>
-                </select>
+                <input type="text" class="form-control"
+                       name="OrgFullName" id="OrgFullName"
+                       value="{{Settings.OrgFullName}}" />
               </td>
             </tr>
-          {{/Users}}
-        </table>
-        <input type="submit" class="btn btn-lg btn-success" value="Tallenna oikeudet" />
-      </form>
+            <tr>
+              <th><label for="OrgShortName">Lyhennetty nimi:</label></th>
+              <td>
+                <input type="text" class="form-control"
+                       name="OrgShortName" id="OrgShortName"
+                       value="{{Settings.OrgShortName}}" />
+              </td>
+            </tr>
+          </table>
+          <input type="submit" class="btn btn-lg btn-success" value="Tallenna nimet" />
+        </form>
+      </div>
+      <h2>Käyttäjien oikeudet</h2>
+      <div class="well well-lg">
+        <form enctype="multipart/form-data" method="POST" action="/api/permissions">
+          <table class="table table-striped table-hover">
+            <tr>
+              <th>Käyttäjä</th>
+              <th>Oikeudet tositteisiin</th>
+            </tr>
+            {{#Users}}
+              <tr>
+                <td>{{FullName}}</td>
+                <td>
+                  <select name="{{UserId}}">
+                    <option value="0">Deaktivoitu</option>
+                    <option value="1">Vain omat</option>
+                    <option value="2">Selata kaikkea</option>
+                    <option value="3">Muokata kaikkea</option>
+                  </select>
+                </td>
+              </tr>
+            {{/Users}}
+          </table>
+          <input type="submit" class="btn btn-lg btn-success" value="Tallenna oikeudet" />
+        </form>
+      </div>
     </div>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
