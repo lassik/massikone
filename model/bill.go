@@ -238,6 +238,10 @@ func (m *Model) billEntriesFromSelect(selectStmt sq.SelectBuilder) []BillEntry {
 	return entries
 }
 
+func (m *Model) GetAllBillEntries() []BillEntry {
+	return m.billEntriesFromSelect(selectBillEntry())
+}
+
 func (m *Model) populateBillEntries(bill *Bill) {
 	bill.Entries = m.billEntriesFromSelect(
 		selectBillEntry().Where(sq.Eq{"bill_id": bill.BillID}))
