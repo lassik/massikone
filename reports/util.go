@@ -169,7 +169,7 @@ func writePdf(m *model.Model, doc document, getWriter GetWriter) {
 	pdf.SetHeaderFunc(func() {
 		div3 := pageWidth / 3
 		const height = 8.0
-		pdf.SetY(5)
+		pdf.SetY(sideMargin)
 		pdf.SetX(sideMargin)
 		pdf.SetFont("", "", 11)
 		pdf.CellFormat(div3, height,
