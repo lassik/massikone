@@ -65,12 +65,17 @@ func (m *Model) getIntFromDb(q sq.SelectBuilder) string {
 }
 
 func amountFromCents(cents int64) string {
-	if cents <= 0 {
+	if cents == 0 {
 		return ""
+	}
+	sign := ""
+	if cents < 0 {
+		sign = "-"
+		cents = -cents
 	}
 	euros := cents / 100
 	cents = cents % 100
-	return fmt.Sprintf("%d,%02d", euros, cents)
+	return fmt.Sprintf("%s%d,%02d", sign, euros, cents)
 }
 
 func centsFromAmount(amount string) (int64, error) {
