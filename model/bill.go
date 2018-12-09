@@ -203,6 +203,12 @@ func (m *Model) GetBillID(billID string) *Bill {
 	return &b
 }
 
+func selectBillEntry() sq.SelectBuilder {
+	return sq.Select("row_number, account_id, debit, unit_count, unit_cost_cents, description").
+		From("bill_entry").
+		OrderBy("bill_id, row_number")
+}
+
 func scanBillEntry(rows sq.RowScanner) (BillEntry, error) {
 	e := BillEntry{}
 	err := rows.Scan(&e.RowNumber, &e.AccountID,
@@ -211,27 +217,30 @@ func scanBillEntry(rows sq.RowScanner) (BillEntry, error) {
 	return e, err
 }
 
-func (m *Model) populateBillEntries(bill *Bill) {
-	q := sq.Select("row_number, account_id, debit, unit_count, unit_cost_cents, description").From("bill_entry").
-		Where(sq.Eq{"bill_id": bill.BillID}).
-		OrderBy("bill_id, row_number")
-	rows, err := q.RunWith(m.tx).Query()
+func (m *Model) billEntriesFromSelect(selectStmt sq.SelectBuilder) []BillEntry {
+	noEntries := []BillEntry{}
+	rows, err := selectStmt.RunWith(m.tx).Query()
 	if m.isErr(err) {
-		return
+		return noEntries
 	}
-	entries := []BillEntry{}
+	entries := noEntries
 	defer rows.Close()
 	for rows.Next() {
-		e, err := scanBillEntry(rows)
+		entry, err := scanBillEntry(rows)
 		if m.isErr(err) {
-			return
+			return noEntries
 		}
-		entries = append(entries, e)
+		entries = append(entries, entry)
 	}
 	if m.isErr(rows.Err()) {
-		return
+		return noEntries
 	}
-	bill.Entries = entries
+	return entries
+}
+
+func (m *Model) populateBillEntries(bill *Bill) {
+	bill.Entries = m.billEntriesFromSelect(
+		selectBillEntry().Where(sq.Eq{"bill_id": bill.BillID}))
 }
 
 func (m *Model) populateBillEntriesFromOtherBillFields(bill *Bill) {
