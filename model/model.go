@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"os"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/mattn/go-sqlite3"
@@ -41,14 +40,14 @@ func migrate(tx *sql.Tx) {
 	}
 }
 
-func Initialize() {
+func Initialize(databaseURL string) {
 	if db != nil {
 		return
 	}
 	var tx *sql.Tx
 	var err error
-	log.Printf("Tietokanta: %s", os.Getenv("DATABASE_URL"))
-	if db, err = dburl.Open(os.Getenv("DATABASE_URL")); err != nil {
+	log.Printf("Tietokanta: %s", databaseURL)
+	if db, err = dburl.Open(databaseURL); err != nil {
 		log.Fatal(err)
 	}
 	if tx, err = db.Begin(); err != nil {
