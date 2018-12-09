@@ -9,11 +9,19 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
+const (
+	NoPermission      = 0
+	NormalPermission  = 1
+	ViewAllPermission = 2
+	AdminPermission   = 3
+)
+
 type User struct {
-	UserID   int64
-	FullName string
-	IsAdmin  bool
-	IsMatch  bool
+	UserID          int64
+	FullName        string
+	PermissionLevel int
+	IsAdmin         bool
+	IsMatch         bool
 }
 
 func countUsers(tx *sql.Tx) int {
@@ -53,14 +61,15 @@ func (m *Model) isAdminOrUser(userID int64) bool {
 }
 
 func selectUser() sq.SelectBuilder {
-	return sq.Select("user_id, full_name, is_admin").
+	return sq.Select("user_id, full_name, permission_level").
 		From("user").
 		OrderBy("lower(full_name)")
 }
 
 func scanUser(rows sq.RowScanner) (User, error) {
 	var user User
-	err := rows.Scan(&user.UserID, &user.FullName, &user.IsAdmin)
+	err := rows.Scan(&user.UserID, &user.FullName, &user.PermissionLevel)
+	user.IsAdmin = (user.PermissionLevel >= AdminPermission)
 	return user, err
 }
 
@@ -102,15 +111,19 @@ func GetOrPutUser(authProvider, authUserID, fullName string) (int64, error) {
 	}
 	userID := getUserIDByAuth(tx, authProvider, authUserID)
 	if userID == 0 {
+		permissionLevel := NormalPermission
+		if countUsers(tx) == 0 {
+			permissionLevel = AdminPermission
+		}
 		err = sq.Select("coalesce(max(user_id), 0) + 1").From("user").
 			RunWith(tx).Limit(1).QueryRow().Scan(&userID)
 		if err != nil {
 			return 0, err
 		}
 		_, err = sq.Insert("user").SetMap(sq.Eq{
-			"user_id":   userID,
-			"full_name": fullName,
-			"is_admin":  (countUsers(tx) == 0),
+			"user_id":          userID,
+			"full_name":        fullName,
+			"permission_level": permissionLevel,
 		}).RunWith(tx).Exec()
 		if err != nil {
 			return 0, err

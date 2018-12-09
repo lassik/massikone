@@ -10,7 +10,7 @@ CREATE TABLE 'setting' (
 CREATE TABLE 'user' (
   'user_id' integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   'full_name' varchar(255) NOT NULL,
-  'is_admin' Boolean DEFAULT (0) NOT NULL
+  'permission_level' integer DEFAULT (0) NOT NULL
 );
 
 CREATE TABLE 'user_auth' (
