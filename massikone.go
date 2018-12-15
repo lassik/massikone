@@ -29,6 +29,8 @@ import (
 	"github.com/lassik/massikone/reports"
 )
 
+const iniFileName = "massikone.ini"
+const logFileName = "massikone.log"
 const sessionName = "massikone"
 const sessionCurrentUser = "current_user"
 
@@ -339,26 +341,42 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 }
 
 func main() {
+	log.SetOutput(os.Stdout)
+	iniErr := gotenv.Load(iniFileName)
+	publicURL = os.Getenv("PUBLIC_URL")
+	var logFile *os.File
+	var err error
+	if publicURL == "" {
+		logFile, err = os.OpenFile(logFileName,
+			os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err == nil {
+			defer logFile.Close()
+			log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+		} else {
+			log.Fatalf("error opening log file: %v", err)
+		}
+	}
+
 	log.Printf("Massikone (%s, %s/%s)",
 		runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	wd, _ := os.Getwd()
 	log.Printf("Työhakemisto: %s", wd)
-
-	iniFile := "massikone.ini"
-	err := gotenv.Load(iniFile)
-	if err == nil {
-		log.Printf("Asetustiedosto %s käytössä", iniFile)
-	} else if os.IsNotExist(err) {
-		log.Printf("Asetustiedostoa %s ei ole työhakemistossa", iniFile)
+	if logFile != nil {
+		log.Printf("Lokitiedosto: %s", logFileName)
+	}
+	if iniErr == nil {
+		log.Printf("Asetustiedosto: %s", iniFileName)
+	} else if os.IsNotExist(iniErr) {
+		log.Printf("Asetustiedostoa %s ei ole työhakemistossa",
+			iniFileName)
 	} else {
-		log.Fatalf("Asetustiedoston %s käyttö epäonnistui. %s", iniFile, err)
+		log.Fatalf("Asetustiedoston %s käyttö epäonnistui. %s",
+			iniFileName, iniErr)
 	}
 	if os.Getenv("DATABASE_URL") == "" {
 		os.Setenv("DATABASE_URL", "sqlite://massikone.db")
 	}
 	model.Initialize(os.Getenv("DATABASE_URL"))
-
-	publicURL = os.Getenv("PUBLIC_URL")
 	if publicURL != "" {
 		cookieStore = sessions.NewCookieStore(
 			getSessionSecret(os.Getenv("SESSION_SECRET")))
