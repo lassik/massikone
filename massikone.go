@@ -342,6 +342,7 @@ func report(generate func(*model.Model, reports.GetWriter)) ModelHandlerFunc {
 
 func main() {
 	log.SetOutput(os.Stdout)
+	debugLog := os.Stdout
 	iniErr := gotenv.Load(iniFileName)
 	publicURL = os.Getenv("PUBLIC_URL")
 	var logFile *os.File
@@ -352,6 +353,7 @@ func main() {
 		if err == nil {
 			defer logFile.Close()
 			log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+			debugLog = logFile
 		} else {
 			log.Fatalf("error opening log file: %v", err)
 		}
@@ -476,7 +478,7 @@ func main() {
 		}
 	}
 	check(http.Serve(listener,
-		handlers.LoggingHandler(os.Stdout,
+		handlers.LoggingHandler(debugLog,
 			handlers.RecoveryHandler(
 				handlers.PrintRecoveryStack(true))(router))))
 }
