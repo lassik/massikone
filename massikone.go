@@ -477,8 +477,7 @@ func main() {
 			log.Printf("Selaimen avaaminen ei onnistunut. %s", err)
 		}
 	}
-	check(http.Serve(listener,
-		handlers.LoggingHandler(debugLog,
-			handlers.RecoveryHandler(
-				handlers.PrintRecoveryStack(true))(router))))
+	recov := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))
+	stack := handlers.LoggingHandler(debugLog, recov(router))
+	check(http.Serve(listener, stack))
 }
