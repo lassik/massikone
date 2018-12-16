@@ -94,7 +94,8 @@ func getSessionUserID(r *http.Request) int64 {
 	session, _ := cookieStore.Get(r, sessionName)
 	if id, ok := session.Values[sessionCurrentUser]; ok {
 		if sid, ok := id.(string); ok {
-			if iid, err := strconv.Atoi(sid); err == nil {
+			iid, err := strconv.Atoi(sid)
+			if err == nil && iid > 0 {
 				return int64(iid)
 			}
 		}
