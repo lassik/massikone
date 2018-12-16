@@ -467,7 +467,7 @@ func main() {
 		addr = "127.0.0.1:" + port
 	} else {
 		if port == "" {
-			log.Fatal("Julkiselle Massikoneelle täytyy määritellä PORT")
+			log.Fatal("Julkiselle Massikoneelle täytyy määritellä PORT-ympäristömuuttuja")
 		}
 		addr = ":" + port
 	}
