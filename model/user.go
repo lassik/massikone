@@ -28,11 +28,10 @@ func getPrivateSessionUser() User {
 	return User{UserID: 0, PermissionLevel: AdminPermission, IsAdmin: true}
 }
 
-func countUsers(tx *sql.Tx) int {
-	var count int
+func countUsers(tx *sql.Tx) (count int) {
 	sq.Select("count(*)").From("user").
 		RunWith(tx).Limit(1).QueryRow().Scan(&count)
-	return count
+	return
 }
 
 func getNewUserID(tx *sql.Tx) (userID int64, err error) {
@@ -41,13 +40,12 @@ func getNewUserID(tx *sql.Tx) (userID int64, err error) {
 	return
 }
 
-func getUserIDByAuth(tx *sql.Tx, authProvider, authUserID string) int64 {
-	var userID int64
+func getUserIDByAuth(tx *sql.Tx, authProvider, authUserID string) (userID int64) {
 	sq.Select("user_id").From("user_auth").Where(sq.Eq{
 		"auth_provider": authProvider,
 		"auth_user_id":  authUserID,
 	}).RunWith(tx).Limit(1).QueryRow().Scan(&userID)
-	return userID
+	return
 }
 
 func (m *Model) Forbidden() {
@@ -114,12 +112,12 @@ func (m *Model) GetUsers(matchUserID int64) []User {
 	return users
 }
 
-func insertUser(tx *sql.Tx, fullName string) (int64, error) {
+func insertUser(tx *sql.Tx, fullName string) (userID int64, err error) {
 	permissionLevel := NormalPermission
 	if countUsers(tx) == 0 {
 		permissionLevel = AdminPermission
 	}
-	userID, err := getNewUserID(tx)
+	userID, err = getNewUserID(tx)
 	if err != nil {
 		return 0, err
 	}
@@ -133,28 +131,30 @@ func insertUser(tx *sql.Tx, fullName string) (int64, error) {
 	return userID, nil
 }
 
-func insertUserAuth(tx *sql.Tx, userID int64, authProvider, authUserID string) error {
-	_, err := sq.Insert("user_auth").SetMap(sq.Eq{
+func insertUserAuth(tx *sql.Tx, userID int64,
+	authProvider, authUserID string) (err error) {
+	_, err = sq.Insert("user_auth").SetMap(sq.Eq{
 		"user_id":       userID,
 		"auth_provider": authProvider,
 		"auth_user_id":  authUserID,
 	}).RunWith(tx).Exec()
-	return err
+	return
 }
 
-func updateUserFullName(tx *sql.Tx, userID int64, fullName string) error {
-	_, err := sq.Update("user").SetMap(sq.Eq{
+func updateUserFullName(tx *sql.Tx, userID int64, fullName string) (err error) {
+	_, err = sq.Update("user").SetMap(sq.Eq{
 		"full_name": fullName,
 	}).Where(sq.Eq{"user_id": userID}).RunWith(tx).Exec()
-	return err
+	return
 }
 
-func GetOrPutUser(authProvider, authUserID, fullName string) (int64, error) {
+func GetOrPutUser(authProvider, authUserID,
+	fullName string) (userID int64, err error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
 	}
-	userID := getUserIDByAuth(tx, authProvider, authUserID)
+	userID = getUserIDByAuth(tx, authProvider, authUserID)
 	if userID == 0 {
 		if userID, err = insertUser(tx, fullName); err != nil {
 			return 0, err
