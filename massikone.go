@@ -87,9 +87,12 @@ func setSessionUserID(w http.ResponseWriter, r *http.Request, id int64) {
 	session.Save(r, w)
 }
 
+// -1 -- not logged in (public session)
+//  0 -- private user (private session)
+// >0 -- public user (public session)
 func getSessionUserID(r *http.Request) int64 {
 	if publicURL == "" {
-		return 1
+		return 0
 	}
 	session, _ := cookieStore.Get(r, sessionName)
 	if id, ok := session.Values[sessionCurrentUser]; ok {
@@ -100,7 +103,7 @@ func getSessionUserID(r *http.Request) int64 {
 			}
 		}
 	}
-	return 0
+	return -1
 }
 
 type ModelHandlerFunc func(*model.Model, http.ResponseWriter, *http.Request)
@@ -178,7 +181,7 @@ func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
-	if getSessionUserID(r) == 0 {
+	if getSessionUserID(r) == -1 {
 		getLoginPage(w, r)
 	} else {
 		anyUser(getBills)(w, r)

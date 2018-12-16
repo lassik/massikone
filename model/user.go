@@ -24,6 +24,10 @@ type User struct {
 	IsMatch         bool
 }
 
+func getPrivateSessionUser() User {
+	return User{UserID: 0, PermissionLevel: AdminPermission, IsAdmin: true}
+}
+
 func countUsers(tx *sql.Tx) int {
 	var count int
 	sq.Select("count(*)").From("user").

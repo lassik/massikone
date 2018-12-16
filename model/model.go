@@ -64,13 +64,17 @@ func getDB() *sql.DB {
 }
 
 func MakeModel(userID int64, adminOnly bool) Model {
-	if userID == 0 {
-		return Model{Err: errors.New("Not logged in")}
-	}
 	var m Model
 	var err error
-	m.tx, err = getDB().Begin()
-	if m.isErr(err) {
+	if userID == -1 {
+		m.Err = errors.New("Not logged in")
+		return m
+	}
+	if m.tx, err = getDB().Begin(); m.isErr(err) {
+		return m
+	}
+	if userID == 0 {
+		m.user = getPrivateSessionUser()
 		return m
 	}
 	m.user, err = m.getUserByID(userID)
