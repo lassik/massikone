@@ -35,6 +35,12 @@ func countUsers(tx *sql.Tx) int {
 	return count
 }
 
+func getNewUserID(tx *sql.Tx) (userID int64, err error) {
+	err = sq.Select("coalesce(max(user_id), 0) + 1").From("user").
+		RunWith(tx).Limit(1).QueryRow().Scan(&userID)
+	return
+}
+
 func getUserIDByAuth(tx *sql.Tx, authProvider, authUserID string) int64 {
 	var userID int64
 	sq.Select("user_id").From("user_auth").Where(sq.Eq{
@@ -119,9 +125,7 @@ func GetOrPutUser(authProvider, authUserID, fullName string) (int64, error) {
 		if countUsers(tx) == 0 {
 			permissionLevel = AdminPermission
 		}
-		err = sq.Select("coalesce(max(user_id), 0) + 1").From("user").
-			RunWith(tx).Limit(1).QueryRow().Scan(&userID)
-		if err != nil {
+		if userID, err = getNewUserID(tx); err != nil {
 			return 0, err
 		}
 		_, err = sq.Insert("user").SetMap(sq.Eq{
