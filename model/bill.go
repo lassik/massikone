@@ -363,23 +363,27 @@ func (m *Model) PutBill(bill Bill) {
 	}
 }
 
+func (m *Model) getNewBillID() (billID int64, err error) {
+	err = sq.Select("coalesce(max(bill_id), 0) + 1").From("bill").
+		RunWith(m.tx).Limit(1).QueryRow().Scan(&billID)
+	return
+}
+
 func (m *Model) PostBill(bill Bill) string {
 	createdDate := time.Now().Format("2006-01-02")
-	setMap := sq.Eq{
-		"created_date": createdDate,
+	billID, err := m.getNewBillID()
+	if m.isErr(err) {
+		return ""
 	}
+	setMap := sq.Eq{"bill_id": billID, "created_date": createdDate}
 	if !m.user.IsAdmin {
 		setMap["paid_user_id"] = m.user.UserID
 	}
-	result, err := sq.Insert("bill").SetMap(setMap).RunWith(m.tx).Exec()
+	_, err = sq.Insert("bill").SetMap(setMap).RunWith(m.tx).Exec()
 	if m.isErr(err) {
 		return ""
 	}
-	billIDInt64, err := result.LastInsertId()
-	if m.isErr(err) {
-		return ""
-	}
-	bill.BillID = strconv.Itoa(int(billIDInt64))
+	bill.BillID = strconv.Itoa(int(billID))
 	log.Printf("Created bill #%s", bill.BillID)
 	m.PutBill(bill)
 	return bill.BillID

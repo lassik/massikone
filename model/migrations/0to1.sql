@@ -37,7 +37,7 @@ CREATE TABLE 'period_account' (
 );
 
 CREATE TABLE 'bill' (
-  'bill_id' integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  'bill_id' integer NOT NULL PRIMARY KEY,
   'description' varchar(255) DEFAULT ('') NOT NULL,
   'paid_date' varchar(255) NULL,
   'paid_user_id' integer NULL REFERENCES 'user',
