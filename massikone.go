@@ -36,6 +36,7 @@ const sessionCurrentUser = "current_user"
 
 var cookieStore *sessions.CookieStore
 var publicURL string
+var version = ""
 
 func getTemplate(filename string) *mustache.Template {
 	tmplString := templates[filename].Contents
@@ -359,8 +360,13 @@ func main() {
 		}
 	}
 
-	log.Printf("Massikone (%s, %s/%s)",
-		runtime.Version(), runtime.GOOS, runtime.GOARCH)
+	if version == "" {
+		log.Print("Massikone käynnistyy")
+	} else {
+		log.Print("Massikone", version, "käynnistyy")
+	}
+	log.Printf("Käyttöympäristö: %s/%s, %s",
+		runtime.GOOS, runtime.GOARCH, runtime.Version())
 	wd, _ := os.Getwd()
 	log.Printf("Työhakemisto: %s", wd)
 	if logFile != nil {

@@ -10,5 +10,5 @@ env:
 install: []
 script:
   - go generate
-  - go build
+  - go build -ldflags="-X main.version=$(git describe --always --long --dirty)"
   - go test
