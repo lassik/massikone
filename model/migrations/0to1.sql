@@ -21,7 +21,7 @@ CREATE TABLE 'user_auth' (
 );
 
 CREATE TABLE 'period' (
-  'period_id' integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  'period_id' integer NOT NULL PRIMARY KEY,
   'start_date' varchar(255) NULL,
   'end_date' varchar(255) NULL
 );
