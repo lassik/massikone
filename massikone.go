@@ -483,10 +483,8 @@ func main() {
 		log.Print("Käytettävissä julkisesti, kirjautuminen vaadittu")
 	} else {
 		log.Print("Käytettävissä vain tällä tietokoneella")
-		err = webbrowser.Open(privateURL)
-		if err == nil {
-			log.Print("Avataan Massikone selaimessa")
-		} else {
+		log.Print("Avataan Massikone selaimessa")
+		if err = webbrowser.Open(privateURL); err != nil {
 			log.Printf("Selaimen avaaminen ei onnistunut. %s", err)
 		}
 	}
