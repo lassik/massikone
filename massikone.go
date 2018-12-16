@@ -367,7 +367,7 @@ func main() {
 	if version == "" {
 		log.Print("Massikone käynnistyy")
 	} else {
-		log.Print("Massikone %s käynnistyy", version)
+		log.Printf("Massikone %s käynnistyy", version)
 	}
 	log.Printf("Käyttöympäristö: %s/%s, %s",
 		runtime.GOOS, runtime.GOARCH, runtime.Version())
