@@ -114,6 +114,41 @@ func (m *Model) GetUsers(matchUserID int64) []User {
 	return users
 }
 
+func insertUser(tx *sql.Tx, fullName string) (int64, error) {
+	permissionLevel := NormalPermission
+	if countUsers(tx) == 0 {
+		permissionLevel = AdminPermission
+	}
+	userID, err := getNewUserID(tx)
+	if err != nil {
+		return 0, err
+	}
+	if _, err := sq.Insert("user").SetMap(sq.Eq{
+		"user_id":          userID,
+		"full_name":        fullName,
+		"permission_level": permissionLevel,
+	}).RunWith(tx).Exec(); err != nil {
+		return 0, err
+	}
+	return userID, nil
+}
+
+func insertUserAuth(tx *sql.Tx, userID int64, authProvider, authUserID string) error {
+	_, err := sq.Insert("user_auth").SetMap(sq.Eq{
+		"user_id":       userID,
+		"auth_provider": authProvider,
+		"auth_user_id":  authUserID,
+	}).RunWith(tx).Exec()
+	return err
+}
+
+func updateUserFullName(tx *sql.Tx, userID int64, fullName string) error {
+	_, err := sq.Update("user").SetMap(sq.Eq{
+		"full_name": fullName,
+	}).Where(sq.Eq{"user_id": userID}).RunWith(tx).Exec()
+	return err
+}
+
 func GetOrPutUser(authProvider, authUserID, fullName string) (int64, error) {
 	tx, err := db.Begin()
 	if err != nil {
@@ -121,36 +156,17 @@ func GetOrPutUser(authProvider, authUserID, fullName string) (int64, error) {
 	}
 	userID := getUserIDByAuth(tx, authProvider, authUserID)
 	if userID == 0 {
-		permissionLevel := NormalPermission
-		if countUsers(tx) == 0 {
-			permissionLevel = AdminPermission
-		}
-		if userID, err = getNewUserID(tx); err != nil {
+		if userID, err = insertUser(tx, fullName); err != nil {
 			return 0, err
 		}
-		_, err = sq.Insert("user").SetMap(sq.Eq{
-			"user_id":          userID,
-			"full_name":        fullName,
-			"permission_level": permissionLevel,
-		}).RunWith(tx).Exec()
-		if err != nil {
-			return 0, err
-		}
-		_, err = sq.Insert("user_auth").SetMap(sq.Eq{
-			"user_id":       userID,
-			"auth_provider": authProvider,
-			"auth_user_id":  authUserID,
-		}).RunWith(tx).Exec()
+		err = insertUserAuth(tx, userID, authProvider, authUserID)
 	} else {
-		_, err = sq.Update("user").SetMap(sq.Eq{
-			"full_name": fullName,
-		}).Where(sq.Eq{"user_id": userID}).RunWith(tx).Exec()
+		err = updateUserFullName(tx, userID, fullName)
 	}
 	if err != nil {
 		return 0, err
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
 	return userID, err
