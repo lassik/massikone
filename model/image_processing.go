@@ -46,7 +46,11 @@ func transformImage(reader io.Reader, transform transformFunc) (string, []byte, 
 
 func prepareImage(reader io.Reader) (string, []byte, error) {
 	return transformImage(reader, func(img image.Image) image.Image {
-		img = imaging.Resize(img, 900, 0, imaging.Lanczos)
+		const maxWidth = 900
+		imgWidth := img.Bounds().Dx()
+		if imgWidth > maxWidth {
+			img = imaging.Resize(img, maxWidth, 0, imaging.Lanczos)
+		}
 		img = imaging.Grayscale(img)
 		return img
 	})
