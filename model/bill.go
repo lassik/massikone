@@ -347,7 +347,9 @@ func (m *Model) PutBill(bill Bill) {
 		return
 	}
 	if m.user.IsAdmin {
-		if bill.PaidUser.UserID != 0 {
+		if bill.PaidUser.UserID == 0 {
+			setmap["paid_user_id"] = nil
+		} else {
 			setmap["paid_user_id"] = bill.PaidUser.UserID
 		}
 		m.populateBillEntriesFromOtherBillFields(&bill)
