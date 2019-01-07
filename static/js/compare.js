@@ -12,7 +12,6 @@ $(function() {
     var lookup = {};
     addToLookupTable(lookup, appBills, "MASSIKONE");
     addToLookupTable(lookup, extBills, "PANKKI");
-    $("#entries").empty();
     var lookupKeys = [];
     for (var key in lookup) {
       if (lookup.hasOwnProperty(key)) {
@@ -25,16 +24,14 @@ $(function() {
       var isFirst = true;
       var cssClass = keyBills.length === 2 ? "success" : "danger";
       keyBills.forEach(function(bill) {
-        $("#entries")
-          .addClass("table table-bordered")
-          .append(
-            $("<tr>")
-              .addClass(cssClass)
-              .append($("<td>").text(isFirst ? bill.Date : ""))
-              .append($("<td>").text(isFirst ? bill.Cents : ""))
-              .append($("<td>").text(bill.Prefix))
-              .append($("<td>").text(bill.Description))
-          );
+        $("#entries > tbody").append(
+          $("<tr>")
+            .addClass(cssClass)
+            .append($("<td>").text(isFirst ? bill.Date : ""))
+            .append($("<td>").text(isFirst ? bill.Cents : ""))
+            .append($("<td>").text(bill.Prefix))
+            .append($("<td>").text(bill.Description))
+        );
         isFirst = false;
       });
     });
