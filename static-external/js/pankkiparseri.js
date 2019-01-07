@@ -119,6 +119,31 @@ Pankkiparseri.parseSPankkiTilioteTabulaCSV = function(contents) {
   return entries;
 };
 
+Pankkiparseri.parseOfxXml = function(contents) {
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(contents, "text/xml");
+  var stmttrn_list = doc
+    .getElementsByTagName("OFX")[0]
+    .getElementsByTagName("BANKMSGSRSV1")[0]
+    .getElementsByTagName("STMTTRNRS")[0]
+    .getElementsByTagName("STMTRS")[0]
+    .getElementsByTagName("BANKTRANLIST")[0].childNodes;
+  var ans = [];
+  stmttrn_list.forEach(function(stmttrn) {
+    var dtposted = stmttrn.getElementsByTagName("DTPOSTED")[0].childNodes[0]
+      .nodeValue;
+    var trnamt = stmttrn.getElementsByTagName("TRNAMT")[0].childNodes[0]
+      .nodeValue;
+    var memo = stmttrn.getElementsByTagName("MEMO")[0].childNodes[0].nodeValue;
+    ans.push({
+      Date: dtposted.replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"),
+      Cents: Math.abs(parseInt(trnamt.replace(".", ""))),
+      Description: memo
+    });
+  });
+  return ans;
+};
+
 Pankkiparseri.handleFiles = function(files, entriesCallback, parse, encoding) {
   for (var i = 0; i < files.length; i++) {
     var file = files[i];
@@ -133,13 +158,7 @@ Pankkiparseri.handleFiles = function(files, entriesCallback, parse, encoding) {
   }
 };
 
-Pankkiparseri.addBankToForm = function(
-  form,
-  entriesCallback,
-  bankTitle,
-  parse,
-  encoding
-) {
+Pankkiparseri.addBankToForm = function(form, entriesCallback, parse, encoding) {
   var hiddenInput = document.createElement("input");
   hiddenInput.style.display = "none";
   hiddenInput.type = "file";
@@ -149,42 +168,61 @@ Pankkiparseri.addBankToForm = function(
     Pankkiparseri.handleFiles(this.files, entriesCallback, parse, encoding);
   });
   form.appendChild(hiddenInput);
+  return function(e) {
+    e.preventDefault();
+    hiddenInput.click();
+  };
+};
+
+Pankkiparseri.addBankButtonToForm = function(
+  form,
+  entriesCallback,
+  bankTitle,
+  parse,
+  encoding
+) {
+  var onClick = Pankkiparseri.addBankToForm(
+    form,
+    entriesCallback,
+    parse,
+    encoding
+  );
   var button = document.createElement("button");
   button.appendChild(document.createTextNode(bankTitle));
-  button.addEventListener(
-    "click",
-    function(e) {
-      hiddenInput.click();
-      e.preventDefault(); // prevent navigation to "#"
-    },
-    false
-  );
+  button.addEventListener("click", onClick, false);
   form.appendChild(button);
 };
 
+Pankkiparseri.formatsList = [
+  {
+    title: "S-Pankki (tiliote Tabula CSV)",
+    parse: Pankkiparseri.parseSPankkiTilioteTabulaCSV,
+    encoding: "UTF-8"
+  },
+  {
+    title: "Oma Säästöpankki (tilitapahtumat CSV)",
+    parse: Pankkiparseri.parseOmaSaastopankkiTilitapahtumatCSV,
+    encoding: "ISO-8859-15"
+  },
+  {
+    title: "Osuuspankki (tilitapahtumat CSV)",
+    parse: Pankkiparseri.parseOsuuspankkiTilitapahtumatCSV,
+    encoding: "ISO-8859-15"
+  }
+];
+
 Pankkiparseri.addToForm = function(formId, entriesCallback) {
   var form = document.getElementById(formId);
-  Pankkiparseri.addBankToForm(
-    form,
-    entriesCallback,
-    "S-Pankki (tiliote Tabula CSV)",
-    Pankkiparseri.parseSPankkiTilioteTabulaCSV,
-    "UTF-8"
-  );
-  Pankkiparseri.addBankToForm(
-    form,
-    entriesCallback,
-    "Oma Säästöpankki (tilitapahtumat CSV)",
-    Pankkiparseri.parseOmaSaastopankkiTilitapahtumatCSV,
-    "ISO-8859-15"
-  );
-  Pankkiparseri.addBankToForm(
-    form,
-    entriesCallback,
-    "Osuuspankki (tilitapahtumat CSV)",
-    Pankkiparseri.parseOsuuspankkiTilitapahtumatCSV,
-    "ISO-8859-15"
-  );
+  for (var i = 0; i < Pankkiparseri.formatsList.length; i++) {
+    var format = Pankkiparseri.formatsList[i];
+    Pankkiparseri.addBankButtonToForm(
+      form,
+      entriesCallback,
+      format.title,
+      format.parse,
+      format.encoding
+    );
+  }
 };
 
 Pankkiparseri.ofxStringFromEntries = function(entries) {
