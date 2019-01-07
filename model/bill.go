@@ -34,6 +34,7 @@ type Bill struct {
 	DebitAccountID  string
 	ImageID         string
 	Amount          string
+	AmountCents     int64
 	Images          []map[string]string
 	Entries         []BillEntry
 }
@@ -77,6 +78,7 @@ func scanBill(rows sq.RowScanner) (Bill, error) {
 	b.PaidDateFi = fiFromISODate(b.PaidDateISO)
 	b.PaidUser.UserID = paidUserID.Int64
 	b.PaidUser.FullName = paidUserFullName.String
+	b.AmountCents = cents.Int64
 	b.Amount = amountFromCents(cents.Int64)
 	return b, nil
 }
@@ -389,4 +391,41 @@ func (m *Model) PostBill(bill Bill) string {
 	log.Printf("Created bill #%s", bill.BillID)
 	m.PutBill(bill)
 	return bill.BillID
+}
+
+type BillComp struct {
+	BillID      string
+	Date        string
+	Cents       int64
+	Description string
+}
+
+func (m *Model) GetBillsForCompare() []BillComp {
+	noBills := []BillComp{}
+	if !m.user.IsAdmin {
+		m.Forbidden()
+		return noBills
+	}
+	bills := noBills
+	rows, err := selectBill().RunWith(m.tx).Query()
+	if m.isErr(err) {
+		return noBills
+	}
+	defer rows.Close()
+	for rows.Next() {
+		bill, err := scanBill(rows)
+		if m.isErr(err) {
+			return noBills
+		}
+		bills = append(bills, BillComp{
+			Date:        bill.PaidDateFi,
+			Cents:       bill.AmountCents,
+			Description: bill.Description,
+		})
+	}
+	if m.isErr(rows.Err()) {
+		return noBills
+	}
+	return bills
+
 }

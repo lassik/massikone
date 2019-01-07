@@ -15,7 +15,7 @@
       <h2>Vertaa tiliotteeseen</h2>
       <p>Lataa verkkopankista saamasi tiliotteet tälle sivulle. Näet, mille
         tilitapahtumille ei ole vastaavaa merkintää Massikoneessa.</p>
-      <form>
+      <form id="compare-form">
         <div class="btn-group">
           <button class="btn btn-lg btn-success" id="fileUploadButton">Valitse OFX-tiedosto&hellip;</button>
           <a class="btn btn-lg btn-warning" href="/">Takaisin</a>
@@ -30,7 +30,9 @@
       </div>
     </div>
     <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/jquery.csv.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/pankkiparseri.js"></script>
     <script src="/static/js/compare.js"></script>
   </body>
 </html>

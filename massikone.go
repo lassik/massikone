@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"encoding/json"
 	"runtime"
 	"strconv"
 	"strings"
@@ -289,6 +290,17 @@ func putSettings(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/asetukset", http.StatusSeeOther)
 }
 
+func getApiCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	bills := m.GetBillsForCompare()
+	bytes, err := json.Marshal(bills)
+	if err != nil {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bytes)
+}
+
 func getCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	settings := m.GetSettings()
 	w.Write([]byte(compareTemplate.Render(
@@ -427,8 +439,8 @@ func main() {
 
 	post(`/api/settings`,
 		adminOnly(putSettings))
-	//get(`/api/compare`,
-	//	adminOnly(getCompare))
+	get(`/api/compare`,
+		adminOnly(getApiCompare))
 	get(`/asetukset`,
 		adminOnly(getSettings))
 	get(`/vertaa`,

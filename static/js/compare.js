@@ -17,9 +17,9 @@ $(function() {
       var memo = stmttrn.getElementsByTagName("MEMO")[0].childNodes[0]
         .nodeValue;
       ans.push({
-        date: dtposted.replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"),
-        cents: Math.abs(parseInt(trnamt.replace(".", ""))),
-        description: memo
+        Date: dtposted.replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"),
+        Cents: Math.abs(parseInt(trnamt.replace(".", ""))),
+        Description: memo
       });
     });
     return ans;
@@ -27,18 +27,17 @@ $(function() {
 
   function addToLookupTable(lookup, bills, prefix) {
     bills.forEach(function(bill) {
-      var key = bill.date + ":" + bill.cents;
-      bill.prefix = prefix;
+      var key = bill.Date + ":" + bill.Cents;
+      bill.Prefix = prefix;
       lookup[key] = lookup[key] || [];
       lookup[key].push(bill);
     });
   }
 
-  function compare(ofxString, appBills) {
-    var ofxBills = parseOfx(ofxString);
+  function compareExternalBills(appBills, extBills) {
     var lookup = {};
     addToLookupTable(lookup, appBills, "MASSIKONE");
-    addToLookupTable(lookup, ofxBills, "PANKKI");
+    addToLookupTable(lookup, extBills, "PANKKI");
     $("#entries").empty();
     var lookupKeys = [];
     for (var key in lookup) {
@@ -57,10 +56,10 @@ $(function() {
           .append(
             $("<tr>")
               .addClass(cssClass)
-              .append($("<td>").text(isFirst ? bill.date : ""))
-              .append($("<td>").text(isFirst ? bill.cents : ""))
-              .append($("<td>").text(bill.prefix))
-              .append($("<td>").text(bill.description))
+              .append($("<td>").text(isFirst ? bill.Date : ""))
+              .append($("<td>").text(isFirst ? bill.Cents : ""))
+              .append($("<td>").text(bill.Prefix))
+              .append($("<td>").text(bill.Description))
           );
         isFirst = false;
       });
@@ -72,7 +71,28 @@ $(function() {
       url: "/api/compare"
     })
       .done(function(appBills) {
-        compare(ofxString, appBills);
+        compareExternalBills(appBills, parseOfx(ofxString));
+      })
+      .fail(function(jqXHR) {
+        alert("Error: " + jqXHR.statusText);
+      });
+  }
+
+  function initComparePankkiparseri(entries) {
+    $.get({
+      url: "/api/compare"
+    })
+      .done(function(appBills) {
+        var extBills = [];
+        for (var i = 0; i < entries.length; i++) {
+          var entry = entries[i];
+          extBills.push({
+            Date: entry.date.finnish,
+            Cents: entry.amount.cents,
+            Description: entry.message
+          });
+        }
+        compareExternalBills(appBills, extBills);
       })
       .fail(function(jqXHR) {
         alert("Error: " + jqXHR.statusText);
@@ -95,4 +115,6 @@ $(function() {
     $("#hiddenFileInput").click();
     e.preventDefault(); // prevent navigation to "#"
   });
+
+  Pankkiparseri.addToForm("compare-form", initComparePankkiparseri);
 });
