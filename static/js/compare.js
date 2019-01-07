@@ -12,6 +12,7 @@ $(function() {
     var lookup = {};
     addToLookupTable(lookup, appBills, "MASSIKONE");
     addToLookupTable(lookup, extBills, "PANKKI");
+    $("#entries > tbody").empty();
     var lookupKeys = [];
     for (var key in lookup) {
       if (lookup.hasOwnProperty(key)) {
