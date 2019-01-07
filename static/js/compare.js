@@ -1,30 +1,4 @@
 $(function() {
-  function parseOfx(ofxString) {
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(ofxString, "text/xml");
-    var stmttrn_list = doc
-      .getElementsByTagName("OFX")[0]
-      .getElementsByTagName("BANKMSGSRSV1")[0]
-      .getElementsByTagName("STMTTRNRS")[0]
-      .getElementsByTagName("STMTRS")[0]
-      .getElementsByTagName("BANKTRANLIST")[0].childNodes;
-    var ans = [];
-    stmttrn_list.forEach(function(stmttrn) {
-      var dtposted = stmttrn.getElementsByTagName("DTPOSTED")[0].childNodes[0]
-        .nodeValue;
-      var trnamt = stmttrn.getElementsByTagName("TRNAMT")[0].childNodes[0]
-        .nodeValue;
-      var memo = stmttrn.getElementsByTagName("MEMO")[0].childNodes[0]
-        .nodeValue;
-      ans.push({
-        Date: dtposted.replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"),
-        Cents: Math.abs(parseInt(trnamt.replace(".", ""))),
-        Description: memo
-      });
-    });
-    return ans;
-  }
-
   function addToLookupTable(lookup, bills, prefix) {
     bills.forEach(function(bill) {
       var key = bill.Date + ":" + bill.Cents;
@@ -34,7 +8,7 @@ $(function() {
     });
   }
 
-  function compareExternalBills(appBills, extBills) {
+  function compare(appBills, extBills) {
     var lookup = {};
     addToLookupTable(lookup, appBills, "MASSIKONE");
     addToLookupTable(lookup, extBills, "PANKKI");
@@ -66,19 +40,7 @@ $(function() {
     });
   }
 
-  function initCompare(ofxString) {
-    $.get({
-      url: "/api/compare"
-    })
-      .done(function(appBills) {
-        compareExternalBills(appBills, parseOfx(ofxString));
-      })
-      .fail(function(jqXHR) {
-        alert("Error: " + jqXHR.statusText);
-      });
-  }
-
-  function initComparePankkiparseri(entries) {
+  function initCompare(entries) {
     $.get({
       url: "/api/compare"
     })
@@ -92,29 +54,26 @@ $(function() {
             Description: entry.message
           });
         }
-        compareExternalBills(appBills, extBills);
+        compare(appBills, extBills);
       })
       .fail(function(jqXHR) {
         alert("Error: " + jqXHR.statusText);
       });
   }
 
-  function handleFiles(files) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      initCompare(e.target.result);
-    };
-    reader.readAsText(files[0]);
+  for (var i = Pankkiparseri.formatsList.length - 1; i >= 0; i--) {
+    var format = Pankkiparseri.formatsList[i];
+    $("<button>")
+      .attr("class", "btn btn-success")
+      .text(format.title)
+      .click(
+        Pankkiparseri.addBankToForm(
+          document.getElementById("compare-form"),
+          initCompare,
+          format.parse,
+          format.encoding
+        )
+      )
+      .prependTo("#compare-btn-group");
   }
-
-  $("#hiddenFileInput").change(function() {
-    handleFiles(this.files);
-  });
-
-  $("#fileUploadButton").click(function(e) {
-    $("#hiddenFileInput").click();
-    e.preventDefault(); // prevent navigation to "#"
-  });
-
-  Pankkiparseri.addToForm("compare-form", initComparePankkiparseri);
 });

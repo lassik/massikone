@@ -16,11 +16,9 @@
       <p>Lataa verkkopankista saamasi tiliotteet tälle sivulle. Näet, mille
         tilitapahtumille ei ole vastaavaa merkintää Massikoneessa.</p>
       <form id="compare-form">
-        <div class="btn-group">
-          <button class="btn btn-lg btn-success" id="fileUploadButton">Valitse OFX-tiedosto&hellip;</button>
-          <a class="btn btn-lg btn-warning" href="/">Takaisin</a>
+        <div class="btn-group" id="compare-btn-group">
+          <a class="btn btn-warning" href="/">Takaisin</a>
         </div>
-        <input type="file" id="hiddenFileInput" accept=".ofx,text/xml" style="display:none">
       </form>
       <table id="entries" class="table"></table>
       <div class="alert alert-warning">
