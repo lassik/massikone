@@ -13,11 +13,13 @@
       <h1>{{AppTitle}}</h1>
       <h2>{{CurrentUser.FullName}}</h2>
       <h2>Vertaa tiliotteeseen</h2>
+      <div><a class="btn btn-warning" href="/">Takaisin</a></div>
+      <h2>Valitse tiliote</h2>
       <p>Lataa verkkopankista saamasi tiliotteet tälle sivulle. Näet, mille
         tilitapahtumille ei ole vastaavaa merkintää Massikoneessa.</p>
       <form id="compare-form">
         <div class="btn-group" id="compare-btn-group">
-          <a class="btn btn-warning" href="/">Takaisin</a>
+          <table class="table" id="compare-btn-table"></table>
         </div>
       </form>
       <h2>Tulokset</h2>

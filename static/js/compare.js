@@ -75,20 +75,27 @@ $(function() {
       });
   }
 
-  for (var i = Pankkiparseri.formatsList.length - 1; i >= 0; i--) {
+  for (var i = 0; i < Pankkiparseri.formatsList.length; i++) {
     var format = Pankkiparseri.formatsList[i];
-    $("<button>")
-      .addClass("btn btn-info")
-      .text(format.bankTitle)
-      .append("&hellip;")
-      .click(
-        Pankkiparseri.addBankToForm(
-          document.getElementById("compare-form"),
-          initCompare,
-          format.parse,
-          format.encoding
+    $("#compare-btn-table").append(
+      $("<tr>")
+        .append(
+          $("<td>").append(
+            $("<button>")
+              .addClass("btn btn-block btn-info")
+              .text(format.bankTitle)
+              .append("&hellip;")
+              .click(
+                Pankkiparseri.addBankToForm(
+                  document.getElementById("compare-form"),
+                  initCompare,
+                  format.parse,
+                  format.encoding
+                )
+              )
+          )
         )
-      )
-      .prependTo("#compare-btn-group");
+        .append($("<td>").text(format.subtitle))
+    );
   }
 });
