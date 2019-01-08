@@ -28,8 +28,16 @@ $(function() {
         $("#entries > tbody").append(
           $("<tr>")
             .addClass(cssClass)
-            .append($("<td>").text(isFirst ? bill.Date : ""))
-            .append($("<td>").text(isFirst ? bill.Cents : ""))
+            .append(
+              $("<td>")
+                .addClass("text-right")
+                .text(isFirst ? bill.Date : "")
+            )
+            .append(
+              $("<td>")
+                .addClass("text-right")
+                .text(isFirst ? bill.Cents : "")
+            )
             .append($("<td>").text(bill.Prefix))
             .append($("<td>").text(bill.Description))
         );
