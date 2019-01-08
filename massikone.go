@@ -54,6 +54,7 @@ func getTemplate(filename string) *mustache.Template {
 var billsTemplate = getTemplate("/bills.mustache")
 var billTemplate = getTemplate("/bill.mustache")
 var settingsTemplate = getTemplate("/settings.mustache")
+var aboutTemplate = getTemplate("/about.mustache")
 var compareTemplate = getTemplate("/compare.mustache")
 var loginTemplate = getTemplate("/login.mustache")
 
@@ -282,6 +283,10 @@ func getSettings(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		})))
 }
 
+func getAboutPage(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(aboutTemplate.Render(nil)))
+}
+
 func putSettings(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	m.PutSettings(model.Settings{
 		OrgFullName:  r.PostFormValue("OrgFullName"),
@@ -443,6 +448,8 @@ func main() {
 		adminOnly(getApiCompare))
 	get(`/asetukset`,
 		adminOnly(getSettings))
+	get(`/tietoja`,
+		getAboutPage)
 	get(`/vertaa`,
 		adminOnly(getCompare))
 	get(`/raportti/tuloslaskelma`,
