@@ -10,8 +10,8 @@ $(function() {
 
   function compare(appBills, extBills) {
     var lookup = {};
-    addToLookupTable(lookup, appBills, "MASSIKONE");
-    addToLookupTable(lookup, extBills, "PANKKI");
+    addToLookupTable(lookup, appBills, "Massikone");
+    addToLookupTable(lookup, extBills, "Pankki");
     $("#entries > tbody").empty();
     var lookupKeys = [];
     for (var key in lookup) {
@@ -62,7 +62,7 @@ $(function() {
   for (var i = Pankkiparseri.formatsList.length - 1; i >= 0; i--) {
     var format = Pankkiparseri.formatsList[i];
     $("<button>")
-      .attr("class", "btn btn-success")
+      .attr("class", "btn")
       .text(format.bankTitle)
       .click(
         Pankkiparseri.addBankToForm(
