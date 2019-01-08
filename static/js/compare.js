@@ -1,4 +1,12 @@
 $(function() {
+  function formatEuros(euros) {
+    return euros.toFixed(2).replace(".", ",");
+  }
+
+  function formatCents(cents) {
+    return formatEuros(cents / 100.0);
+  }
+
   function addToLookupTable(lookup, bills, prefix) {
     bills.forEach(function(bill) {
       var key = bill.Date + ":" + bill.Cents;
@@ -36,7 +44,7 @@ $(function() {
             .append(
               $("<td>")
                 .addClass("text-right")
-                .text(isFirst ? bill.Cents : "")
+                .text(isFirst ? formatCents(bill.Cents) : "")
             )
             .append($("<td>").text(bill.Prefix))
             .append($("<td>").text(bill.Description))
