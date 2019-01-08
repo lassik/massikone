@@ -78,8 +78,9 @@ $(function() {
   for (var i = Pankkiparseri.formatsList.length - 1; i >= 0; i--) {
     var format = Pankkiparseri.formatsList[i];
     $("<button>")
-      .attr("class", "btn")
+      .addClass("btn btn-info")
       .text(format.bankTitle)
+      .append("&hellip;")
       .click(
         Pankkiparseri.addBankToForm(
           document.getElementById("compare-form"),
