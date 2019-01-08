@@ -63,7 +63,7 @@ $(function() {
     var format = Pankkiparseri.formatsList[i];
     $("<button>")
       .attr("class", "btn btn-success")
-      .text(format.title)
+      .text(format.bankTitle)
       .click(
         Pankkiparseri.addBankToForm(
           document.getElementById("compare-form"),

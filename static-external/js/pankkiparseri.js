@@ -195,17 +195,20 @@ Pankkiparseri.addBankButtonToForm = function(
 
 Pankkiparseri.formatsList = [
   {
-    title: "S-Pankki (tiliote Tabula CSV)",
+    bankTitle: "S-Pankki",
+    subtitle: "tiliote Tabula CSV",
     parse: Pankkiparseri.parseSPankkiTilioteTabulaCSV,
     encoding: "UTF-8"
   },
   {
-    title: "Oma Säästöpankki (tilitapahtumat CSV)",
+    bankTitle: "Oma Säästöpankki",
+    subtitle: "tilitapahtumat CSV",
     parse: Pankkiparseri.parseOmaSaastopankkiTilitapahtumatCSV,
     encoding: "ISO-8859-15"
   },
   {
-    title: "Osuuspankki (tilitapahtumat CSV)",
+    bankTitle: "Osuuspankki",
+    subtitle: "tilitapahtumat CSV",
     parse: Pankkiparseri.parseOsuuspankkiTilitapahtumatCSV,
     encoding: "ISO-8859-15"
   }
@@ -218,7 +221,7 @@ Pankkiparseri.addToForm = function(formId, entriesCallback) {
     Pankkiparseri.addBankButtonToForm(
       form,
       entriesCallback,
-      format.title,
+      format.bankTitle,
       format.parse,
       format.encoding
     );
