@@ -1,3 +1,4 @@
+cloud.google.com/go v0.30.0 h1:xKvyLgk56d0nksWq49J0UyGEeUIicTl4+UBiX1NPX9g=
 cloud.google.com/go v0.30.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Masterminds/squirrel v0.0.0-20181030160206-3ba160b0147f h1:8JBQSKzsc40IAP5tAKEq3mwtINgeJnzN9CmS5nn4wTM=
 github.com/Masterminds/squirrel v0.0.0-20181030160206-3ba160b0147f/go.mod h1:xnKTFzjGUiZtiOagBsfnvomW+nJg2usB1ZpordQWqNM=
