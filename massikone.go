@@ -22,7 +22,7 @@ import (
 	"github.com/lassik/airfreight"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/gplus"
+	"github.com/markbates/goth/providers/google"
 	"github.com/subosito/gotenv"
 	"github.com/toqueteos/webbrowser"
 
@@ -411,10 +411,10 @@ func main() {
 			getSessionSecret(os.Getenv("SESSION_SECRET")))
 		gothic.Store = cookieStore
 		goth.UseProviders(
-			gplus.New(
+			google.New(
 				os.Getenv("GOOGLE_CLIENT_ID"),
 				os.Getenv("GOOGLE_CLIENT_SECRET"),
-				publicURL+"/auth/gplus/callback"),
+				publicURL+"/auth/google/callback"),
 		)
 	}
 
