@@ -51,8 +51,8 @@ func getTemplate(filename string) *mustache.Template {
 	return tmpl
 }
 
-var documentsTemplate = getTemplate("/bills.mustache")
-var documentTemplate = getTemplate("/bill.mustache")
+var documentsTemplate = getTemplate("/documents.mustache")
+var documentTemplate = getTemplate("/document.mustache")
 var settingsTemplate = getTemplate("/settings.mustache")
 var aboutTemplate = getTemplate("/about.mustache")
 var compareTemplate = getTemplate("/compare.mustache")
