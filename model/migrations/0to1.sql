@@ -16,6 +16,7 @@ CREATE TABLE 'user' (
 CREATE TABLE 'user_auth' (
   'user_id' integer NOT NULL REFERENCES 'user',
   'auth_provider' varchar(255) NOT NULL,
+  'auth_hash' varchar(255) NOT NULL,
   'auth_user_id' varchar(255) NOT NULL,
   PRIMARY KEY ('user_id', 'auth_provider')
 );

@@ -1,8 +1,10 @@
 package model
 
 import (
+	"crypto/sha1"
 	"database/sql"
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -136,6 +138,7 @@ func insertUserAuth(tx *sql.Tx, userID int64,
 	_, err = sq.Insert("user_auth").SetMap(sq.Eq{
 		"user_id":       userID,
 		"auth_provider": authProvider,
+		"auth_hash":     "sha1",
 		"auth_user_id":  authUserID,
 	}).RunWith(tx).Exec()
 	return
@@ -148,12 +151,20 @@ func updateUserFullName(tx *sql.Tx, userID int64, fullName string) (err error) {
 	return
 }
 
+func hashAuthUserID(authProvider, authUserID string) string {
+	hasher := sha1.New()
+	hasher.Write([]byte(authProvider))
+	hasher.Write([]byte(authUserID))
+	return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
 func GetOrPutUser(authProvider, authUserID,
 	fullName string) (userID int64, err error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return 0, err
 	}
+	authUserID = hashAuthUserID(authProvider, authUserID)
 	userID = getUserIDByAuth(tx, authProvider, authUserID)
 	if userID == 0 {
 		if userID, err = insertUser(tx, fullName); err != nil {
