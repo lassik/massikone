@@ -10,7 +10,7 @@ func entrySubtractsFromBalance(entryIsDebit bool, acctType int) bool {
 }
 
 func GetAccountBalancesAndProfit(acctMap map[int]Account,
-	entries []BillEntry) (map[int]int64, int64) {
+	entries []DocumentEntry) (map[int]int64, int64) {
 	balances := map[int]int64{}
 	var profit int64
 	for _, entry := range entries {

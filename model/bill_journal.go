@@ -3,7 +3,7 @@ package model
 import ()
 
 type Journal struct {
-	Bills            []Bill
+	Documents        []Document
 	TotalDebitCents  int64
 	TotalCreditCents int64
 }
@@ -13,35 +13,35 @@ func (m *Model) GetJournal() Journal {
 	if !m.isAdmin() {
 		return journal
 	}
-	q := selectBill()
+	q := selectDocument()
 	rows, err := q.RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return journal
 	}
 	defer rows.Close()
-	bills := []Bill{}
+	documents := []Document{}
 	var totalDebitCents int64
 	var totalCreditCents int64
 	for rows.Next() {
-		bill, err := scanBill(rows)
+		document, err := scanDocument(rows)
 		if m.isErr(err) {
 			return journal
 		}
-		m.populateBillEntries(&bill)
-		for _, billEntry := range bill.Entries {
-			cents := billEntry.UnitCount * billEntry.UnitCostCents
-			if billEntry.IsDebit {
+		m.populateDocumentEntries(&document)
+		for _, documentEntry := range document.Entries {
+			cents := documentEntry.UnitCount * documentEntry.UnitCostCents
+			if documentEntry.IsDebit {
 				totalDebitCents += cents
 			} else {
 				totalCreditCents += cents
 			}
 		}
-		bills = append(bills, bill)
+		documents = append(documents, document)
 	}
 	if m.isErr(rows.Err()) {
 		return journal
 	}
-	journal.Bills = bills
+	journal.Documents = documents
 	journal.TotalDebitCents = totalDebitCents
 	journal.TotalCreditCents = totalCreditCents
 	return journal

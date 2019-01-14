@@ -23,7 +23,7 @@ func FullStatementZip(m *model.Model, getWriter GetWriter) {
 	}
 	GeneralJournalPdf(m, writeToZip)
 	ChartOfAccountsPdf(m, writeToZip)
-	addBillImagesToZip(m, writeToZip)
+	addDocumentImagesToZip(m, writeToZip)
 	err = zipWriter.Close()
 	if err != nil {
 		log.Fatal(err)

@@ -26,19 +26,19 @@ func GeneralJournalPdf(m *model.Model, getWriter GetWriter) {
 		},
 	}
 	journal := m.GetJournal()
-	for _, bill := range journal.Bills {
+	for _, document := range journal.Documents {
 		doc.rows = append(doc.rows, []cell{
 			cell{
-				text:  bill.BillID,
+				text:  document.DocumentID,
 				width: numberWidth,
 			},
 			cell{
-				text: bill.PaidDateFi,
+				text: document.PaidDateFi,
 				width: accountWidth + 2*numberWidth +
 					descriptionWidth,
 			},
 		})
-		for _, entry := range bill.Entries {
+		for _, entry := range document.Entries {
 			debit := ""
 			credit := ""
 			if entry.IsDebit {

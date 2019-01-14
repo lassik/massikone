@@ -36,8 +36,8 @@ CREATE TABLE 'period_account' (
   PRIMARY KEY ('period_id', 'account_id', 'nesting_level')
 );
 
-CREATE TABLE 'bill' (
-  'bill_id' integer NOT NULL PRIMARY KEY,
+CREATE TABLE 'document' (
+  'document_id' integer NOT NULL PRIMARY KEY,
   'description' varchar(255) DEFAULT ('') NOT NULL,
   'paid_date' varchar(255) NULL,
   'paid_user_id' integer NULL REFERENCES 'user',
@@ -47,15 +47,15 @@ CREATE TABLE 'bill' (
   'closed_type' varchar(255) NULL
 );
 
-CREATE TABLE 'bill_entry' (
-  'bill_id' integer NOT NULL REFERENCES 'bill',
+CREATE TABLE 'document_entry' (
+  'document_id' integer NOT NULL REFERENCES 'document',
   'row_number' integer NOT NULL,
   'account_id' integer NOT NULL,
   'debit' Boolean NOT NULL,
   'unit_count' integer DEFAULT (1) NOT NULL,
   'unit_cost_cents' integer NOT NULL,
   'description' varchar(255) NOT NULL,
-  PRIMARY KEY ('bill_id', 'row_number')
+  PRIMARY KEY ('document_id', 'row_number')
 );
 
 CREATE TABLE 'image' (
@@ -63,11 +63,11 @@ CREATE TABLE 'image' (
   'image_data' blob NOT NULL
 );
 
-CREATE TABLE 'bill_image' (
-  'bill_id' integer NOT NULL REFERENCES 'bill',
-  'bill_image_num' integer NOT NULL,
+CREATE TABLE 'document_image' (
+  'document_id' integer NOT NULL REFERENCES 'document',
+  'document_image_num' integer NOT NULL,
   'image_id' varchar(255) NOT NULL REFERENCES 'image',
-  PRIMARY KEY ('bill_id', 'bill_image_num')
+  PRIMARY KEY ('document_id', 'document_image_num')
 );
 
 INSERT INTO setting values ("OrgFullName", "");

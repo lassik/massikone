@@ -10,7 +10,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-type BillEntry struct {
+type DocumentEntry struct {
 	RowNumber     int
 	AccountID     int
 	IsDebit       bool
@@ -20,12 +20,12 @@ type BillEntry struct {
 	Description   string
 }
 
-type Bill struct {
-	BillID          string
-	PrevBillID      string
-	NextBillID      string
-	HasPrevBill     bool
-	HasNextBill     bool
+type Document struct {
+	DocumentID      string
+	PrevDocumentID  string
+	NextDocumentID  string
+	HasPrevDocument bool
+	HasNextDocument bool
 	PaidDateISO     string
 	PaidDateFi      string
 	Description     string
@@ -36,40 +36,40 @@ type Bill struct {
 	Amount          string
 	AmountCents     int64
 	Images          []map[string]string
-	Entries         []BillEntry
+	Entries         []DocumentEntry
 }
 
-func withPaidUser(bill sq.SelectBuilder) sq.SelectBuilder {
-	return bill.LeftJoin(
-		"user as paid_user on (paid_user.user_id = bill.paid_user_id)").
+func withPaidUser(document sq.SelectBuilder) sq.SelectBuilder {
+	return document.LeftJoin(
+		"user as paid_user on (paid_user.user_id = document.paid_user_id)").
 		Columns("paid_user_id", "paid_user.full_name as paid_user_full_name")
 }
 
-func withCents(bill sq.SelectBuilder) sq.SelectBuilder {
+func withCents(document sq.SelectBuilder) sq.SelectBuilder {
 	sums := sq.Select("unit_count * unit_cost_cents as sum").
-		From("bill_entry").
-		Where("bill_entry.bill_id = bill.bill_id")
+		From("document_entry").
+		Where("document_entry.document_id = document.document_id")
 	debit, _, _ := sums.Where("debit = 1").ToSql()
 	credit, _, _ := sums.Where("debit = 0").ToSql()
-	return bill.Column(fmt.Sprintf("max((%s), (%s)) as cents", debit, credit))
+	return document.Column(fmt.Sprintf("max((%s), (%s)) as cents", debit, credit))
 }
 
-func selectBill() sq.SelectBuilder {
-	q := sq.Select("bill_id, description, paid_date").
-		From("bill").OrderBy("bill_id, description")
+func selectDocument() sq.SelectBuilder {
+	q := sq.Select("document_id, description, paid_date").
+		From("document").OrderBy("document_id, description")
 	q = withPaidUser(q)
 	q = withCents(q)
 	return q
 }
 
-func scanBill(rows sq.RowScanner) (Bill, error) {
-	var b Bill
+func scanDocument(rows sq.RowScanner) (Document, error) {
+	var b Document
 	var description sql.NullString
 	var paidDateISO sql.NullString
 	var paidUserID sql.NullInt64
 	var paidUserFullName sql.NullString
 	var cents sql.NullInt64
-	if err := rows.Scan(&b.BillID, &description, &paidDateISO,
+	if err := rows.Scan(&b.DocumentID, &description, &paidDateISO,
 		&paidUserID, &paidUserFullName, &cents); err != nil {
 		return b, err
 	}
@@ -83,75 +83,75 @@ func scanBill(rows sq.RowScanner) (Bill, error) {
 	return b, nil
 }
 
-func (m *Model) GetBills() []Bill {
-	noBills := []Bill{}
-	bills := noBills
-	q := selectBill()
+func (m *Model) GetDocuments() []Document {
+	noDocuments := []Document{}
+	documents := noDocuments
+	q := selectDocument()
 	if !m.user.IsAdmin {
 		q = q.Where(sq.Eq{"paid_user_id": m.user.UserID})
 	}
 	rows, err := q.RunWith(m.tx).Query()
 	if m.isErr(err) {
-		return noBills
+		return noDocuments
 	}
 	defer rows.Close()
 	for rows.Next() {
-		bill, err := scanBill(rows)
+		document, err := scanDocument(rows)
 		if m.isErr(err) {
-			return noBills
+			return noDocuments
 		}
-		bills = append(bills, bill)
+		documents = append(documents, document)
 	}
 	if m.isErr(rows.Err()) {
-		return noBills
+		return noDocuments
 	}
-	return bills
+	return documents
 }
 
-func (m *Model) GetBillsForImages() ([]map[string]interface{}, []int) {
+func (m *Model) GetDocumentsForImages() ([]map[string]interface{}, []int) {
 	var images []map[string]interface{}
 	var missing []int
 	if !m.isAdmin() {
 		return images, missing
 	}
-	rows, err := sq.Select("bill.bill_id, bill_image_num, image.image_id, description, image_data").
-		From("bill").
-		LeftJoin("bill_image on bill_id = bill_id").
+	rows, err := sq.Select("document.document_id, document_image_num, image.image_id, description, image_data").
+		From("document").
+		LeftJoin("document_image on document_id = document_id").
 		LeftJoin("image on image_id = image_id").
-		OrderBy("bill.bill_id, bill_image_num").
+		OrderBy("document.document_id, document_image_num").
 		RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return images, missing
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var bill_id string
-		var bill_image_num int
+		var document_id string
+		var document_image_num int
 		var image_id string
 		var description string
 		var image_data []byte
-		if m.isErr(rows.Scan(&bill_id, &bill_image_num, &image_id,
+		if m.isErr(rows.Scan(&document_id, &document_image_num, &image_id,
 			&description, &image_data)) {
 			return images, missing
 		}
 		images = append(images, map[string]interface{}{
-			"bill_id":        bill_id,
-			"bill_image_num": bill_image_num,
-			"image_id":       image_id,
-			"description":    description,
-			"image_data":     image_data,
+			"document_id":        document_id,
+			"document_image_num": document_image_num,
+			"image_id":           image_id,
+			"description":        description,
+			"image_data":         image_data,
 		})
 	}
 	m.isErr(rows.Err())
 	return images, missing
 }
 
-func (m *Model) getBillImages(billID string) []map[string]string {
+func (m *Model) getDocumentImages(documentID string) []map[string]string {
 	noImages := []map[string]string{}
 	images := noImages
-	rows, err := sq.Select("image_id").From("bill_image").
-		Where(sq.Eq{"bill_id": billID}).
-		OrderBy("bill_image_num").RunWith(m.tx).Query()
+	rows, err := sq.Select("image_id").From("document_image").
+		Where(sq.Eq{"document_id": documentID}).
+		OrderBy("document_image_num").RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return noImages
 	}
@@ -167,25 +167,25 @@ func (m *Model) getBillImages(billID string) []map[string]string {
 	return images
 }
 
-func (m *Model) getRelativeBillID(q sq.SelectBuilder) string {
+func (m *Model) getRelativeDocumentID(q sq.SelectBuilder) string {
 	if !m.user.IsAdmin {
 		q = q.Where(sq.Eq{"paid_user_id": m.user.UserID})
 	}
 	return m.getIntFromDb(q)
 }
 
-func (m *Model) getPrevBillID(billID string) string {
-	return m.getRelativeBillID(
-		sq.Select("max(bill_id)").From("bill").Where(sq.Lt{"bill_id": billID}))
+func (m *Model) getPrevDocumentID(documentID string) string {
+	return m.getRelativeDocumentID(
+		sq.Select("max(document_id)").From("document").Where(sq.Lt{"document_id": documentID}))
 }
 
-func (m *Model) getNextBillID(billID string) string {
-	return m.getRelativeBillID(
-		sq.Select("min(bill_id)").From("bill").Where(sq.Gt{"bill_id": billID}))
+func (m *Model) getNextDocumentID(documentID string) string {
+	return m.getRelativeDocumentID(
+		sq.Select("min(document_id)").From("document").Where(sq.Gt{"document_id": documentID}))
 }
 
-func (m *Model) GetBillID(billID string) *Bill {
-	b, err := scanBill(selectBill().Where(sq.Eq{"bill_id": billID}).
+func (m *Model) GetDocumentID(documentID string) *Document {
+	b, err := scanDocument(selectDocument().Where(sq.Eq{"document_id": documentID}).
 		RunWith(m.tx).QueryRow())
 	if err != nil {
 		return nil
@@ -193,34 +193,34 @@ func (m *Model) GetBillID(billID string) *Bill {
 	if !m.isAdminOrUser(b.PaidUser.UserID) {
 		return nil
 	}
-	m.populateOtherBillFieldsFromBillEntries(&b)
-	b.Images = m.getBillImages(billID)
+	m.populateOtherDocumentFieldsFromDocumentEntries(&b)
+	b.Images = m.getDocumentImages(documentID)
 	if len(b.Images) > 0 {
 		b.ImageID = b.Images[0]["ImageID"]
 	}
-	b.PrevBillID = m.getPrevBillID(billID)
-	b.NextBillID = m.getNextBillID(billID)
-	b.HasPrevBill = (b.PrevBillID != "")
-	b.HasNextBill = (b.NextBillID != "")
+	b.PrevDocumentID = m.getPrevDocumentID(documentID)
+	b.NextDocumentID = m.getNextDocumentID(documentID)
+	b.HasPrevDocument = (b.PrevDocumentID != "")
+	b.HasNextDocument = (b.NextDocumentID != "")
 	return &b
 }
 
-func selectBillEntry() sq.SelectBuilder {
+func selectDocumentEntry() sq.SelectBuilder {
 	return sq.Select("row_number, account_id, debit, unit_count, unit_cost_cents, description").
-		From("bill_entry").
-		OrderBy("bill_id, row_number")
+		From("document_entry").
+		OrderBy("document_id, row_number")
 }
 
-func scanBillEntry(rows sq.RowScanner) (BillEntry, error) {
-	e := BillEntry{}
+func scanDocumentEntry(rows sq.RowScanner) (DocumentEntry, error) {
+	e := DocumentEntry{}
 	err := rows.Scan(&e.RowNumber, &e.AccountID,
 		&e.IsDebit, &e.UnitCount, &e.UnitCostCents, &e.Description)
 	e.Amount = amountFromCents(e.UnitCount * e.UnitCostCents)
 	return e, err
 }
 
-func (m *Model) billEntriesFromSelect(selectStmt sq.SelectBuilder) []BillEntry {
-	noEntries := []BillEntry{}
+func (m *Model) documentEntriesFromSelect(selectStmt sq.SelectBuilder) []DocumentEntry {
+	noEntries := []DocumentEntry{}
 	rows, err := selectStmt.RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return noEntries
@@ -228,7 +228,7 @@ func (m *Model) billEntriesFromSelect(selectStmt sq.SelectBuilder) []BillEntry {
 	entries := noEntries
 	defer rows.Close()
 	for rows.Next() {
-		entry, err := scanBillEntry(rows)
+		entry, err := scanDocumentEntry(rows)
 		if m.isErr(err) {
 			return noEntries
 		}
@@ -240,25 +240,25 @@ func (m *Model) billEntriesFromSelect(selectStmt sq.SelectBuilder) []BillEntry {
 	return entries
 }
 
-func (m *Model) GetAllBillEntries() []BillEntry {
-	return m.billEntriesFromSelect(selectBillEntry())
+func (m *Model) GetAllDocumentEntries() []DocumentEntry {
+	return m.documentEntriesFromSelect(selectDocumentEntry())
 }
 
-func (m *Model) populateBillEntries(bill *Bill) {
-	bill.Entries = m.billEntriesFromSelect(
-		selectBillEntry().Where(sq.Eq{"bill_id": bill.BillID}))
+func (m *Model) populateDocumentEntries(document *Document) {
+	document.Entries = m.documentEntriesFromSelect(
+		selectDocumentEntry().Where(sq.Eq{"document_id": document.DocumentID}))
 }
 
-func (m *Model) populateBillEntriesFromOtherBillFields(bill *Bill) {
-	unitCostCents, err := centsFromAmount(bill.Amount)
+func (m *Model) populateDocumentEntriesFromOtherDocumentFields(document *Document) {
+	unitCostCents, err := centsFromAmount(document.Amount)
 	if m.isErr(err) {
 		return
 	}
-	var entries []BillEntry
+	var entries []DocumentEntry
 	addEntry := func(accountIDString, description string, isDebit bool) {
 		accountID, _ := strconv.Atoi(accountIDString)
 		if accountID > 0 {
-			entries = append(entries, BillEntry{
+			entries = append(entries, DocumentEntry{
 				RowNumber:     len(entries),
 				UnitCount:     1,
 				UnitCostCents: unitCostCents,
@@ -268,33 +268,33 @@ func (m *Model) populateBillEntriesFromOtherBillFields(bill *Bill) {
 			})
 		}
 	}
-	addEntry(bill.CreditAccountID, "Credit", false)
-	addEntry(bill.DebitAccountID, "Debet", true)
-	bill.Entries = entries
+	addEntry(document.CreditAccountID, "Credit", false)
+	addEntry(document.DebitAccountID, "Debet", true)
+	document.Entries = entries
 }
 
-func (m *Model) populateOtherBillFieldsFromBillEntries(bill *Bill) {
-	q := sq.Select("account_id").From("bill_entry").
-		Where(sq.Eq{"bill_id": bill.BillID}).
-		OrderBy("bill_id, row_number")
+func (m *Model) populateOtherDocumentFieldsFromDocumentEntries(document *Document) {
+	q := sq.Select("account_id").From("document_entry").
+		Where(sq.Eq{"document_id": document.DocumentID}).
+		OrderBy("document_id, row_number")
 	q.Where("debit = 0").RunWith(m.tx).Limit(1).
-		QueryRow().Scan(&bill.CreditAccountID)
+		QueryRow().Scan(&document.CreditAccountID)
 	q.Where("debit = 1").RunWith(m.tx).Limit(1).
-		QueryRow().Scan(&bill.DebitAccountID)
+		QueryRow().Scan(&document.DebitAccountID)
 }
 
-func (m *Model) putBillEntries(bill Bill) {
-	_, err := sq.Delete("bill_entry").Where(sq.Eq{"bill_id": bill.BillID}).
+func (m *Model) putDocumentEntries(document Document) {
+	_, err := sq.Delete("document_entry").Where(sq.Eq{"document_id": document.DocumentID}).
 		RunWith(m.tx).Exec()
 	if m.isErr(err) {
 		return
 	}
-	for rowNumber, entry := range bill.Entries {
+	for rowNumber, entry := range document.Entries {
 		if entry.RowNumber != rowNumber {
 			panic("Row number mismatch")
 		}
-		_, err := sq.Insert("bill_entry").SetMap(sq.Eq{
-			"bill_id":         bill.BillID,
+		_, err := sq.Insert("document_entry").SetMap(sq.Eq{
+			"document_id":     document.DocumentID,
 			"row_number":      rowNumber,
 			"unit_count":      1,
 			"unit_cost_cents": entry.UnitCostCents,
@@ -308,40 +308,40 @@ func (m *Model) putBillEntries(bill Bill) {
 	}
 }
 
-func (m *Model) putBillImages(bill Bill) {
-	_, err := sq.Delete("bill_image").Where(sq.Eq{"bill_id": bill.BillID}).
+func (m *Model) putDocumentImages(document Document) {
+	_, err := sq.Delete("document_image").Where(sq.Eq{"document_id": document.DocumentID}).
 		RunWith(m.tx).Exec()
 	if m.isErr(err) {
 		return
 	}
-	if bill.ImageID == "" {
+	if document.ImageID == "" {
 		return
 	}
-	_, err = sq.Insert("bill_image").SetMap(sq.Eq{
-		"bill_id":        bill.BillID,
-		"bill_image_num": 1,
-		"image_id":       bill.ImageID,
+	_, err = sq.Insert("document_image").SetMap(sq.Eq{
+		"document_id":        document.DocumentID,
+		"document_image_num": 1,
+		"image_id":           document.ImageID,
 	}).RunWith(m.tx).Exec()
 	if m.isErr(err) {
 		return
 	}
 }
 
-func (m *Model) PutBill(bill Bill) {
-	billID := parsePositiveInt("bill ID", bill.BillID)
-	if billID < 1 {
+func (m *Model) PutDocument(document Document) {
+	documentID := parsePositiveInt("document ID", document.DocumentID)
+	if documentID < 1 {
 		return
 	}
 	setmap := sq.Eq{
-		"description": bill.Description,
-		"paid_date":   isoFromFiDate(bill.PaidDateFi),
+		"description": document.Description,
+		"paid_date":   isoFromFiDate(document.PaidDateFi),
 	}
-	if !m.user.IsAdmin && bill.PaidUser.UserID != 0 {
-		panic("Non-null PaidUser.UserID for non-admin in PutBill")
+	if !m.user.IsAdmin && document.PaidUser.UserID != 0 {
+		panic("Non-null PaidUser.UserID for non-admin in PutDocument")
 	}
 	var oldPaidUserID sql.NullInt64
 	if m.isErr(sq.Select("paid_user_id").
-		From("bill").Where(sq.Eq{"bill_id": billID}).
+		From("document").Where(sq.Eq{"document_id": documentID}).
 		RunWith(m.tx).QueryRow().Scan(&oldPaidUserID)) {
 		return
 	}
@@ -349,17 +349,17 @@ func (m *Model) PutBill(bill Bill) {
 		return
 	}
 	if m.user.IsAdmin {
-		if bill.PaidUser.UserID == 0 {
+		if document.PaidUser.UserID == 0 {
 			setmap["paid_user_id"] = nil
 		} else {
-			setmap["paid_user_id"] = bill.PaidUser.UserID
+			setmap["paid_user_id"] = document.PaidUser.UserID
 		}
-		m.populateBillEntriesFromOtherBillFields(&bill)
-		m.putBillEntries(bill)
+		m.populateDocumentEntriesFromOtherDocumentFields(&document)
+		m.putDocumentEntries(document)
 	}
-	m.putBillImages(bill)
-	q := sq.Update("bill").SetMap(setmap).
-		Where(sq.Eq{"bill_id": billID}).
+	m.putDocumentImages(document)
+	q := sq.Update("document").SetMap(setmap).
+		Where(sq.Eq{"document_id": documentID}).
 		RunWith(m.tx)
 	_, err := q.Exec()
 	if m.isErr(err) {
@@ -367,65 +367,65 @@ func (m *Model) PutBill(bill Bill) {
 	}
 }
 
-func (m *Model) getNewBillID() (billID int64, err error) {
-	err = sq.Select("coalesce(max(bill_id), 0) + 1").From("bill").
-		RunWith(m.tx).Limit(1).QueryRow().Scan(&billID)
+func (m *Model) getNewDocumentID() (documentID int64, err error) {
+	err = sq.Select("coalesce(max(document_id), 0) + 1").From("document").
+		RunWith(m.tx).Limit(1).QueryRow().Scan(&documentID)
 	return
 }
 
-func (m *Model) PostBill(bill Bill) string {
+func (m *Model) PostDocument(document Document) string {
 	createdDate := time.Now().Format("2006-01-02")
-	billID, err := m.getNewBillID()
+	documentID, err := m.getNewDocumentID()
 	if m.isErr(err) {
 		return ""
 	}
-	setMap := sq.Eq{"bill_id": billID, "created_date": createdDate}
+	setMap := sq.Eq{"document_id": documentID, "created_date": createdDate}
 	if !m.user.IsAdmin {
 		setMap["paid_user_id"] = m.user.UserID
 	}
-	_, err = sq.Insert("bill").SetMap(setMap).RunWith(m.tx).Exec()
+	_, err = sq.Insert("document").SetMap(setMap).RunWith(m.tx).Exec()
 	if m.isErr(err) {
 		return ""
 	}
-	bill.BillID = strconv.Itoa(int(billID))
-	log.Printf("Created bill #%s", bill.BillID)
-	m.PutBill(bill)
-	return bill.BillID
+	document.DocumentID = strconv.Itoa(int(documentID))
+	log.Printf("Created document #%s", document.DocumentID)
+	m.PutDocument(document)
+	return document.DocumentID
 }
 
-type BillComp struct {
-	BillID      string
+type DocumentComp struct {
+	DocumentID  string
 	Date        string
 	Cents       int64
 	Description string
 }
 
-func (m *Model) GetBillsForCompare() []BillComp {
-	noBills := []BillComp{}
+func (m *Model) GetDocumentsForCompare() []DocumentComp {
+	noDocuments := []DocumentComp{}
 	if !m.user.IsAdmin {
 		m.Forbidden()
-		return noBills
+		return noDocuments
 	}
-	bills := noBills
-	rows, err := selectBill().RunWith(m.tx).Query()
+	documents := noDocuments
+	rows, err := selectDocument().RunWith(m.tx).Query()
 	if m.isErr(err) {
-		return noBills
+		return noDocuments
 	}
 	defer rows.Close()
 	for rows.Next() {
-		bill, err := scanBill(rows)
+		document, err := scanDocument(rows)
 		if m.isErr(err) {
-			return noBills
+			return noDocuments
 		}
-		bills = append(bills, BillComp{
-			Date:        bill.PaidDateFi,
-			Cents:       bill.AmountCents,
-			Description: bill.Description,
+		documents = append(documents, DocumentComp{
+			Date:        document.PaidDateFi,
+			Cents:       document.AmountCents,
+			Description: document.Description,
 		})
 	}
 	if m.isErr(rows.Err()) {
-		return noBills
+		return noDocuments
 	}
-	return bills
+	return documents
 
 }

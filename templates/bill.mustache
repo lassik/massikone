@@ -14,44 +14,44 @@
     <div class="container">
       <h1>{{AppTitle}}</h1>
       <h2>{{CurrentUser.FullName}}</h2>
-      {{#Bill}}<h2>Tosite #{{BillID}}</h2>{{/Bill}}
-      {{^Bill}}<h2>Uusi tosite</h2>{{/Bill}}
-      <form id="bill-form" enctype="multipart/form-data"
-            {{#Bill}}method="POST" action="/tosite/{{BillID}}"{{/Bill}}
-            {{^Bill}}method="POST" action="/tosite"{{/Bill}}>
+      {{#Document}}<h2>Tosite #{{DocumentID}}</h2>{{/Document}}
+      {{^Document}}<h2>Uusi tosite</h2>{{/Document}}
+      <form id="document-form" enctype="multipart/form-data"
+            {{#Document}}method="POST" action="/tosite/{{DocumentID}}"{{/Document}}
+            {{^Document}}method="POST" action="/tosite"{{/Document}}>
         <div class="btn-group">
           <input type="submit" class="btn btn-lg btn-success" value="Tallenna">
-          <a class="btn btn-lg btn-warning" href="/{{#Bill}}bill/{{BillID}}{{/Bill}}">Peruuta</a>
+          <a class="btn btn-lg btn-warning" href="/{{#Document}}document/{{DocumentID}}{{/Document}}">Peruuta</a>
           <a class="btn btn-lg btn-info" href="/">Takaisin</a>
-          {{#Bill}}
-            {{#HasPrevBill}}
-              <a class="btn btn-lg btn-primary" href="/tosite/{{PrevBillID}}">
+          {{#Document}}
+            {{#HasPrevDocument}}
+              <a class="btn btn-lg btn-primary" href="/tosite/{{PrevDocumentID}}">
                 <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
               </a>
-            {{/HasPrevBill}}
-            {{^HasPrevBill}}
+            {{/HasPrevDocument}}
+            {{^HasPrevDocument}}
               <button class="btn btn-lg btn-primary disabled">
                 <span class="glyphicon glyphicon-arrow-left" title="Edellinen"></span>
               </button>
-            {{/HasPrevBill}}
-            {{#HasNextBill}}
-              <a class="btn btn-lg btn-primary" href="/tosite/{{NextBillID}}">
+            {{/HasPrevDocument}}
+            {{#HasNextDocument}}
+              <a class="btn btn-lg btn-primary" href="/tosite/{{NextDocumentID}}">
                 <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
               </a>
-            {{/HasNextBill}}
-            {{^HasNextBill}}
+            {{/HasNextDocument}}
+            {{^HasNextDocument}}
               <button class="btn btn-lg btn-primary disabled">
                 <span class="glyphicon glyphicon-arrow-right" title="Seuraava"></span>
               </button>
-            {{/HasNextBill}}
-          {{/Bill}}
+            {{/HasNextDocument}}
+          {{/Document}}
         </div>
         <table class="table table-striped">
           <tr>
             <th>Maksaja:</th>
             <td>
               {{#CurrentUser.IsAdmin}}
-                <select class="form-control" name="paid_user_id" value="{{#Bill}}{{PaidUser.id}}{{/Bill}}">
+                <select class="form-control" name="paid_user_id" value="{{#Document}}{{PaidUser.id}}{{/Document}}">
                   <option value=""></option>
                   {{#Users}}
                     <option value="{{UserID}}"{{#IsMatch}} selected{{/IsMatch}}>{{FullName}}</option>
@@ -59,8 +59,8 @@
                 </select>
               {{/CurrentUser.IsAdmin}}
               {{^CurrentUser.IsAdmin}}
-                {{#Bill}}{{PaidUser.FullName}}{{/Bill}}
-                {{^Bill}}{{CurrentUser.FullName}}{{/Bill}}
+                {{#Document}}{{PaidUser.FullName}}{{/Document}}
+                {{^Document}}{{CurrentUser.FullName}}{{/Document}}
               {{/CurrentUser.IsAdmin}}
             </td>
           </tr>
@@ -73,7 +73,7 @@
                        data-date-language="fi"
                        data-date-today-highlight="true"
                        name="paid_date_fi"
-                       value="{{#Bill}}{{PaidDateFi}}{{/Bill}}">
+                       value="{{#Document}}{{PaidDateFi}}{{/Document}}">
               </td>
             </tr>
           {{/CurrentUser.IsAdmin}}
@@ -93,14 +93,14 @@
           </tr>
           <tr>
             <th>Kulun selvennys:</th>
-            <td><textarea name="description" cols="80" rows="4">{{#Bill}}{{Description}}{{/Bill}}</textarea></td>
+            <td><textarea name="description" cols="80" rows="4">{{#Document}}{{Description}}{{/Document}}</textarea></td>
           </tr>
           {{#CurrentUser.IsAdmin}}
             <tr>
               <th>Summa:</th>
               <td>
                 <input type="text" name="amount"
-                       value="{{#Bill}}{{Amount}}{{/Bill}}"> &euro;
+                       value="{{#Document}}{{Amount}}{{/Document}}"> &euro;
               </td>
             </tr>
             <tr>
@@ -141,19 +141,19 @@
           {{/CurrentUser.IsAdmin}}
         </table>
         <input type="hidden" id="image-id" name="image_id"
-               value="{{#Bill}}{{#Images}}{{ImageID}}{{/Images}}{{/Bill}}">
+               value="{{#Document}}{{#Images}}{{ImageID}}{{/Images}}{{/Document}}">
       </form>
       <form id="image-upload-form" enctype="multipart/form-data"
             style="display: none">
         <input type="file" name="file" id="image-upload-file"
                accept=".jpeg,.jpg,.png,.gif,image/jpeg,image/png,image/gif">
       </form>
-      <div id="bill-image-container">
-        {{#Bill}}{{#Images}}{{#ImageID}}
+      <div id="document-image-container">
+        {{#Document}}{{#Images}}{{#ImageID}}
           <img src="/api/userimage/{{ImageID}}">
-        {{/ImageID}}{{/Images}}{{/Bill}}
+        {{/ImageID}}{{/Images}}{{/Document}}
       </div>
-      <div id="bill-image-placeholder" class="well">
+      <div id="document-image-placeholder" class="well">
         <ul>
           <li>Valitse kuva laskusta tai kuitista.
             <li>Kuvasta täytyy näkyä <b>päivämäärä</b> ja <b>summa</b>. Kuittia saa täydentää kirjoittamalla.</li>

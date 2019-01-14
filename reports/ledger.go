@@ -74,7 +74,7 @@ func GeneralLedgerPdf(m *model.Model, getWriter GetWriter) {
 					width: numberWidth,
 				},
 				cell{
-					text:  entry.BillID,
+					text:  entry.DocumentID,
 					width: numberWidth,
 				},
 				cell{

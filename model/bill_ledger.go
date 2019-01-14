@@ -5,7 +5,7 @@ import (
 )
 
 type LedgerEntry struct {
-	BillID       string
+	DocumentID   string
 	PaidDateISO  string
 	PaidDateFi   string
 	DebitAmount  string
@@ -34,7 +34,7 @@ func (m *Model) GetLedger() Ledger {
 		return ledger
 	}
 	acctMap := m.GetAccountMap()
-	rows, err := selectBill().RunWith(m.tx).Query()
+	rows, err := selectDocument().RunWith(m.tx).Query()
 	if m.isErr(err) {
 		return ledger
 	}
@@ -43,36 +43,36 @@ func (m *Model) GetLedger() Ledger {
 	var totalDebitCents int64
 	var totalCreditCents int64
 	for rows.Next() {
-		bill, err := scanBill(rows)
+		document, err := scanDocument(rows)
 		if err != nil {
 			return ledger
 		}
-		m.populateBillEntries(&bill)
-		for _, billEntry := range bill.Entries {
-			cents := billEntry.UnitCount * billEntry.UnitCostCents
-			ledgerAccount := ledgerMap[billEntry.AccountID]
-			ledgerAccount.AccountID = billEntry.AccountID
+		m.populateDocumentEntries(&document)
+		for _, documentEntry := range document.Entries {
+			cents := documentEntry.UnitCount * documentEntry.UnitCostCents
+			ledgerAccount := ledgerMap[documentEntry.AccountID]
+			ledgerAccount.AccountID = documentEntry.AccountID
 			ledgerAccount.AccountTitle =
 				acctMap[ledgerAccount.AccountID].Title
 			ledgerEntry := LedgerEntry{}
-			if billEntry.IsDebit {
-				ledgerEntry.DebitAmount = billEntry.Amount
+			if documentEntry.IsDebit {
+				ledgerEntry.DebitAmount = documentEntry.Amount
 				ledgerAccount.CurrentBalanceCents += cents
 				totalDebitCents += cents
 			} else {
-				ledgerEntry.CreditAmount = billEntry.Amount
+				ledgerEntry.CreditAmount = documentEntry.Amount
 				ledgerAccount.CurrentBalanceCents -= cents
 				totalCreditCents += cents
 			}
 			ledgerEntry.BalanceAfter = amountFromCents(
 				ledgerAccount.CurrentBalanceCents)
-			ledgerEntry.BillID = bill.BillID
-			ledgerEntry.PaidDateISO = bill.PaidDateISO
-			ledgerEntry.PaidDateFi = bill.PaidDateFi
-			ledgerEntry.Description = billEntry.Description
+			ledgerEntry.DocumentID = document.DocumentID
+			ledgerEntry.PaidDateISO = document.PaidDateISO
+			ledgerEntry.PaidDateFi = document.PaidDateFi
+			ledgerEntry.Description = documentEntry.Description
 			ledgerAccount.Entries =
 				append(ledgerAccount.Entries, ledgerEntry)
-			ledgerMap[billEntry.AccountID] = ledgerAccount
+			ledgerMap[documentEntry.AccountID] = ledgerAccount
 		}
 	}
 	if m.isErr(rows.Err()) {
@@ -88,7 +88,7 @@ func (m *Model) GetLedger() Ledger {
 			if ents[i].PaidDateISO > ents[j].PaidDateISO {
 				return false
 			}
-			return ents[i].BillID < ents[j].BillID
+			return ents[i].DocumentID < ents[j].DocumentID
 		})
 		acctList = append(acctList, ledgerAccount)
 	}

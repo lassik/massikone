@@ -51,8 +51,8 @@ func getTemplate(filename string) *mustache.Template {
 	return tmpl
 }
 
-var billsTemplate = getTemplate("/bills.mustache")
-var billTemplate = getTemplate("/bill.mustache")
+var documentsTemplate = getTemplate("/bills.mustache")
+var documentTemplate = getTemplate("/bill.mustache")
 var settingsTemplate = getTemplate("/settings.mustache")
 var aboutTemplate = getTemplate("/about.mustache")
 var compareTemplate = getTemplate("/compare.mustache")
@@ -168,36 +168,36 @@ func getLoginPage(w http.ResponseWriter, r *http.Request) {
 		map[string]string{"AppTitle": getAppTitle(settings)})))
 }
 
-func getBills(m *model.Model, w http.ResponseWriter, r *http.Request) {
+func getDocuments(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	settings := m.GetSettings()
-	bills := m.GetBills()
-	w.Write([]byte(billsTemplate.Render(
+	documents := m.GetDocuments()
+	w.Write([]byte(documentsTemplate.Render(
 		map[string]interface{}{
 			"AppTitle":    getAppTitle(settings),
 			"IsPublic":    (publicURL != ""),
 			"CurrentUser": m.User(),
-			"Bills": map[string][]model.Bill{
-				"Bills": bills,
+			"Documents": map[string][]model.Document{
+				"Documents": documents,
 			},
 		})))
 }
 
-func getBillsOrLogin(w http.ResponseWriter, r *http.Request) {
+func getDocumentsOrLogin(w http.ResponseWriter, r *http.Request) {
 	if getSessionUserID(r) == -1 {
 		getLoginPage(w, r)
 	} else {
-		anyUser(getBills)(w, r)
+		anyUser(getDocuments)(w, r)
 	}
 }
 
-func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
+func getDocumentID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	settings := m.GetSettings()
-	billID := mux.Vars(r)["billID"]
-	bill := m.GetBillID(billID)
+	documentID := mux.Vars(r)["documentID"]
+	document := m.GetDocumentID(documentID)
 	if m.Err != nil {
 		return
 	}
-	if bill == nil {
+	if document == nil {
 		http.NotFound(w, r)
 		return
 	}
@@ -205,25 +205,25 @@ func getBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	var creditAccounts []model.Account
 	var debitAccounts []model.Account
 	if m.User().IsAdmin {
-		users = m.GetUsers(bill.PaidUser.UserID)
-		creditAccounts = m.GetAccountList(false, bill.CreditAccountID)
-		debitAccounts = m.GetAccountList(false, bill.DebitAccountID)
+		users = m.GetUsers(document.PaidUser.UserID)
+		creditAccounts = m.GetAccountList(false, document.CreditAccountID)
+		debitAccounts = m.GetAccountList(false, document.DebitAccountID)
 	}
-	w.Write([]byte(billTemplate.Render(
+	w.Write([]byte(documentTemplate.Render(
 		map[string]interface{}{
 			"AppTitle":       getAppTitle(settings),
 			"CurrentUser":    m.User(),
-			"Bill":           bill,
+			"Document":       document,
 			"Users":          users,
 			"CreditAccounts": creditAccounts,
 			"DebitAccounts":  debitAccounts,
 		})))
 }
 
-func billFromRequest(r *http.Request, billID string) model.Bill {
+func documentFromRequest(r *http.Request, documentID string) model.Document {
 	paidUserID, _ := strconv.Atoi(r.PostFormValue("paid_user_id"))
-	return model.Bill{
-		BillID:          billID,
+	return model.Document{
+		DocumentID:      documentID,
 		PaidDateFi:      r.PostFormValue("paid_date_fi"),
 		Description:     r.PostFormValue("description"),
 		ImageID:         r.PostFormValue("image_id"),
@@ -236,24 +236,24 @@ func billFromRequest(r *http.Request, billID string) model.Bill {
 	}
 }
 
-func putBillID(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	billID := mux.Vars(r)["billID"]
-	m.PutBill(billFromRequest(r, billID))
+func putDocumentID(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	documentID := mux.Vars(r)["documentID"]
+	m.PutDocument(documentFromRequest(r, documentID))
 	if m.Err != nil {
 		return
 	}
-	http.Redirect(w, r, "/tosite/"+billID, http.StatusSeeOther)
+	http.Redirect(w, r, "/tosite/"+documentID, http.StatusSeeOther)
 }
 
-func postBill(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	billID := m.PostBill(billFromRequest(r, ""))
+func postDocument(m *model.Model, w http.ResponseWriter, r *http.Request) {
+	documentID := m.PostDocument(documentFromRequest(r, ""))
 	if m.Err != nil {
 		return
 	}
-	http.Redirect(w, r, "/tosite/"+billID, http.StatusSeeOther)
+	http.Redirect(w, r, "/tosite/"+documentID, http.StatusSeeOther)
 }
 
-func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
+func getNewDocumentPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 	settings := m.GetSettings()
 	var users []model.User
 	var accounts []model.Account
@@ -261,7 +261,7 @@ func getNewBillPage(m *model.Model, w http.ResponseWriter, r *http.Request) {
 		users = m.GetUsers(0)
 		accounts = m.GetAccountList(false, "")
 	}
-	w.Write([]byte(billTemplate.Render(
+	w.Write([]byte(documentTemplate.Render(
 		map[string]interface{}{
 			"AppTitle":       getAppTitle(settings),
 			"CurrentUser":    m.User(),
@@ -296,8 +296,8 @@ func putSettings(m *model.Model, w http.ResponseWriter, r *http.Request) {
 }
 
 func getApiCompare(m *model.Model, w http.ResponseWriter, r *http.Request) {
-	bills := m.GetBillsForCompare()
-	bytes, err := json.Marshal(bills)
+	documents := m.GetDocumentsForCompare()
+	bytes, err := json.Marshal(documents)
 	if err != nil {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
@@ -433,14 +433,14 @@ func main() {
 		anyUser(getImage))
 	post(`/api/userimage`,
 		anyUser(postImage))
-	get(`/tosite/{billID}`,
-		anyUser(getBillID))
-	post(`/tosite/{billID}`,
-		anyUser(putBillID))
+	get(`/tosite/{documentID}`,
+		anyUser(getDocumentID))
+	post(`/tosite/{documentID}`,
+		anyUser(putDocumentID))
 	get(`/tosite`,
-		anyUser(getNewBillPage))
+		anyUser(getNewDocumentPage))
 	post(`/tosite`,
-		anyUser(postBill))
+		anyUser(postDocument))
 
 	post(`/api/settings`,
 		adminOnly(putSettings))
@@ -473,7 +473,7 @@ func main() {
 	get(`/auth/{provider}`, gothic.BeginAuthHandler)
 	get(`/ulos`, logout)
 	post(`/ulos`, logout)
-	get(`/`, getBillsOrLogin)
+	get(`/`, getDocumentsOrLogin)
 	router.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/",
 			http.FileServer(airfreight.HTTPFileSystem(static))))

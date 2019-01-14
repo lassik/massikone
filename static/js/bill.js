@@ -14,10 +14,10 @@ $(function() {
         $("#image-select-button").show();
         $("#image-remove-button").toggle(hasImage);
         $("#image-rotate-button").toggle(hasImage);
-        $("#bill-image-placeholder").toggle(!hasImage);
-        $("#bill-image-container").empty();
+        $("#document-image-placeholder").toggle(!hasImage);
+        $("#document-image-container").empty();
         if (hasImage) {
-            $("#bill-image-container").append(
+            $("#document-image-container").append(
                 $("<img>", {src: "/api/userimage/"+imageId}));
         }
     }
@@ -87,7 +87,7 @@ $(function() {
         return formatEuros(cents / 100.0);
     }
 
-    $("#bill-form input[name=paid_user_id]").val($("#paid-user-id-init").val());
+    $("#document-form input[name=paid_user_id]").val($("#paid-user-id-init").val());
     setImageId(getImageId());
 
 });

@@ -7,19 +7,19 @@ $(function() {
     return formatEuros(cents / 100.0);
   }
 
-  function addToLookupTable(lookup, bills, prefix) {
-    bills.forEach(function(bill) {
-      var key = bill.Date + ":" + bill.Cents;
-      bill.Prefix = prefix;
+  function addToLookupTable(lookup, documents, prefix) {
+    documents.forEach(function(document) {
+      var key = document.Date + ":" + document.Cents;
+      document.Prefix = prefix;
       lookup[key] = lookup[key] || [];
-      lookup[key].push(bill);
+      lookup[key].push(document);
     });
   }
 
-  function compare(appBills, extBills) {
+  function compare(appDocuments, extDocuments) {
     var lookup = {};
-    addToLookupTable(lookup, appBills, "Massikone");
-    addToLookupTable(lookup, extBills, "Pankki");
+    addToLookupTable(lookup, appDocuments, "Massikone");
+    addToLookupTable(lookup, extDocuments, "Pankki");
     $("#entries > tbody").empty();
     var lookupKeys = [];
     for (var key in lookup) {
@@ -29,25 +29,25 @@ $(function() {
     }
     lookupKeys.sort();
     lookupKeys.forEach(function(key) {
-      var keyBills = lookup[key];
+      var keyDocuments = lookup[key];
       var isFirst = true;
-      var cssClass = keyBills.length === 2 ? "success" : "danger";
-      keyBills.forEach(function(bill) {
+      var cssClass = keyDocuments.length === 2 ? "success" : "danger";
+      keyDocuments.forEach(function(document) {
         $("#entries > tbody").append(
           $("<tr>")
             .addClass(cssClass)
             .append(
               $("<td>")
                 .addClass("text-right")
-                .text(isFirst ? bill.Date : "")
+                .text(isFirst ? document.Date : "")
             )
             .append(
               $("<td>")
                 .addClass("text-right")
-                .text(isFirst ? formatCents(bill.Cents) : "")
+                .text(isFirst ? formatCents(document.Cents) : "")
             )
-            .append($("<td>").text(bill.Prefix))
-            .append($("<td>").text(bill.Description))
+            .append($("<td>").text(document.Prefix))
+            .append($("<td>").text(document.Description))
         );
         isFirst = false;
       });
@@ -58,17 +58,17 @@ $(function() {
     $.get({
       url: "/api/compare"
     })
-      .done(function(appBills) {
-        var extBills = [];
+      .done(function(appDocuments) {
+        var extDocuments = [];
         for (var i = 0; i < entries.length; i++) {
           var entry = entries[i];
-          extBills.push({
+          extDocuments.push({
             Date: entry.date.finnish,
             Cents: entry.amount.cents,
             Description: entry.message
           });
         }
-        compare(appBills, extBills);
+        compare(appDocuments, extDocuments);
       })
       .fail(function(jqXHR) {
         alert("Error: " + jqXHR.statusText);

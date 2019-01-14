@@ -86,7 +86,7 @@ func (m *Model) GetAccountList(usedOnly bool, matchAccountID string) []Account {
 		accounts = append(accounts, acct)
 	}
 	if usedOnly {
-		//accounts = reject_unused_accounts(accounts, @db[:bill_entry].select(:account_id).order(:account_id).distinct.map(:account_id))
+		//accounts = reject_unused_accounts(accounts, @db[:document_entry].select(:account_id).order(:account_id).distinct.map(:account_id))
 	}
 	return accounts
 }
